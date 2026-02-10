@@ -1,6 +1,6 @@
 ## Description
 Please include a summary of changes
-Closes # (issue)
+Closes # (issue if applicable)
 
 ## Type of change
 - [ ] Bug fix (non-breaking change which fixes an issue)
