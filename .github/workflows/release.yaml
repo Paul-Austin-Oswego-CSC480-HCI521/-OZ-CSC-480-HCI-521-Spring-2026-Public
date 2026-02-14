@@ -29,16 +29,16 @@ jobs:
                   username: ${{ github.actor }}
                   password: ${{ secrets.GITHUB_TOKEN }}
             - name: Set lowercase image name
-              id: repo
-              run: echo "name=$(echo ${{ github.event.repository.name }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+              id: image 
+              run: echo "name=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]' | sed 's/\/-oz-/\/oz-/')" >> $GITHUB_OUTPUT
             - name: Build and push Frontend
               uses: docker/build-push-action@v5
               with:
                   context: ./frontend
                   push: true
                   tags: |
-                    ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ steps.repo.outputs.name }}/frontend:${{ env.VERSION }}
-                    ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ steps.repo.outputs.name }}/frontend:latest
+                    ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}/frontend:${{ env.VERSION }}
+                    ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}/frontend:latest
     build_backend-finish:
         name: build_backend_finish
         runs-on: ubuntu-latest
@@ -54,17 +54,16 @@ jobs:
                   username: ${{ github.actor }}
                   password: ${{ secrets.GITHUB_TOKEN }}
             - name: Set lowercase image name
-              id: repo
-              run: echo "name=$(echo ${{ github.event.repository.name }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+              id: image
+              run: echo "name=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]' | sed 's/\/-oz-/\/oz-/')" >> $GITHUB_OUTPUT
             - name: Build and push Backend
               uses: docker/build-push-action@v5
               with:
                   context: ./backend/finish
                   push: true
                   tags: |
-                      ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ steps.repo.outputs.name }}/backend-finish:${{ env.VERSION }}
-                      ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ steps.repo.outputs.name }}/backend-finish:latest
-
+                    ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}/backend-finish:${{ env.VERSION }}
+                    ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}/backend-finish:latest
     create_release:
         name: create_release
         needs: [build_frontend, build_backend-finish]
