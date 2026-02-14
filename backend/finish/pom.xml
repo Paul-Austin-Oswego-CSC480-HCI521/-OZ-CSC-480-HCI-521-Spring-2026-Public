@@ -70,6 +70,10 @@
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
                 <version>3.11.5</version>
+                <configuration>
+                    <dockerfile>Dockerfile.dev</dockerfile>
+                    <containerRunOpts>-p 7001:9080 </containerRunOpts>
+                </configuration>
             </plugin>
             <!-- end::libertyMavenPlugin[] -->
             <plugin>
