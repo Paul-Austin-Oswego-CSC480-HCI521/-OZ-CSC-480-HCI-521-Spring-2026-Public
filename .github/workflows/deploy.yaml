@@ -7,11 +7,24 @@ on:
             version:
                 description: "Version to deploy (e.g. v1.2.3)"
                 required: true
-
+env:
+    VERSION: ${{ inputs.version || 'latest' }}
+    
 jobs:
     deploy:
         runs-on: ubuntu-latest
         steps:
+            - uses: actions/checkout@v6
+            
+            - name: Copy docker-compose to server
+              uses: appleboy/scp-action@v0.1.7
+              with:
+                  host: ${{ secrets.MOXIE_DEPLOY_HOST_CSC480 }}
+                  username: ${{ secrets.MOXIE_DEPLOY_USERNAME_CSC480 }}
+                  key: ${{ secrets.MOXIE_DEPLOY_KEY_CSC480 }}
+                  source: "docker-compose.yml"
+                  target: "~/CSC480/production/"
+                  
             - name: Deploy to server
               uses: appleboy/ssh-action@v1
               with:
@@ -19,5 +32,7 @@ jobs:
                   username: ${{ secrets.MOXIE_DEPLOY_USERNAME_CSC480 }}
                   key: ${{ secrets.MOXIE_DEPLOY_KEY_CSC480 }}
                   script: |
-                      echo "Example Text Message: ${{ inputs.version }} at $(date)" > ~/CSC480/hello.txt
-                      cat ~/CSC480/hello.txt
+                      cd ~/CSC480/production/
+                      docker pull ghcr.io/paul-austin-oswego-csc480-hci521/oz-csc-480-hci-521-spring-2026-public/frontend:${{ env.VERSION }}
+                      docker pull ghcr.io/paul-austin-oswego-csc480-hci521/oz-csc-480-hci-521-spring-2026-public/backend-finish:${{ env.VERSION }}
+                      docker-compose up -d
