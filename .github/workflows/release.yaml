@@ -3,7 +3,7 @@ on:
     workflow_dispatch:
         inputs:
             version:
-                description: 'Version tag (e.g. v1.2.3)'
+                description: "Version tag (e.g. v1.2.3)"
                 required: true
 
 jobs:
@@ -31,5 +31,5 @@ jobs:
             - uses: actions/checkout@v4
             - uses: softprops/action-gh-release@v2
               with:
-                tag_name: ${{ inputs.version }}
-                generate_release_notes: true
+                  tag_name: ${{ inputs.version }}
+                  generate_release_notes: true
