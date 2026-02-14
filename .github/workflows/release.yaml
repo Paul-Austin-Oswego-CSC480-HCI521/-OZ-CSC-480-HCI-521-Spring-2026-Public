@@ -1,7 +1,5 @@
 name: Create Release
 on:
-    push:
-        branches: [feat/setup_github_workflows]
     workflow_dispatch:
         inputs:
             version:
