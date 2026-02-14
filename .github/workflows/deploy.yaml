@@ -1,7 +1,5 @@
 name: Deploy to Moxie Server
 on:
-    push:
-        branches: [feat/setup_github_workflows] # TODO: remove on.push when merging to main branch
     workflow_dispatch:
         inputs:
             version:
@@ -9,7 +7,7 @@ on:
                 required: true
 env:
     VERSION: ${{ inputs.version || 'latest' }}
-    
+
 jobs:
     deploy:
         runs-on: ubuntu-latest
