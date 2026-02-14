@@ -1,10 +1,10 @@
 # syntax=docker.io/docker/dockerfile:1
 
-FROM node:20-alpine AS base
+FROM node:24-alpine AS base
+WORKDIR /app
 
 FROM base AS deps
 RUN apk add --no-cache libc6-compat
-WORKDIR /app
 
 COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* .npmrc* ./
 RUN \
@@ -14,9 +14,7 @@ RUN \
   else echo "Lockfile not found." && exit 1; \
   fi
 
-
 FROM base AS builder
-WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
@@ -27,8 +25,7 @@ RUN \
   else echo "Lockfile not found." && exit 1; \
   fi
 
-FROM base AS runner
-WORKDIR /app
+FROM base AS production
 
 ENV NODE_ENV=production
 
