@@ -1,0 +1,9 @@
+{
+  "name": "student-home-page",
+  "version": "1.0.0",
+  "description": "Student Home Page dashboard",
+  "private": true,
+  "scripts": {
+    "dev": "npx serve ."
+  }
+}

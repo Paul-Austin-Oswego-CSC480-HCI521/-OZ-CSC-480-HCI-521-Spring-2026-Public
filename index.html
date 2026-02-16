@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Home Page</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+</head>
+<body>
+  <div class="app">
+    <!-- Header -->
+    <header class="header">
+      <h1 class="header-title">Student Home Page</h1>
+      <div class="header-actions">
+        <div class="search-wrap">
+          <i class="fas fa-search search-icon"></i>
+          <input type="text" class="search-input" placeholder="Search" />
+        </div>
+        <button class="icon-btn" aria-label="Profile">
+          <i class="fas fa-user"></i>
+        </button>
+      </div>
+    </header>
+
+    <div class="layout">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <p class="sidebar-label">Weekly Work Log Tracker</p>
+          <p class="sidebar-course">HCI 521/CSC 480</p>
+        </div>
+        <nav class="sidebar-nav">
+          <a href="#" class="nav-item active">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+          </a>
+          <a href="#" class="nav-item">
+            <i class="fas fa-bell"></i>
+            <span>Notifications</span>
+          </a>
+          <a href="#" class="nav-item">
+            <i class="fas fa-file-alt"></i>
+            <span>Work Logs</span>
+          </a>
+          <a href="#" class="nav-item">
+            <i class="fas fa-tasks"></i>
+            <span>Task Trackers</span>
+          </a>
+        </nav>
+        <div class="sidebar-footer">
+          <button class="icon-btn" aria-label="Settings">
+            <i class="fas fa-cog"></i>
+          </button>
+          <button class="icon-btn" aria-label="Help">
+            <i class="fas fa-question"></i>
+          </button>
+        </div>
+      </aside>
+
+      <!-- Main content -->
+      <main class="main">
+        <section class="welcome-section">
+          <h2 class="welcome-title">Welcome, Student.</h2>
+          <p class="welcome-deadline">The next weekly work log is due Monday, xx, xx, xxxx.</p>
+          <button class="btn-primary">Continue This Week's Work Log</button>
+        </section>
+
+        <section class="notification-section">
+          <h3 class="section-title">Notification Center</h3>
+          <div class="notification-cards">
+            <div class="card card-work-log">
+              <h4 class="card-title">Work Log</h4>
+              <ul class="card-list">
+                <li>Week 2 - Finish Reflection for 'Task 1:....'</li>
+                <li>Week 1 - Work Log is overdue by 3 days.</li>
+              </ul>
+              <button class="btn-secondary">View More</button>
+            </div>
+            <div class="card card-task-tracker">
+              <h4 class="card-title">Task Tracker</h4>
+              <ul class="card-list">
+                <li><strong>Team A</strong></li>
+                <li>Task - 'Example Task Name' is due - xx, xx, xxxx at: x:xxpm.</li>
+              </ul>
+              <button class="btn-secondary">View More</button>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+</body>
+</html>
