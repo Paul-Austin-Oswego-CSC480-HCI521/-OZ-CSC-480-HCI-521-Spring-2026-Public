@@ -24,7 +24,7 @@
 
 ---
 
-## Checking Out Version Releases (QA Team)
+## Checking Out Version Releases
 
 During weekly sprints, the full stack team will tag a release when ready.
 
@@ -48,6 +48,18 @@ Then follow the [Setting Up the Project](#setting-up-the-project) steps to run l
 
 ---
 
+## Writing/Running Tests
+
+From the `backend/finish` directory:
+```bash
+./mvnw test      # unit tests only
+./mvnw verify    # unit + integration tests
+```
+
+**Unit tests** are named `*Test.java`.
+**Integration tests** are named `*IT.java`.
+
+---
 ## Issues and Pull Requests
 
 We have templates for creating issues and pull requests — please use them.
