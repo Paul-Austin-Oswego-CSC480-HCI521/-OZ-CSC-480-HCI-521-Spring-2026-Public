@@ -1,8 +1,5 @@
 name: Deploy to Moxie Server
 on:
-    push:
-        branches:
-            - bugfix/moxie-host-error
     workflow_dispatch:
         inputs:
             version:
@@ -32,3 +29,4 @@ jobs:
                       VERSION=${{ env.VERSION }} docker-compose pull
                       docker-compose down
                       VERSION=${{ env.VERSION }} docker-compose up -d
+                      docker-compose ps
