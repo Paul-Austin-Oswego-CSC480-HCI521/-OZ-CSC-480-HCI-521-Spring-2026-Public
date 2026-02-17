@@ -64,30 +64,44 @@
     <build>
         <finalName>${project.artifactId}</finalName>
         <plugins>
-            <!-- Enable liberty-maven plugin -->
-            <!-- tag::libertyMavenPlugin[] -->
+            <!-- Liberty Maven Plugin -->
             <plugin>
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
                 <version>3.11.5</version>
-                <configuration>
-                    <dockerfile>Dockerfile.dev</dockerfile>
-                    <containerRunOpts>-p 7001:9080 </containerRunOpts>
-                </configuration>
+                <executions>
+                    <execution>
+                        <id>start-server</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                            <goal>start</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>stop-server</id>
+                        <phase>post-integration-test</phase>
+                        <goals>
+                            <goal>stop</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
-            <!-- end::libertyMavenPlugin[] -->
+
+            <!-- WAR packaging -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
                 <version>3.5.0</version>
             </plugin>
+
+            <!-- Unit tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.5.4</version>
             </plugin>
-            <!-- Plugin to run functional tests -->
-            <!-- tag::maven-failsafe-plugin[] -->
+
+            <!-- Integration tests -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
@@ -95,13 +109,18 @@
                 <configuration>
                     <systemPropertyVariables>
                         <http.port>${liberty.var.http.port}</http.port>
-                        <!-- tag::contextRoot[] -->
-                        <context.root>/dev</context.root>
-                        <!-- end::contextRoot[] -->
+                        <context.root>/</context.root>
                     </systemPropertyVariables>
                 </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
-            <!-- end::maven-failsafe-plugin[] -->
-        </plugins>
+        </plugins> 
     </build>
 </project>
