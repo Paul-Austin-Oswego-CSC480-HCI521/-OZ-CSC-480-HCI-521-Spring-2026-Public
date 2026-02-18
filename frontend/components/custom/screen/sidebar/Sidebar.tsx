@@ -39,9 +39,9 @@ const items = [
 export function AppSidebar() {
   return (
     <Sidebar>
-      <SidebarContent>
+      <SidebarContent className="m-3">
         {/* group1 for header */}
-        <SidebarGroup className="m-3">HCI 521/CSC480</SidebarGroup>
+        <SidebarGroup className="m-3 mt-8 text-2xl">HCI 521/CSC480</SidebarGroup>
 
         {/* group 2 for side bar */}
         <SidebarGroup>
@@ -49,11 +49,11 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => (
-                <SidebarMenuItem key={item.title}>
+                <SidebarMenuItem key={item.title} className="mt-2">
                   <SidebarMenuButton asChild>
                     <a href={item.url}>
                       <item.icon />
-                      <span>{item.title}</span>
+                      <span className="text-lg">{item.title}</span>
                     </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
