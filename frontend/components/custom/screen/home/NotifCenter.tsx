@@ -3,16 +3,16 @@ import { Card } from "@/components/ui/card";
 const NotifCenter = () => {
   return (
     <div className="w-full space-y-4 mt-10">
-      <h2 className="text-2xl font-semibold">Notification Center</h2>
+      <h2 className="text-3xl ">Notification Center</h2>
       <div className="grid grid-cols-2 gap-6">
         {/* Work Log Card */}
         <Card className="p-5 space-y-3 w-11/12">
-          <h3 className="text-lg font-semibold">Work Log</h3>
+          <h3 className="text-xl">Work Log</h3>
           <div className="space-y-2">
-            <div className="bg-gray-200 rounded-full px-4 py-2 text-sm">
+            <div className="bg-gray-100 rounded-full px-4 py-2 text-md">
               Week 2 - Finish Reflection for "Task 1: ..."
             </div>
-            <div className="bg-gray-200 rounded-full px-4 py-2 text-sm">
+            <div className="bg-gray-100 rounded-full px-4 py-2 text-md">
               Week 1 - Work Log is overdue by 3 days.
             </div>
           </div>
@@ -23,10 +23,10 @@ const NotifCenter = () => {
 
         {/* Task Tracker Card */}
         <Card className="p-5 space-y-3 w-11/12">
-          <h3 className="text-lg font-semibold">Task Tracker</h3>
+          <h3 className="text-xl">Task Tracker</h3>
           <div className="space-y-2">
-            <div className="bg-gray-200 rounded-lg px-4 py-3 text-sm">
-              <p className="font-medium">Team A</p>
+            <div className="bg-gray-100 rounded-lg px-4 py-3 text-md">
+              <p className="">Team A</p>
               <p>
                 Task - "Example Task Name" is due - xx, xx, xxxx at: x:xxpm.
               </p>

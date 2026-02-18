@@ -41,7 +41,9 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarContent className="m-5 mt-15">
         {/* group1 for header */}
-        <SidebarGroup className="m-3 mt-8 text-2xl">HCI 521/CSC480</SidebarGroup>
+        <SidebarGroup className="m-3 mt-8 text-2xl">
+          HCI 521/CSC480
+        </SidebarGroup>
 
         {/* group 2 for side bar */}
         <SidebarGroup>
@@ -50,7 +52,7 @@ export function AppSidebar() {
             <SidebarMenu>
               {items.map((item) => (
                 <SidebarMenuItem key={item.title} className="mt-2">
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton asChild className="">
                     <a href={item.url}>
                       <item.icon />
                       <span className="text-lg">{item.title}</span>

@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Search, UserCircle } from "lucide-react";
 const Topbar = () => {
   return (
-    <div className="w-full bg-zinc-800 text-white flex items-center justify-between px-6 py-3 relative z-50">
+    <div className="w-full bg-zinc-700 text-white flex items-center justify-between px-6 py-3 relative z-50">
       <span className="text-sm font-medium">Weekly Work Log Tracker</span>
       <div className="flex items-center gap-4">
         <div className="relative">
