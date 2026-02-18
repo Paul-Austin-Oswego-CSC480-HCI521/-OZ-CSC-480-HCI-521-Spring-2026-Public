@@ -2,13 +2,13 @@ import NotifCenter from "@/components/custom/screen/home/NotifCenter";
 import Welcome from "@/components/custom/screen/home/Welcome";
 import React from "react";
 
-const page = () => {
+const Page = () => {
   return (
-    <div>
+    <div className="w-full m-10">
       <Welcome />
       <NotifCenter />
     </div>
   );
 };
 
-export default page;
+export default Page;
