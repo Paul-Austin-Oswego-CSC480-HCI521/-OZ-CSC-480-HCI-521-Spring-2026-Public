@@ -1,0 +1,30 @@
+# Maven generated
+target/
+
+# Eclipse generated
+.apt_generated/
+.settings/
+.project
+.classpath
+.factorypath
+MANIFEST.MF
+
+# IntelliJ generated
+*.iml
+../.idea/
+
+# MacOS system files
+.DS_Store
+
+# Asciidoc rendered
+README.html
+
+# VSCode
+.vscode/
+
+# Zip files
+*.zip
+
+# Security certificates
+**/truststore.p12
+**/security/*.p12
