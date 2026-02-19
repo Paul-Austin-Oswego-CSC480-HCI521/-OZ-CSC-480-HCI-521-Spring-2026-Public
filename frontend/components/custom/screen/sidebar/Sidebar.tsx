@@ -1,5 +1,14 @@
 "use client";
-import { Calendar, Home, Inbox, Search, Settings, BellIcon, Workflow, ListTodo } from "lucide-react";
+import {
+  Calendar,
+  Home,
+  Inbox,
+  Search,
+  Settings,
+  BellIcon,
+  Workflow,
+  ListTodo,
+} from "lucide-react";
 
 import {
   Sidebar,
@@ -10,6 +19,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { usePathname } from "next/navigation";
 
 // Menu items.
 const items = [
@@ -37,6 +47,8 @@ const items = [
 ];
 
 export function AppSidebar() {
+  const pathname = usePathname();
+
   return (
     <Sidebar>
       <SidebarContent className="m-5 mt-15">
@@ -52,7 +64,10 @@ export function AppSidebar() {
             <SidebarMenu>
               {items.map((item) => (
                 <SidebarMenuItem key={item.title} className="mt-2">
-                  <SidebarMenuButton asChild className="">
+                  <SidebarMenuButton
+                    asChild
+                    className={`hover:bg-gray-300 ${pathname === item.url ? "bg-gray-300" : ""}`}
+                  >
                     <a href={item.url}>
                       <item.icon />
                       <span className="text-lg">{item.title}</span>
