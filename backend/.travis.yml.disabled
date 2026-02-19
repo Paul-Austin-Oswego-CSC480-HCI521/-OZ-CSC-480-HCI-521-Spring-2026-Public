@@ -1,0 +1,28 @@
+language: java
+services:
+- docker
+before_script:
+- unset _JAVA_OPTIONS
+- chmod +x scripts/travisTest.sh
+- cd finish/
+script:
+- ../scripts/travisTest.sh
+after_script:
+- logsPath=$(find . -name "messages.log" | sed "s/messages.log//g");
+- release=$(grep "Open Liberty" $logsPath/messages.log | cut -d" " -f5 | cut -d")" -f1 | cut -d'/' -f1);
+- number=$(grep "Open Liberty" $logsPath/messages.log | cut -d" " -f6 | cut -d"(" -f2 | cut -d")" -f1);
+- jv=$(grep -i "version" $logsPath/messages.log | head -1 | cut -d"=" -f2);
+- echo -e "\n"\
+  "\033[1;34m Open Liberty release:\033[0m\033[1;36m $release \033[0m \n"\
+  "\033[1;34m Open Liberty build number:\033[0m\033[1;36m $number \033[0m \n"\
+  "\033[1;34m Java version:\033[0m\033[1;36m $jv \033[0m \n"
+- cd $logsPath;
+- repo_name=$(echo "$TRAVIS_REPO_SLUG" | sed -e "s/\//-/g"); 
+- if [ "$TRAVIS_TEST_RESULT" -eq 0 ]; then RESULT="passed"; else RESULT="failed"; fi;
+- echo -e "\033[1;34m result:\033[0m\033[1;36m $RESULT \033[0m \n"
+- serverlogsarchive="$repo_name-$TRAVIS_BUILD_NUMBER-$RESULT.zip";
+- if [ "$TRAVIS_TEST_RESULT" -eq 0 ]; then echo skipped to zip $serverlogsarchive; else zip -r "$serverlogsarchive" .; fi;
+- if [ "$TRAVIS_TEST_RESULT" -eq 0 ]; then echo skipped upload; else curl -H "$JFROG_TOKEN" -T "$serverlogsarchive" "https://na.artifactory.swg-devops.com/artifactory/hyc-openliberty-guides-files-generic-local/"; fi;
+branches:
+  only: 
+  - master

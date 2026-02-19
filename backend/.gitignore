@@ -24,3 +24,7 @@ README.html
 
 # Zip files
 *.zip
+
+# Security certificates
+**/truststore.p12
+**/security/*.p12

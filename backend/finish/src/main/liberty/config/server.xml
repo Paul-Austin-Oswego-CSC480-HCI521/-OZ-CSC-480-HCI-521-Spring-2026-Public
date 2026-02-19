@@ -1,34 +1,62 @@
 <server description="Sample Liberty server">
-    <!-- tag::features[] -->
+    <!-- tag::featureManager[] -->
     <featureManager>
         <platform>jakartaee-10.0</platform>
         <platform>microprofile-7.1</platform>
-        <feature>restfulWS</feature>
-        <feature>jsonp</feature>
-        <feature>jsonb</feature>
+        <feature>beanValidation</feature>
+        <!-- tag::cdiFeature[] -->
         <feature>cdi</feature>
-        <!-- tag::mpHealth[] -->
-        <feature>mpHealth</feature>
-        <!-- end::mpHealth[] -->
+        <!-- end::cdiFeature[] -->
+        <feature>jsonb</feature>
+        <!-- tag::passwordUtilFeature[] -->
+        <feature>passwordUtilities-1.1</feature>
+        <!-- end::passwordUtilFeature[] -->
+        <feature>restfulWS</feature>
+        <!-- tag::sslFeature[] -->
+        <feature>ssl-1.0</feature>
+        <!-- end::sslFeature[] -->
+        <!-- tag::mpConfigFeature[] -->
         <feature>mpConfig</feature>
-        <feature>mpMetrics</feature>
+        <!-- end::mpConfigFeature[] -->
+        <feature>mpOpenAPI</feature>
     </featureManager>
-    <!-- end::features[] -->
+    <!-- end::featureManager[] -->
 
     <variable name="http.port" defaultValue="9080"/>
     <variable name="https.port" defaultValue="9443"/>
+    <variable name="app.context.root" defaultValue="/notifier"/>
+
+    <!-- tag::httpEndpoint[] -->
+    <httpEndpoint
+        host="*" 
+        httpPort="${http.port}" 
+        httpsPort="${https.port}" 
+        id="defaultHttpEndpoint"
+    />
+    <!-- end::httpEndpoint[] -->
 
     <!-- tag::webApplication[] -->
-    <webApplication location="guide-getting-started.war" contextRoot="/" />
-    <!-- end::webApplication[] -->    
-    <mpMetrics authentication="false"/>
-
-    <!-- tag::logging[] -->
-    <logging traceSpecification="com.ibm.ws.microprofile.health.*=all" />
-    <!-- end::logging[] -->
-
-    <httpEndpoint host="*" httpPort="${http.port}"
-        httpsPort="${https.port}" id="defaultHttpEndpoint"/>
-
-    <variable name="io_openliberty_guides_system_inMaintenance" value="false"/>
+    <webApplication 
+        location="notifier.war" 
+        contextRoot="${app.context.root}"
+    />
+    <!-- end::webApplication[] -->
+    <!-- tag::sslContext[] -->
+    <!-- tag::keyStore[] -->
+    <keyStore
+        id="outboundTrustStore" 
+        location="${server.output.dir}/resources/security/truststore.p12"
+        password="mongodb"
+        type="PKCS12" 
+    />
+    <!-- end::keyStore[] -->
+    <!-- tag::ssl[] -->
+    <ssl 
+        id="outboundSSLContext" 
+        keyStoreRef="defaultKeyStore" 
+        trustStoreRef="outboundTrustStore" 
+        sslProtocol="TLS" 
+    />
+    <!-- end::ssl[] -->
+    <!-- end::sslContext[] -->
 </server>
