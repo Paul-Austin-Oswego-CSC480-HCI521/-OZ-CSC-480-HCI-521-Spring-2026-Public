@@ -10,7 +10,7 @@ services:
     volumes:
       - ./logs/frontend:/var/log/frontend
     restart: unless-stopped
-    
+
   backend-finish:
     image: ghcr.io/paul-austin-oswego-csc480-hci521/oz-csc-480-hci-521-spring-2026-public/backend-finish:${VERSION:-latest}
     container_name: backend-finish-csc480-prod-container
@@ -25,17 +25,22 @@ services:
       - ./logs/backend:/logs
     restart: unless-stopped
 
-  mongodb:
-    image: mongo:latest
-    ports:
-      - "7777:27017"
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: secret
-    volumes:
-      - ./certs:/home/mongodb/certs
-      - ./mongodb.conf:/home/mongodb/mongodb.conf
-      - mongo_data:/data/db
+mongodb:
+  image: mongo:latest
+  ports:
+    - "7777:27017"
+  environment:
+    MONGO_INITDB_ROOT_USERNAME: admin
+    MONGO_INITDB_ROOT_PASSWORD: secret
+  volumes:
+    - ./certs:/home/mongodb/certs
+    - ./mongodb.conf:/home/mongodb/mongodb.conf
+    - mongo_data:/data/db
+  healthcheck:
+    test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+    interval: 10s
+    timeout: 5s
+    retries: 5
 
 volumes:
   mongo_data:
