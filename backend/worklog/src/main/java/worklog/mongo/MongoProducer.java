@@ -45,7 +45,7 @@ public class MongoProducer {
     int port;
 
     @Inject
-    @ConfigProperty(name = "mongo.dbname", defaultValue = "testdb")
+    @ConfigProperty(name = "mongo.dbname", defaultValue = "worklogs")
     String dbName;
 
     @Inject

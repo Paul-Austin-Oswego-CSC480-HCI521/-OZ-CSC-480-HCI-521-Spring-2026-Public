@@ -16,10 +16,10 @@
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
         <!-- tag::defaultHttpPort[] -->
-        <liberty.var.http.port>9080</liberty.var.http.port>
+        <liberty.var.http.port>9081</liberty.var.http.port>
         <!-- end::defaultHttpPort[] -->
         <!-- tag::defaultHttpsPort[] -->
-        <liberty.var.https.port>9443</liberty.var.https.port>
+        <liberty.var.https.port>9444</liberty.var.https.port>
         <!-- end::defaultHttpsPort[] -->
         <app.name>${project.artifactId}</app.name>
         <!-- tag::appContextRoot[] -->
@@ -108,6 +108,9 @@
                 <groupId>io.openliberty.tools</groupId>
                 <artifactId>liberty-maven-plugin</artifactId>
                 <version>3.11.5</version>
+                <configuration>
+                    <serverName>worklogManager</serverName>
+                </configuration>
                 <executions>
                     <execution>
                         <id>create-server</id>

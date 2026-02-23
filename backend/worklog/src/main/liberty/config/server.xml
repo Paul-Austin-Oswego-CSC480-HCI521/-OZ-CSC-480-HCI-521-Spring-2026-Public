@@ -22,8 +22,8 @@
     </featureManager>
     <!-- end::featureManager[] -->
 
-    <variable name="http.port" defaultValue="9080"/>
-    <variable name="https.port" defaultValue="9443"/>
+    <variable name="http.port" defaultValue="9081"/>
+    <variable name="https.port" defaultValue="9444"/>
     <variable name="app.context.root" defaultValue="/worklog"/>
 
     <!-- tag::httpEndpoint[] -->
