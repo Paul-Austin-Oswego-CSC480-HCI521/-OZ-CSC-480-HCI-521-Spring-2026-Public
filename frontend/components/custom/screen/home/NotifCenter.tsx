@@ -1,6 +1,10 @@
+"use client";
 import { Card } from "@/components/ui/card";
+import { redirect } from "next/dist/server/api-utils";
+import { useRouter } from "next/navigation";
 
 const NotifCenter = () => {
+  const router = useRouter();
   return (
     <div className="w-full space-y-4 mt-10">
       <h2 className="text-3xl ">Notification Center</h2>
@@ -16,7 +20,10 @@ const NotifCenter = () => {
               Week 1 - Work Log is overdue by 3 days.
             </div>
           </div>
-          <button className="mt-2 border border-gray-300 rounded-full px-6 py-2 text-sm hover:bg-gray-100 transition-colors">
+          <button
+            className="mt-2 border border-gray-300 rounded-full px-6 py-2 text-sm hover:bg-gray-100 transition-colors hover:cursor-pointer"
+            onClick={() => router.push("/worklogs")}
+          >
             View More
           </button>
         </Card>
@@ -32,7 +39,10 @@ const NotifCenter = () => {
               </p>
             </div>
           </div>
-          <button className="mt-2 border border-gray-300 rounded-full px-6 py-2 text-sm hover:bg-gray-100 transition-colors">
+          <button
+            className="mt-2 border border-gray-300 rounded-full px-6 py-2 text-sm hover:bg-gray-100 transition-colors hover:cursor-pointer"
+            onClick={() => router.push("/tasktrackers")}
+          >
             View More
           </button>
         </Card>
