@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>worklog</groupId>
+    <artifactId>worklog</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>war</packaging>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <!-- tag::defaultHttpPort[] -->
+        <liberty.var.http.port>9080</liberty.var.http.port>
+        <!-- end::defaultHttpPort[] -->
+        <!-- tag::defaultHttpsPort[] -->
+        <liberty.var.https.port>9443</liberty.var.https.port>
+        <!-- end::defaultHttpsPort[] -->
+        <app.name>${project.artifactId}</app.name>
+        <!-- tag::appContextRoot[] -->
+        <liberty.var.app.context.root>/worklog</liberty.var.app.context.root>
+        <!-- end::appContextRoot[] -->
+        <package.file>${project.build.directory}/${app.name}.zip</package.file>
+    </properties>
+
+    <dependencies>
+        <!-- Provided dependencies -->
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-api</artifactId>
+            <version>10.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.microprofile</groupId>
+            <artifactId>microprofile</artifactId>
+            <version>7.1</version>
+            <type>pom</type>
+            <scope>provided</scope>
+        </dependency>
+        <!-- tag::passwordUtilDependency[] -->
+        <dependency>
+            <groupId>com.ibm.websphere.appserver.api</groupId>
+            <artifactId>com.ibm.websphere.appserver.api.passwordUtil</artifactId>
+            <version>1.0.106</version>
+            <scope>provided</scope>
+        </dependency>
+        <!-- end::passwordUtilDependency[] -->
+        <!-- tag::sslDependency[] -->
+        <dependency>
+            <groupId>com.ibm.websphere.appserver.api</groupId>
+            <artifactId>com.ibm.websphere.appserver.api.ssl</artifactId>
+            <version>1.8.106</version>
+            <scope>provided</scope>
+        </dependency>
+        <!-- end::sslDependency[] -->
+        <!-- Required dependencies -->
+        <!-- tag::mongoDriver[] -->
+        <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>mongodb-driver-sync</artifactId>
+            <version>5.6.1</version>
+        </dependency>
+        <!-- end::mongoDriver[] -->
+        <!-- For tests -->
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-client</artifactId>
+            <version>6.2.14.Final</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-json-binding-provider</artifactId>
+            <version>6.2.14.Final</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish</groupId>
+            <artifactId>jakarta.json</artifactId>
+            <version>2.0.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.14.0</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <defaultGoal>clean package liberty:run-server</defaultGoal>
+        <finalName>${project.artifactId}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.5.0</version>
+            </plugin>
+            <!-- Enable liberty-maven plugin -->
+            <plugin>
+                <groupId>io.openliberty.tools</groupId>
+                <artifactId>liberty-maven-plugin</artifactId>
+                <version>3.11.5</version>
+                <executions>
+                    <execution>
+                        <id>create-server</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                            <goal>create</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>install-features</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                            <goal>install-feature</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>deploy-app</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                            <goal>deploy</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>start-server</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                            <goal>test-start</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>stop-server</id>
+                        <phase>post-integration-test</phase>
+                        <goals>
+                            <goal>test-stop</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- Plugin to run unit tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.5.4</version>
+            </plugin>
+            <!-- Plugin to run functional tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>3.5.4</version>
+                <configuration>
+                    <!-- tag::testsysprops[] -->
+                    <systemPropertyVariables>
+                        <app.http.port>${liberty.var.http.port}</app.http.port>
+                        <app.context.root>${liberty.var.app.context.root}</app.context.root>
+                    </systemPropertyVariables>
+                    <!-- end::testsysprops[] -->
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
