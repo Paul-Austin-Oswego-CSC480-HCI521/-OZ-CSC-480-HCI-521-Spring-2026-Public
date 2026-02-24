@@ -5,8 +5,8 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>io.openliberty.guides</groupId>
-    <artifactId>notifier</artifactId>
+    <groupId>worklog</groupId>
+    <artifactId>worklog</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>war</packaging>
 
@@ -16,14 +16,14 @@
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
         <!-- tag::defaultHttpPort[] -->
-        <liberty.var.http.port>9080</liberty.var.http.port>
+        <liberty.var.http.port>9081</liberty.var.http.port>
         <!-- end::defaultHttpPort[] -->
         <!-- tag::defaultHttpsPort[] -->
-        <liberty.var.https.port>9443</liberty.var.https.port>
+        <liberty.var.https.port>9444</liberty.var.https.port>
         <!-- end::defaultHttpsPort[] -->
         <app.name>${project.artifactId}</app.name>
         <!-- tag::appContextRoot[] -->
-        <liberty.var.app.context.root>/notifier</liberty.var.app.context.root>
+        <liberty.var.app.context.root>/worklog</liberty.var.app.context.root>
         <!-- end::appContextRoot[] -->
         <package.file>${project.build.directory}/${app.name}.zip</package.file>
     </properties>
@@ -109,7 +109,7 @@
                 <artifactId>liberty-maven-plugin</artifactId>
                 <version>3.11.5</version>
                 <configuration>
-                    <serverName>notificationManager</serverName>
+                    <serverName>worklogManager</serverName>
                 </configuration>
                 <executions>
                     <execution>

@@ -7,11 +7,26 @@ dev:
 dev-frontend:
 	cd ./frontend && npm run dev
 
-dev-backend:
-	cd ./backend/finish && ./mvnw liberty:dev
-
 dev-mongodb:
 	docker start csc480-mongodb-container 2>/dev/null || true
+
+
+dev-backend:
+	make -j dev-backend-finish dev-backend-worklog
+
+dev-backend-finish:
+	cd ./backend/finish && ./mvnw liberty:dev
+
+dev-backend-worklog:
+	cd ./backend/worklog && ./mvnw liberty:dev
+
+dev-backend-clean:
+	cd ./backend/finish && ./mvnw clean &
+	cd ./backend/worklog && ./mvnw clean
+
+dev-backend-stop:
+	cd ./backend/finish && ./mvnw liberty:stop &
+	cd ./backend/worklog && ./mvnw liberty:stop
 
 setup: setup-mongodb setup-frontend setup-backend
 

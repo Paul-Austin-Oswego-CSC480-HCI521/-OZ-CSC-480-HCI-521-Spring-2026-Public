@@ -1,0 +1,62 @@
+<server description="Worklog Management Server">
+    <!-- tag::featureManager[] -->
+    <featureManager>
+        <platform>jakartaee-10.0</platform>
+        <platform>microprofile-7.1</platform>
+        <feature>beanValidation</feature>
+        <!-- tag::cdiFeature[] -->
+        <feature>cdi</feature>
+        <!-- end::cdiFeature[] -->
+        <feature>jsonb</feature>
+        <!-- tag::passwordUtilFeature[] -->
+        <feature>passwordUtilities-1.1</feature>
+        <!-- end::passwordUtilFeature[] -->
+        <feature>restfulWS</feature>
+        <!-- tag::sslFeature[] -->
+        <feature>ssl-1.0</feature>
+        <!-- end::sslFeature[] -->
+        <!-- tag::mpConfigFeature[] -->
+        <feature>mpConfig</feature>
+        <!-- end::mpConfigFeature[] -->
+        <feature>mpOpenAPI</feature>
+    </featureManager>
+    <!-- end::featureManager[] -->
+
+    <variable name="http.port" defaultValue="9081"/>
+    <variable name="https.port" defaultValue="9444"/>
+    <variable name="app.context.root" defaultValue="/worklog"/>
+
+    <!-- tag::httpEndpoint[] -->
+    <httpEndpoint
+        host="*" 
+        httpPort="${http.port}" 
+        httpsPort="${https.port}" 
+        id="defaultHttpEndpoint"
+    />
+    <!-- end::httpEndpoint[] -->
+
+    <!-- tag::webApplication[] -->
+    <webApplication 
+        location="worklog.war" 
+        contextRoot="${app.context.root}"
+    />
+    <!-- end::webApplication[] -->
+    <!-- tag::sslContext[] -->
+    <!-- tag::keyStore[] -->
+    <keyStore
+        id="outboundTrustStore" 
+        location="${server.output.dir}/resources/security/truststore.p12"
+        password="mongodb"
+        type="PKCS12" 
+    />
+    <!-- end::keyStore[] -->
+    <!-- tag::ssl[] -->
+    <ssl 
+        id="outboundSSLContext" 
+        keyStoreRef="defaultKeyStore" 
+        trustStoreRef="outboundTrustStore" 
+        sslProtocol="TLS" 
+    />
+    <!-- end::ssl[] -->
+    <!-- end::sslContext[] -->
+</server>
