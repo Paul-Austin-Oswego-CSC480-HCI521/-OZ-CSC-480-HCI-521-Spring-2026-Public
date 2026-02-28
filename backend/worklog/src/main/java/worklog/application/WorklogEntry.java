@@ -2,6 +2,7 @@ package worklog.application;
 
 
 import java.time.LocalDate;
+import java.util.Dictionary;
 import java.util.List;
 
 import jakarta.validation.Valid;
@@ -9,6 +10,7 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Size;
+import worklog.application.classes.Task;
 
 
 public class WorklogEntry {
@@ -26,8 +28,8 @@ public class WorklogEntry {
     @Valid
     private List<@NotEmpty @Size(max = 50) String> collaborators; 
 
-    @NotEmpty(message = "Worklog body is empty!")
-    private String body;
+    @NotNull(message = "Need tasks!")
+    private Dictionary<Integer, Task> taskList;
 
 
     public void setAuthorName(String name) {
@@ -62,13 +64,14 @@ public class WorklogEntry {
         return collaborators;
     }
 
-    public void setBody(String body) {
-        this.body = body;
+    public void setTaskList(Dictionary<Integer, Task> taskList) {
+        this.taskList = taskList;
     }
 
-    public String getBody() {
-        return body;
+    public Dictionary<Integer, Task> getTaskList() {
+        return taskList;
     }
 
 
 }
+
