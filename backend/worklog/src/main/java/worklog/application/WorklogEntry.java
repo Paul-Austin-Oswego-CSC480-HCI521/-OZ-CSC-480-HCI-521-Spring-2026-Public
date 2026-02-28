@@ -4,7 +4,7 @@ package worklog.application;
 import java.time.LocalDate;
 import java.util.Dictionary;
 import java.util.List;
-
+import java.util.HashMap;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -28,8 +28,8 @@ public class WorklogEntry {
     @Valid
     private List<@NotEmpty @Size(max = 50) String> collaborators; 
 
-    @NotNull(message = "Need tasks!")
-    private Dictionary<Integer, Task> taskList;
+    // @NotNull(message = "Need tasks!")
+    private HashMap<String, Task> taskList;
 
 
     public void setAuthorName(String name) {
@@ -64,11 +64,11 @@ public class WorklogEntry {
         return collaborators;
     }
 
-    public void setTaskList(Dictionary<Integer, Task> taskList) {
+    public void setTaskList(HashMap<String, Task> taskList) {
         this.taskList = taskList;
     }
 
-    public Dictionary<Integer, Task> getTaskList() {
+    public HashMap<String, Task> getTaskList() {
         return taskList;
     }
 

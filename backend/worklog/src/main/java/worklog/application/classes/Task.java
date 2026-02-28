@@ -17,6 +17,10 @@ public class Task {
 
     private ArrayList<String> collaborators;
 
+    public Task(){
+        
+    }
+
     public void setTaskName(String taskName) {
         this.taskName = taskName;
     }
