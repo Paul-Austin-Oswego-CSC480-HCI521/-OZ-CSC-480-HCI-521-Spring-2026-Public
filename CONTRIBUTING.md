@@ -54,6 +54,7 @@ Setup Mongodb Container
    docker run --name csc480-mongodb-container -p 27017:27017 -d csc480-mongodb
    timeout /t 5
    docker cp csc480-mongodb-container:/home/mongodb/certs/truststore.p12 ./backend/finish/src/main/liberty/config/resources/security
+   docker cp csc480-mongodb-container:/home/mongodb/certs/truststore.p12 ./backend/worklog/src/main/liberty/config/resources/security
    docker start csc480-mongodb-container
 ```
 

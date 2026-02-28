@@ -10,7 +10,6 @@ dev-frontend:
 dev-mongodb:
 	docker start csc480-mongodb-container 2>/dev/null || true
 
-
 dev-backend:
 	make -j dev-backend-finish dev-backend-worklog
 
@@ -34,7 +33,8 @@ setup-frontend:
 	cd ./frontend && npm install
 
 setup-backend:
-	cd ./backend/finish && ./mvnw clean install
+	cd ./backend/finish && ./mvnw clean install &
+	cd ./backend/worklog && ./mvnw clean install
 
 setup-mongodb:
 	docker rm -f csc480-mongodb-container 2>/dev/null || true
@@ -44,3 +44,6 @@ setup-mongodb:
 	docker cp \
 		csc480-mongodb-container:/home/mongodb/certs/truststore.p12 \
 		./backend/finish/src/main/liberty/config/resources/security
+	docker cp \
+		csc480-mongodb-container:/home/mongodb/certs/truststore.p12 \
+		./backend/worklog/src/main/liberty/config/resources/security
