@@ -5,3 +5,28 @@ frontend:
 backend:
   - changed-files:
       - any-glob-to-any-file: "backend/**"
+
+backend-worklog:
+  - changed-files:
+      - any-glob-to-any-file: "backend/worklog/**"
+
+backend-finish:
+  - changed-files:
+      - any-glob-to-any-file: "backend/finish/**"
+
+ci:
+  - changed-files:
+      - any-glob-to-any-file: ".github/**"
+
+docker:
+  - changed-files:
+      - any-glob-to-any-file: "**/Dockerfile"
+      - any-glob-to-any-file: "**/docker-compose*.yml"
+
+makefile:
+  - changed-files:
+      - any-glob-to-any-file: "Makefile"
+      
+docs:
+  - changed-files:
+      - any-glob-to-any-file: "**/*.md"
