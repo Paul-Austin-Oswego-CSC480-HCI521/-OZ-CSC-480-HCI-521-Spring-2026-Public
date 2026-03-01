@@ -10,7 +10,22 @@ Make sure you have the following installed before getting started:
 - [Docker](https://www.docker.com/products/docker-desktop)
 - Maven (or use the included `mvnw` wrapper — no install needed)
 
-## Setting Up the Project
+**Mac/Linux**
+
+```bash
+   make check-deps # Check if you have all dependencies installed.
+```
+
+**Windows**
+```
+where docker   # v20+
+where npm      # v9+
+where java     # v21+
+where git      # v2+
+docker info    # just checks if Docker Desktop is running
+```
+
+## Cloning the project
 
 1. Clone the repository and navigate into it:
 
@@ -19,8 +34,9 @@ Make sure you have the following installed before getting started:
    cd ./-OZ-CSC-480-HCI-521-Spring-2026-Public
    ```
 
+## Installation
+
 2. Install dependencies and run the project:
-   > **Note:** Before running any `make` commands, it is recommended to read through the `Makefile` at the root of the project so you understand what each command does.
 
 **Mac/Linux**
 
@@ -34,14 +50,8 @@ Open three separate terminals:
 
 ```bash
    make dev-mongodb    # Spinning up mongodb database container
-   make dev-frontend   # Terminal 1 — Frontend (3000)
-   make dev-backend    # Terminal 2 — Backend (9080)
-```
-
-or
-
-```bash
-   make dev   # frontend + backend + database in one go
+   make dev-frontend   # Terminal 1 — Frontend
+   make dev-backend    # Terminal 2 — Backend
 ```
 
 **Windows**
@@ -53,11 +63,11 @@ Setup Mongodb Container
    cd backend && docker build -t csc480-mongodb -f assets/Dockerfile .
    docker run --name csc480-mongodb-container -p 27017:27017 -d csc480-mongodb
    timeout /t 5
+   cd ..
    docker cp csc480-mongodb-container:/home/mongodb/certs/truststore.p12 ./backend/finish/src/main/liberty/config/resources/security
+   docker cp csc480-mongodb-container:/home/mongodb/certs/truststore.p12 ./backend/worklog/src/main/liberty/config/resources/security
    docker start csc480-mongodb-container
 ```
-
-Open two separate terminals:
 
 Terminal 1 — Frontend:
 
@@ -74,36 +84,41 @@ Terminal 2 — Backend:
    .\mvnw.cmd liberty:dev
 ```
 
-> For more details about these available commands, refer to the `Makefile`.
+## Endpoints
+
+Frontend
+- [http://localhost:3000](http://localhost:3000)
+
+Backend
+- finish backend - [http://localhost:9080](http://localhost:9080)
+- worklog backend - [http://localhost:9081](http://localhost:9081)
+
+Backend documentation 
+- finish backend doc - [http://localhost:9080/openapi/ui](http://localhost:9080/openapi/ui)
+- worklog backend doc - [http://localhost:9081/openapi/ui](http://localhost:9081/openapi/ui)
 
 ---
 
-## Checking Out Version Releases
+## Running Version Releases
 
 During weekly sprints, the full stack team will tag a release when ready.
 
-For retrieving the latest release version
+1. Download the desired releases by going to [Link](https://github.com/Paul-Austin-Oswego-CSC480-HCI521/-OZ-CSC-480-HCI-521-Spring-2026-Public/releases)
 
-```bash
-git fetch --tags && git checkout $(git describe --tags --abbrev=0)
+2. Open the folder in your code editor
+
+**Mac/Linux**
+```
+   make clean
 ```
 
-For retrieving a specific version
-
-```bash
-git fetch --tags && git checkout <version_number>  # Example git checkout v0.0.1
+**Windows**
+```
+   docker rm -fv csc480-mongodb-container
+   docker rmi -f csc480-mongodb
 ```
 
-After testing, return to main:
-
-> After testing, discard any local changes and return to main:
->
-> ```bash
-> git restore .
-> git checkout main
-> ```
-
-Then follow the [Setting Up the Project](#setting-up-the-project) steps to run locally.
+Then follow the [Installation](#installation).
 
 ---
 
