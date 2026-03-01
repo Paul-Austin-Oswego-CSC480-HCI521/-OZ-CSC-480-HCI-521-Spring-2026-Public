@@ -24,6 +24,20 @@ services:
     volumes:
       - ./logs/backend:/logs
     restart: unless-stopped
+  
+  backend-worklog:
+    image: ghcr.io/paul-austin-oswego-csc480-hci521/oz-csc-480-hci-521-spring-2026-public/backend-worklog:${VERSION:-latest}
+    container_name: backend-worklog-csc480-prod-container
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    ports:
+      - "7002:9080"
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - ./logs/backend:/logs
+    restart: unless-stopped
 
   mongodb:
     image: mongo:6.0-focal
