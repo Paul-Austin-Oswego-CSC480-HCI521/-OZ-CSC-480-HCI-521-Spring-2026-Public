@@ -37,7 +37,7 @@ jobs:
                   tags: |
                     ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}/frontend:${{ env.VERSION }}
                     ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}/frontend:latest
-    build_backend-finish:
+    build_backend_finish:
         name: build_backend_finish
         runs-on: ubuntu-latest
         permissions:
@@ -62,9 +62,35 @@ jobs:
                   tags: |
                     ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}/backend-finish:${{ env.VERSION }}
                     ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}/backend-finish:latest
+
+    build_backend_worklog:
+        name: build_backend_worklog
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            packages: write
+        steps:
+            - uses: actions/checkout@v6
+            - name: Log in to GHCR
+              uses: docker/login-action@v3
+              with:
+                  registry: ${{ env.REGISTRY }}
+                  username: ${{ github.actor }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
+            - name: Set lowercase image name
+              id: image
+              run: echo "name=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]' | sed 's/\/-oz-/\/oz-/')" >> $GITHUB_OUTPUT
+            - name: Build and push Backend
+              uses: docker/build-push-action@v5
+              with:
+                  context: ./backend/worklog
+                  push: true
+                  tags: |
+                    ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}/backend-worklog:${{ env.VERSION }}
+                    ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}/backend-worklog:latest
     create_release:
         name: create_release
-        needs: [build_frontend, build_backend-finish]
+        needs: [build_frontend, build_backend_finish, build_backend_worklog]
         runs-on: ubuntu-latest
         permissions:
             contents: write
