@@ -83,6 +83,34 @@ Terminal 2 — Backend:
    cd ./backend/finish
    .\mvnw.cmd liberty:dev
 ```
+Terminal 2 — continued:: IF YOU HAVE AN OLD PROCESSOR, you may need to specify your own version of Mongo. (the "name" field can be whatever you want. 4.4 seems to work on processors at least 8 years old.)
+Find this dependency in your POM.xml
+```xml
+   <dependency>
+      <groupId>org.mongodb</groupId>
+      <artifactId>mongodb-driver-sync</artifactId>
+      <version>4.11.1</version>
+   </dependency>
+```
+Make sure it matches what is listed above^^^
+Then, run the following:
+```bash
+   cd ./backend/finish
+   docker run -d -p 27017:27017 --name inventory-mongo mongo:4.4
+   mvn clean liberty:dev
+```
+If your POST does not work, try this:
+```bash
+cd ./backend/finish/src/main/java/io/openliberty/guides/mongo
+ls
+```
+You should see MongoProducer and MongoProducerSWAP. One of them is commented out completely. Switch them, then try again:
+```bash
+   cd ./backend/finish
+   docker run -d -p 27017:27017 --name inventory-mongo mongo:4.4
+   mvn clean liberty:dev
+```
+If that does not work, then either you have a VPN running, or your machine supports neither the old Mongo version, nor the latest, and you might want to consider asking an AI to help you out with your precise machine. Ask Landon on discord for help as a last resort. 
 
 ## Endpoints
 
