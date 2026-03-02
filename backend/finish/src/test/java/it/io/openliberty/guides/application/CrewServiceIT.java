@@ -11,16 +11,15 @@
 // end::copyright[]
 package it.io.openliberty.guides.application;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import java.io.StringReader;
 import java.util.ArrayList;
 
 import org.junit.jupiter.api.AfterAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.TestMethodOrder;
 
 import jakarta.json.Json;
@@ -32,8 +31,8 @@ import jakarta.json.JsonReader;
 import jakarta.json.JsonValue;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.Response;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class CrewServiceIT {
