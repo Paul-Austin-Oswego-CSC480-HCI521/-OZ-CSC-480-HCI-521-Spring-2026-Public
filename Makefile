@@ -44,3 +44,7 @@ setup-mongodb:
 	docker cp \
 		csc480-mongodb-container:/home/mongodb/certs/truststore.p12 \
 		./backend/finish/src/main/liberty/config/resources/security
+
+		docker cp \
+		csc480-mongodb-container:/home/mongodb/certs/truststore.p12 \
+		./backend/worklog/src/main/liberty/config/resources/security
