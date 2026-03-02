@@ -1,4 +1,4 @@
-package io.openliberty.guides.application;
+package application;
 
 
 
@@ -7,9 +7,6 @@ import jakarta.validation.constraints.Pattern;
 
 public class Notification {
 
-    @NotEmpty(message = "Notifications must have a String ID")
-    private String id;
-
     @NotEmpty(message = "Notifications must have a message!")
     private String message;
 
@@ -17,8 +14,6 @@ public class Notification {
     @Pattern(regexp = "^\\d{4}-\\d{2}-\\d{2}$", message = "Date must be in format YYYY-MM-DD")
     private String date;
 
-    public String getID() {return id;}
-    public void setID(String id) {this.id = id;}
     public String getMessage() {return message;}
     public void setMessage(String mes) {message = mes;}
     public String getDate() {return date;}

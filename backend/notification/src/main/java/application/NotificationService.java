@@ -1,4 +1,4 @@
-package io.openliberty.guides.application;
+package application;
 
 import java.io.StringWriter;
 import java.util.Set;
@@ -68,10 +68,9 @@ public class NotificationService {
             return Response.status(Response.Status.BAD_REQUEST).entity(violations.toString()).build();
         }
 
-        MongoCollection<Document> collection = db.getCollection("Notifications");
+        MongoCollection<Document> collection = db.getCollection("notifications");
 
         Document newDoc = new Document();
-        newDoc.put("id", notification.getID());
         newDoc.put("Message", notification.getMessage());
         newDoc.put("date", notification.getDate());
 
@@ -87,7 +86,7 @@ public class NotificationService {
     public Response retrieve() {
         StringWriter sb = new StringWriter();
         try {
-            MongoCollection<Document> collection = db.getCollection("Notifications");
+            MongoCollection<Document> collection = db.getCollection("notifications");
             sb.append("[");
             boolean first = true;
             FindIterable<Document> docs = collection.find();
@@ -138,7 +137,7 @@ public class NotificationService {
         }
 
         // tag::getCollectionDelete[]
-        MongoCollection<Document> crew = db.getCollection("Notifications");
+        MongoCollection<Document> crew = db.getCollection("notifications");
         // end::getCollectionDelete[]
 
         // tag::queryDelete[]
@@ -211,7 +210,7 @@ public class NotificationService {
         }
 
         // tag::getCollectionUpdate[]
-        MongoCollection<Document> crew = db.getCollection("Notifications");
+        MongoCollection<Document> crew = db.getCollection("notifications");
         // end::getCollectionUpdate[]
 
         // tag::queryUpdate[]
@@ -220,7 +219,6 @@ public class NotificationService {
 
         // tag::crewMemberUpdate[]
         Document newDoc = new Document();
-        newDoc.put("id", notification.getID());
         newDoc.put("message", notification.getMessage());
         newDoc.put("date", notification.getDate());
         // end::crewMemberUpdate[]
