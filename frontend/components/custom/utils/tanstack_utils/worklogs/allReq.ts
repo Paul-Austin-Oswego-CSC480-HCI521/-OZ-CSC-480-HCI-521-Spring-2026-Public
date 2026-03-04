@@ -3,7 +3,7 @@ import {
   workLogPostType,
 } from "@/types/worklog/worklogTypes";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:7002";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 
 export async function submitWorkLog(data: workLogPostType) {
   const res = await fetch(`${API_BASE}/api/worklogs`, {
