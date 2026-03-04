@@ -1,0 +1,66 @@
+services:
+  # frontend:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile
+  #   container_name: frontend-csc480-prod-container
+  #   ports:
+  #     - "7000:3000"
+  #   environment:
+  #     - NODE_ENV=production
+  #   volumes:
+  #     - ./logs/frontend:/var/log/frontend
+  #   restart: unless-stopped
+
+  # backend-task:
+  #   build:
+  #     context: ./backend/task
+  #     dockerfile: Dockerfile
+  #   container_name: backend-task-csc480-prod-container
+  #   depends_on:
+  #     mongodb:
+  #       condition: service_healthy
+  #   ports:
+  #     - "7001:9080"
+  #   environment:
+  #     - NODE_ENV=production
+  #   volumes:
+  #     - ./logs/backend:/logs
+  #   restart: unless-stopped
+
+  # backend-worklog:
+  #   build:
+  #     context: ./backend/worklog
+  #     dockerfile: Dockerfile
+  #   container_name: backend-worklog-csc480-prod-container
+  #   depends_on:
+  #     mongodb:
+  #       condition: service_healthy
+  #   ports:
+  #     - "7002:9081"
+  #   environment:
+  #     - NODE_ENV=production
+  #   volumes:
+  #     - ./logs/backend:/logs
+  #   restart: unless-stopped
+
+  mongodb:
+    build:
+      context: ./backend/worklog
+      dockerfile: Dockerfile
+    container_name: csc480-mongodb-container
+    ports:
+      - "7777:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: secret
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mongo_data:

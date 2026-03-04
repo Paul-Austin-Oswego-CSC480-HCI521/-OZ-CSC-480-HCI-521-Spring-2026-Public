@@ -3,9 +3,6 @@
 start-backend: 
 	make -j start-backend-worklog start-backend-notification start-backend-task
 
-start-backend-finish:
-	cd ./backend/finish && ./mvnw liberty:start
-
 start-backend-worklog:
 	cd ./backend/worklog && ./mvnw liberty:start
 
@@ -27,12 +24,6 @@ dev-mongodb:
 
 dev-backend:
 	make -j dev-backend-worklog dev-backend-notification dev-backend-task
-<<<<<<< HEAD
-=======
-
-dev-backend-finish:
-	cd ./backend/finish && ./mvnw liberty:dev
->>>>>>> main
 
 dev-backend-worklog:
 	cd ./backend/worklog && ./mvnw liberty:dev
