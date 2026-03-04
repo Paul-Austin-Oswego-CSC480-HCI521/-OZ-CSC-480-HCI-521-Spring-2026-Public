@@ -46,8 +46,8 @@ services:
 
   mongodb:
     build:
-      context: ./backend/worklog
-      dockerfile: Dockerfile
+      context: ./backend
+      dockerfile: assets/Dockerfile
     container_name: csc480-mongodb-container
     ports:
       - "7777:27017"
