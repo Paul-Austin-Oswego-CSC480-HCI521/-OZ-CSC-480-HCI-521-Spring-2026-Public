@@ -44,19 +44,11 @@ dev-backend-task:
 	cd ./backend/task && ./mvnw liberty:dev
 
 dev-backend-clean clean-backend:
-<<<<<<< HEAD
-=======
-	cd ./backend/finish && ./mvnw clean &
->>>>>>> main
 	cd ./backend/worklog && ./mvnw clean
 	cd ./backend/notification && ./mvnw clean
 	cd ./backend/task && ./mvnw clean
 
 dev-backend-stop stop-backend:
-<<<<<<< HEAD
-=======
-	cd ./backend/finish && ./mvnw liberty:stop &
->>>>>>> main
 	cd ./backend/worklog && ./mvnw liberty:stop
 	cd ./backend/notification && ./mvnw liberty:stop
 	cd ./backend/task && ./mvnw liberty:stop
