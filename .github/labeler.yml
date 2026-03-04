@@ -10,9 +10,13 @@ backend-worklog:
   - changed-files:
       - any-glob-to-any-file: "backend/worklog/**"
 
-backend-finish:
+backend-notification:
   - changed-files:
-      - any-glob-to-any-file: "backend/finish/**"
+      - any-glob-to-any-file: "backend/notification/**"
+
+backend-task:
+  - changed-files:
+      - any-glob-to-any-file: "backend/task/**"
 
 ci:
   - changed-files:
