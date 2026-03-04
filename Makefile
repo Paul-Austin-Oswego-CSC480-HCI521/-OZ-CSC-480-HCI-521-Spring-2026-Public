@@ -11,10 +11,7 @@ dev-mongodb:
 	docker start csc480-mongodb-container 2>/dev/null || true
 
 dev-backend:
-	make -j dev-backend-finish dev-backend-worklog dev-backend-notification dev-backend-task
-
-dev-backend-finish:
-	cd ./backend/finish && ./mvnw liberty:dev
+	make -j dev-backend-worklog dev-backend-notification dev-backend-task
 
 dev-backend-worklog:
 	cd ./backend/worklog && ./mvnw liberty:dev
@@ -26,13 +23,11 @@ dev-backend-task:
 	cd ./backend/task && ./mvnw liberty:dev
 
 dev-backend-clean:
-	cd ./backend/finish && ./mvnw clean &
 	cd ./backend/worklog && ./mvnw clean
 	cd ./backend/notification && ./mvnw clean
 	cd ./backend/task && ./mvnw clean
 
 dev-backend-stop:
-	cd ./backend/finish && ./mvnw liberty:stop &
 	cd ./backend/worklog && ./mvnw liberty:stop
 	cd ./backend/notification && ./mvnw liberty:stop
 	cd ./backend/task && ./mvnw liberty:stop
@@ -62,7 +57,6 @@ setup-backend:
 	else \
 		echo "MongoDB container already running, skipping setup."; \
 	fi
-	cd ./backend/finish && ./mvnw clean install
 	cd ./backend/worklog && ./mvnw clean install
 	cd ./backend/notification && ./mvnw clean install
 	cd ./backend/task && ./mvnw clean install
@@ -72,9 +66,6 @@ setup-mongodb:
 	cd ./backend && docker build -t csc480-mongodb -f assets/Dockerfile .
 	docker run --name csc480-mongodb-container -p 27017:27017 -d csc480-mongodb
 	sleep 5
-	docker cp \
-		csc480-mongodb-container:/home/mongodb/certs/truststore.p12 \
-		./backend/finish/src/main/liberty/config/resources/security
 	docker cp \
 		csc480-mongodb-container:/home/mongodb/certs/truststore.p12 \
 		./backend/worklog/src/main/liberty/config/resources/security
@@ -88,7 +79,6 @@ setup-mongodb:
 clean:
 	docker rm -fv csc480-mongodb-container 2>/dev/null || true
 	docker rmi -f csc480-mongodb 2>/dev/null || true
-	rm -f ./backend/finish/src/main/liberty/config/resources/security/truststore.p12
 	rm -f ./backend/worklog/src/main/liberty/config/resources/security/truststore.p12
 	rm -f ./backend/notification/src/main/liberty/config/resources/security/truststore.p12
 	rm -f ./backend/task/src/main/liberty/config/resources/security/truststore.p12
