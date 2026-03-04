@@ -12,8 +12,8 @@ RUN mkdir -p /opt/ol/wlp/output/defaultServer/resources/security && \
 COPY --chown=1001:0 --from=builder /app/target/*.war /config/apps/
 COPY --chown=1001:0 certs/truststore.p12 /opt/ol/wlp/output/defaultServer/resources/security/truststore.p12
 COPY --chown=1001:0 worklog/src/main/liberty/config /config/
+COPY --chown=1001:0 certs/clientkeystore.p12 /opt/ol/wlp/output/defaultServer/resources/security/clientkeystore.p12
 
 ENV JVM_ARGS="-Djavax.net.ssl.trustStore=/opt/ol/wlp/output/defaultServer/resources/security/truststore.p12 \
               -Djavax.net.ssl.trustStorePassword=mongodb \
-              -Djavax.net.ssl.trustStoreType=PKCS12 \
-              -Djavax.net.debug=ssl:handshake"
+              -Djavax.net.ssl.trustStoreType=PKCS12"

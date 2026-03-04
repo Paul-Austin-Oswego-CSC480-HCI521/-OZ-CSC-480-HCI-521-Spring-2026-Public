@@ -4,4 +4,5 @@ RUN mkdir -p /certs
 
 COPY certs/mongodb_tls.pem /certs/mongodb_tls.pem
 COPY certs/cert.pem /certs/cert.pem
-CMD ["mongod", "--tlsMode", "requireTLS", "--tlsCertificateKeyFile", "/certs/mongodb_tls.pem", "--bind_ip_all"]
+
+CMD ["mongod", "--tlsMode", "requireTLS", "--tlsCertificateKeyFile", "/certs/mongodb_tls.pem", "--tlsCAFile", "/certs/cert.pem","--bind_ip_all"]

@@ -20,51 +20,57 @@
         <!-- end::mpConfigFeature[] -->
         <feature>mpOpenAPI</feature>
 
-      
+
     </featureManager>
     <!-- end::featureManager[] -->
 
-<!-- cors allowed -->
-  <cors domain="*"                                                                                                                                                                  
-        allowedOrigins="*"                                                                                                                                                                   
-        allowedMethods="GET, POST, PUT, DELETE, OPTIONS"                                                                                                                                     
+    <!-- cors allowed -->
+    <cors domain="*"
+        allowedOrigins="*"
+        allowedMethods="GET, POST, PUT, DELETE, OPTIONS"
         allowedHeaders="Content-Type, Authorization"
         maxAge="3600" />
 
-    <variable name="http.port" defaultValue="9081"/>
-    <variable name="https.port" defaultValue="9444"/>
-    <variable name="app.context.root" defaultValue="/worklog"/>
+    <variable name="http.port" defaultValue="9081" />
+    <variable name="https.port" defaultValue="9444" />
+    <variable name="app.context.root" defaultValue="/worklog" />
 
     <!-- tag::httpEndpoint[] -->
     <httpEndpoint
-        host="*" 
-        httpPort="${http.port}" 
-        httpsPort="${https.port}" 
+        host="*"
+        httpPort="${http.port}"
+        httpsPort="${https.port}"
         id="defaultHttpEndpoint"
     />
     <!-- end::httpEndpoint[] -->
 
     <!-- tag::webApplication[] -->
-    <webApplication 
-        location="worklog.war" 
+    <webApplication
+        location="worklog.war"
         contextRoot="${app.context.root}"
     />
     <!-- end::webApplication[] -->
     <!-- tag::sslContext[] -->
     <!-- tag::keyStore[] -->
     <keyStore
-        id="outboundTrustStore" 
+        id="outboundTrustStore"
         location="${server.output.dir}/resources/security/truststore.p12"
         password="mongodb"
-        type="PKCS12" 
+        type="PKCS12"
     />
-    <!-- end::keyStore[] -->
-    <!-- tag::ssl[] -->
-    <ssl 
-        id="outboundSSLContext" 
-        keyStoreRef="defaultKeyStore" 
-        trustStoreRef="outboundTrustStore" 
-        sslProtocol="TLS" 
+
+    <keyStore
+        id="outboundKeyStore"
+        location="${server.output.dir}/resources/security/clientkeystore.p12"
+        password="mongodb"
+        type="PKCS12"
+    />
+
+    <ssl
+        id="outboundSSLContext"
+        keyStoreRef="outboundKeyStore"
+        trustStoreRef="outboundTrustStore"
+        sslProtocol="TLS"
     />
     <!-- end::ssl[] -->
     <!-- end::sslContext[] -->
