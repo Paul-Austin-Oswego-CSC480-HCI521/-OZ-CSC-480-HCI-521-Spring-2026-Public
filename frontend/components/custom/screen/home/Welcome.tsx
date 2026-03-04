@@ -1,5 +1,6 @@
 import { Card } from "@/components/ui/card";
 
+import Link from "next/link";
 const Welcome = () => {
   return (
     <div className="w-full space-y-6 pr-15">
@@ -9,9 +10,11 @@ const Welcome = () => {
         <span className="underline">Monday, xx, xx, xxxx</span>.
       </p>
       <Card className="w-full cursor-pointer hover:bg-gray-100 transition-colors mr-10 ">
-        <div className="py-4 text-center text-xl font-medium mr-10 ">
-          Continue This Week's Work Log
-        </div>
+        <Link href="/worklogs">
+          <div className="py-4 text-center text-xl font-medium mr-10">
+            Continue This Week's Work Log
+          </div>
+        </Link>
       </Card>
     </div>
   );

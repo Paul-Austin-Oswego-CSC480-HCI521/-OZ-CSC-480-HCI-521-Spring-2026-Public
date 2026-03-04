@@ -7,7 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const Notification = () => {
   const sessionId = useAtomValue(sessionIdAtom);
-  console.log(sessionId);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["worklogs", sessionId],
@@ -20,7 +19,7 @@ export const Notification = () => {
   if (error || !data || data.length === 0) {
     return (
       <div className="p-10">
-        <h1 className="text-4xl font-bold mb-8">Notifications</h1>
+        <h1 className="text-4xl mb-8">Notifications</h1>
         <p className="text-gray-500">No notifications</p>
       </div>
     );
@@ -28,7 +27,7 @@ export const Notification = () => {
 
   const worklogs = data;
 
-  const incompleteTasks = worklogs.flatMap((log: any) =>
+  const incompleteTasks = worklogs?.flatMap((log: any) =>
     (log.taskList ?? [])
       .filter(
         (task: any) =>
@@ -42,7 +41,7 @@ export const Notification = () => {
 
   return (
     <div className="p-10">
-      <h1 className="text-4xl font-bold mb-8">Notifications</h1>
+      <h1 className="text-4xl  mb-8">Notifications</h1>
 
       <div className="space-y-8">
         <Card>
@@ -52,7 +51,7 @@ export const Notification = () => {
           <CardContent className="space-y-3">
             {worklogs.map((log: any, i: number) => (
               <div key={i} className="border rounded-lg px-4 py-3">
-                <p className="text-sm font-medium">
+                <p className="text-md font-medium">
                   Work Log submitted on {log.dateSubmitted}
                   {log.taskList?.length > 0 &&
                     ` — ${log.taskList.length} task(s)`}
@@ -72,15 +71,15 @@ export const Notification = () => {
             ) : (
               incompleteTasks.map((task: any, i: number) => (
                 <div key={i} className="border rounded-lg px-4 py-3">
-                  <p className="text-sm font-semibold">{task.taskName}</p>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-md font-semibold">{task.taskName}</p>
+                  <p className="text-md text-gray-600">
                     Due: {task.dueDate} — Status:{" "}
                     {task.status === "not-started"
                       ? "Not Started"
                       : "In Progress"}
                   </p>
                   {task.collaborators?.length > 0 && (
-                    <p className="text-sm text-gray-500">
+                    <p className="text-md text-gray-500">
                       Collaborators: {task.collaborators.join(", ")}
                     </p>
                   )}

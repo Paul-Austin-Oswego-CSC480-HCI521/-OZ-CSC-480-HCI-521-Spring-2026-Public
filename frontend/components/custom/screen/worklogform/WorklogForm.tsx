@@ -6,7 +6,6 @@ import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { submitWorkLog } from "../../utils/tanstack_utils/worklogs/allReq";
 
 import {
-  workLogPostSchema,
   workLogPostType,
   taskType,
   tasksSchema,
@@ -38,10 +37,16 @@ import { useAtomValue } from "jotai";
 import { sessionIdAtom } from "@/components/custom/utils/context/state";
 
 export function WorkLogForm() {
+  // to show success
   const [showSuccess, setShowSuccess] = useState(false);
-  const dateCreated = new Date().toISOString().split("T")[0];
+  // for custom date
+  const dateCreated = new Date().toLocaleDateString("en-CA", {
+    timeZone: "America/New_York",
+  });
+  // getting session id.
   const sessionId = useAtomValue(sessionIdAtom);
 
+  // creating default values
   const emptyTask = {
     taskName: "",
     goal: "",
@@ -53,6 +58,7 @@ export function WorkLogForm() {
     reflection: "",
   };
 
+  // creating form instance
   const form = useForm<taskType>({
     resolver: zodResolver(tasksSchema),
     defaultValues: {
@@ -60,6 +66,7 @@ export function WorkLogForm() {
     },
   });
 
+  // creating mutation
   const mutation = useMutation({
     mutationFn: submitWorkLog,
     onSuccess: () => {
@@ -86,6 +93,7 @@ export function WorkLogForm() {
   }
 
   return (
+    // to show success
     <div className="p-10">
       {showSuccess && (
         <div className="fixed top-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-in fade-in slide-in-from-top-2">
@@ -93,20 +101,27 @@ export function WorkLogForm() {
         </div>
       )}
 
-      <h1 className="text-4xl font-bold mb-8">Work Logs</h1>
+      <h1 className="text-4xl mb-8">Work Logs</h1>
 
       <Card className="w-full">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-2xl">Weekly Work Log 3</CardTitle>
+          <CardTitle className="text-2xl font-medium">
+            Weekly Work Log
+          </CardTitle>
           <div className="grid grid-cols-2 gap-4">
             <Button
               type="button"
               variant="ghost"
+              className="hover:cursor-pointer"
               onClick={() => append(emptyTask)}
             >
               Add New Task
             </Button>
-            <Button type="submit" form="worklog-form" className="bg-green-700">
+            <Button
+              type="submit"
+              form="worklog-form"
+              className="bg-green-700 hover:cursor-pointer hover:bg-green-800"
+            >
               Submit Work Log
             </Button>
           </div>
@@ -119,14 +134,14 @@ export function WorkLogForm() {
               console.log("Validation errors:", errors),
             )}
           >
-            <div className="space-y-8">
+            <div className="space-y-8 text-muted-foreground">
               {fields.map((field, index) => (
                 <Card key={field.id} className="relative">
-                  <CardContent className="pt-6">
-                    <div className="flex gap-4">
+                  <CardContent className="pt-2">
+                    <div className="flex">
                       <div className="flex-1">
                         <FieldGroup>
-                          <p className="font-semibold mb-2">
+                          <p className="font-semibold">
                             {index + 1}. Task Name
                           </p>
 
@@ -179,7 +194,7 @@ export function WorkLogForm() {
                                       .map((name, i) => (
                                         <span
                                           key={i}
-                                          className="flex items-center gap-1 bg-gray-200 text-sm px-2 py-1 rounded-full"
+                                          className="flex items-center gap-1 bg-gray-100 text-sm px-2 py-1 rounded-full"
                                         >
                                           {name}
                                           <button
@@ -313,7 +328,7 @@ export function WorkLogForm() {
                         <Button
                           type="button"
                           variant="outline"
-                          className="self-center [writing-mode:vertical-lr] h-auto py-4"
+                          className="self-center [writing-mode:vertical-lr] h-auto py-4 bg-red-500/90 hover:bg-red-500 hover:text-white text-white"
                           onClick={() => remove(index)}
                         >
                           Remove Task

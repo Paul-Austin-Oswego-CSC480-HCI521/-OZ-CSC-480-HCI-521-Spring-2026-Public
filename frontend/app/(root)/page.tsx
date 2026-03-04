@@ -1,4 +1,4 @@
-import NotifCenter from "@/components/custom/screen/home/NotifCenter";
+import { NotifCenter } from "@/components/custom/screen/home/NotifCenter";
 import Welcome from "@/components/custom/screen/home/Welcome";
 
 const Page = () => {
@@ -11,4 +11,3 @@ const Page = () => {
 };
 
 export default Page;
-
