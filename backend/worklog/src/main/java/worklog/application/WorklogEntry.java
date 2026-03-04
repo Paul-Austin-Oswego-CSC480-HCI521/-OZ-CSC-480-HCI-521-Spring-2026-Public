@@ -16,18 +16,18 @@ public class WorklogEntry {
     @NotEmpty(message = "Worklog must have an author!")
     private String authorName;
 
-    @PastOrPresent(message = "Can't be created in the future")
+    // @PastOrPresent(message = "Can't be created in the future")
     @NotNull(message = "Date created required")
     private LocalDate dateCreated;
 
-    @PastOrPresent(message = "Can't be submitted in the future")
+    // @PastOrPresent(message = "Can't be submitted in the future")
     private LocalDate dateSubmitted;
 
     @Valid
     private List<@NotEmpty @Size(max = 50) String> collaborators;
 
     @NotNull(message = "Need tasks!")
-    private HashMap<String, Task> taskList;
+    private List<Task> taskList;
 
 
     public void setAuthorName(String name) {
@@ -62,11 +62,11 @@ public class WorklogEntry {
         return collaborators;
     }
 
-    public void setTaskList(HashMap<String, Task> taskList) {
+    public void setTaskList(List<Task> taskList) {
         this.taskList = taskList;
     }
 
-    public HashMap<String, Task> getTaskList() {
+    public List<Task> getTaskList() {
         return taskList;
     }
 

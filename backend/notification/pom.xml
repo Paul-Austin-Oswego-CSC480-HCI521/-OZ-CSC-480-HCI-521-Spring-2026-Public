@@ -19,7 +19,7 @@
         <liberty.var.http.port>9080</liberty.var.http.port>
         <!-- end::defaultHttpPort[] -->
         <!-- tag::defaultHttpsPort[] -->
-        <liberty.var.https.port>9443</liberty.var.https.port>
+        <liberty.var.https.port>9442</liberty.var.https.port>
         <!-- end::defaultHttpsPort[] -->
         <app.name>${project.artifactId}</app.name>
         <!-- tag::appContextRoot[] -->

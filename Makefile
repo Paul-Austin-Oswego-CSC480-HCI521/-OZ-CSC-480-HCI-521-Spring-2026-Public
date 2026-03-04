@@ -11,7 +11,7 @@ dev-mongodb:
 	docker start csc480-mongodb-container 2>/dev/null || true
 
 dev-backend:
-	make -j dev-backend-finish dev-backend-worklog
+	make -j dev-backend-finish dev-backend-worklog dev-backend-notification dev-backend-task
 
 dev-backend-finish:
 	cd ./backend/finish && ./mvnw liberty:dev
@@ -19,13 +19,23 @@ dev-backend-finish:
 dev-backend-worklog:
 	cd ./backend/worklog && ./mvnw liberty:dev
 
+dev-backend-notification:
+	cd ./backend/notification && ./mvnw liberty:dev
+
+dev-backend-task:
+	cd ./backend/task && ./mvnw liberty:dev
+
 dev-backend-clean:
 	cd ./backend/finish && ./mvnw clean &
 	cd ./backend/worklog && ./mvnw clean
+	cd ./backend/notification && ./mvnw clean
+	cd ./backend/task && ./mvnw clean
 
 dev-backend-stop:
 	cd ./backend/finish && ./mvnw liberty:stop &
 	cd ./backend/worklog && ./mvnw liberty:stop
+	cd ./backend/notification && ./mvnw liberty:stop
+	cd ./backend/task && ./mvnw liberty:stop
 
 check-deps:
 	@command -v docker >/dev/null 2>&1 || { echo "Error: Docker not found. Install from https://www.docker.com/products/docker-desktop"; exit 1; }
@@ -54,6 +64,8 @@ setup-backend:
 	fi
 	cd ./backend/finish && ./mvnw clean install
 	cd ./backend/worklog && ./mvnw clean install
+	cd ./backend/notification && ./mvnw clean install
+	cd ./backend/task && ./mvnw clean install
 
 setup-mongodb:
 	docker rm -f csc480-mongodb-container 2>/dev/null || true
@@ -66,10 +78,18 @@ setup-mongodb:
 	docker cp \
 		csc480-mongodb-container:/home/mongodb/certs/truststore.p12 \
 		./backend/worklog/src/main/liberty/config/resources/security
+	docker cp \
+		csc480-mongodb-container:/home/mongodb/certs/truststore.p12 \
+		./backend/notification/src/main/liberty/config/resources/security
+	docker cp \
+		csc480-mongodb-container:/home/mongodb/certs/truststore.p12 \
+		./backend/task/src/main/liberty/config/resources/security
 
 clean:
 	docker rm -fv csc480-mongodb-container 2>/dev/null || true
 	docker rmi -f csc480-mongodb 2>/dev/null || true
 	rm -f ./backend/finish/src/main/liberty/config/resources/security/truststore.p12
 	rm -f ./backend/worklog/src/main/liberty/config/resources/security/truststore.p12
+	rm -f ./backend/notification/src/main/liberty/config/resources/security/truststore.p12
+	rm -f ./backend/task/src/main/liberty/config/resources/security/truststore.p12
 	

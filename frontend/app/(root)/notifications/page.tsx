@@ -1,9 +1,8 @@
-const page = () => {
-  return (
-    <div className=" w-full grid justify-center items-center">
-      Notifications Center
-    </div>
-  );
+"use client";
+import { Notification } from "@/components/custom/screen/notification/Notification";
+
+const NotificationsPage = () => {
+  return <Notification />;
 };
 
-export default page;
+export default NotificationsPage;
