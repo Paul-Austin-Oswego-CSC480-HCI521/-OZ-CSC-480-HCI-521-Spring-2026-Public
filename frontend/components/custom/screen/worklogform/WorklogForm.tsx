@@ -1,13 +1,14 @@
 "use client";
 
-import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
+import { submitWorkLog } from "../../utils/tanstack_utils/worklogs/allReq";
 
 import {
   workLogPostSchema,
   workLogPostType,
 } from "@/types/worklog/worklogTypes";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -53,14 +54,15 @@ export function WorkLogForm() {
       tasks: [emptyTask],
     },
   });
-
+  const mutation = useMutation({ mutationFn: submitWorkLog });
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "tasks",
   });
 
   function onSubmit(data: workLogPostType) {
-    console.log("Submitted:", data);
+    console.log(data);
+    // mutation.mutate()
   }
 
   return (
