@@ -1,69 +1,94 @@
 "use client";
+import { useQuery } from "@tanstack/react-query";
+import { getWorkLog } from "@/components/custom/utils/tanstack_utils/worklogs/allReq";
+import { useAtomValue } from "jotai";
+import { sessionIdAtom } from "@/components/custom/utils/context/state";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const Notification = () => {
-  return (
-    <div className="w-full p-8 space-y-8">
-      {/* Page Title */}
-      <h1 className="text-4xl font-semibold">Notifications</h1>
+  const sessionId = useAtomValue(sessionIdAtom);
+  console.log(sessionId);
 
-      {/* Work Log Section */}
-      <div className="bg-muted rounded-lg p-6 space-y-4">
-        <h2 className="text-2xl font-medium">Work Log</h2>
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["worklogs", sessionId],
+    enabled: !!sessionId,
+    queryFn: () => getWorkLog(sessionId),
+  });
 
-        <div className="space-y-3">
-          <button
-            type="button"
-            onClick={() => console.log("Clicked work log 1")}
-            className="block w-full rounded-md bg-secondary px-4 py-3 text-left
-                 cursor-pointer hover:bg-secondary/80 focus:outline-none focus:ring-2 focus:ring-ring transition"
-          >
-            Week 2 – Finish Reflection for “Task 1: …”
-          </button>
+  if (isLoading) return <p className="p-10">Loading notifications...</p>;
 
-          <button
-            type="button"
-            onClick={() => console.log("Clicked work log 2")}
-            className="block w-full rounded-md bg-secondary px-4 py-3 text-left
-                 cursor-pointer hover:bg-secondary/80 focus:outline-none focus:ring-2 focus:ring-ring transition"
-          >
-            Week 1 – Work Log is overdue by 3 days.
-          </button>
-
-          <button
-            type="button"
-            onClick={() => console.log("Clicked example 1")}
-            className="block w-full rounded-md bg-secondary px-4 py-3 text-left italic
-                 cursor-pointer hover:bg-secondary/80 focus:outline-none focus:ring-2 focus:ring-ring transition"
-          >
-            [Example Work Log Notification.]
-          </button>
-
-          <button
-            type="button"
-            onClick={() => console.log("Clicked example 2")}
-            className="block w-full rounded-md bg-secondary px-4 py-3 text-left italic
-                 cursor-pointer hover:bg-secondary/80 focus:outline-none focus:ring-2 focus:ring-ring transition"
-          >
-            [Example Work Log Notification.]
-          </button>
-        </div>
+  if (error || !data || data.length === 0) {
+    return (
+      <div className="p-10">
+        <h1 className="text-4xl font-bold mb-8">Notifications</h1>
+        <p className="text-gray-500">No notifications</p>
       </div>
+    );
+  }
 
-      {/* Task Tracker Section */}
-      <div className="bg-muted rounded-lg p-6 space-y-4">
-        <h2 className="text-2xl font-medium">Task Tracker</h2>
+  const worklogs = data;
 
-        <div className="space-y-4">
-          <div className="bg-secondary rounded-md p-4">
-            <p className="font-semibold italic">Team A</p>
-            <p>Task – “Example Task Name” is due – xx, xx, xxxx at x:xxpm.</p>
-          </div>
+  const incompleteTasks = worklogs.flatMap((log: any) =>
+    (log.taskList ?? [])
+      .filter(
+        (task: any) =>
+          task.status === "not-started" || task.status === "in-progress",
+      )
+      .map((task: any) => ({
+        ...task,
+        dateSubmitted: log.dateSubmitted,
+      })),
+  );
 
-          <div className="bg-secondary rounded-md p-4">
-            <p className="font-semibold italic">Team A</p>
-            <p>Task – “Example Task Name” is due – xx, xx, xxxx at x:xxpm.</p>
-          </div>
-        </div>
+  return (
+    <div className="p-10">
+      <h1 className="text-4xl font-bold mb-8">Notifications</h1>
+
+      <div className="space-y-8">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-2xl">Work Log</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {worklogs.map((log: any, i: number) => (
+              <div key={i} className="border rounded-lg px-4 py-3">
+                <p className="text-sm font-medium">
+                  Work Log submitted on {log.dateSubmitted}
+                  {log.taskList?.length > 0 &&
+                    ` — ${log.taskList.length} task(s)`}
+                </p>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-2xl">Task Tracker</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {incompleteTasks.length === 0 ? (
+              <p className="text-gray-500">All tasks are complete!</p>
+            ) : (
+              incompleteTasks.map((task: any, i: number) => (
+                <div key={i} className="border rounded-lg px-4 py-3">
+                  <p className="text-sm font-semibold">{task.taskName}</p>
+                  <p className="text-sm text-gray-600">
+                    Due: {task.dueDate} — Status:{" "}
+                    {task.status === "not-started"
+                      ? "Not Started"
+                      : "In Progress"}
+                  </p>
+                  {task.collaborators?.length > 0 && (
+                    <p className="text-sm text-gray-500">
+                      Collaborators: {task.collaborators.join(", ")}
+                    </p>
+                  )}
+                </div>
+              ))
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

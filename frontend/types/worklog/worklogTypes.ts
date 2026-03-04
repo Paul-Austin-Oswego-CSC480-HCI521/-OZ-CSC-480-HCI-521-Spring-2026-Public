@@ -7,7 +7,7 @@ export const taskSchema = z.object({
   assignedUser: z.string(),
   creationDate: z.string(),
   dueDate: z.string().min(1, "Deadline is required"),
-  completion: z.enum(["not-started", "in-progress", "complete"], {
+  status: z.enum(["not-started", "in-progress", "complete"], {
     required_error: "Select completion status",
   }),
   reflection: z

@@ -47,7 +47,7 @@ export function WorkLogForm() {
     goal: "",
     collaborators: [] as string[],
     assignedUser: sessionId,
-    completion: undefined as unknown as "not-started",
+    status: undefined as unknown as "not-started",
     dueDate: "",
     creationDate: dateCreated,
     reflection: "",
@@ -249,7 +249,7 @@ export function WorkLogForm() {
                           />
 
                           <Controller
-                            name={`tasks.${index}.completion`}
+                            name={`tasks.${index}.status`}
                             control={form.control}
                             render={({ field, fieldState }) => (
                               <Field data-invalid={fieldState.invalid}>
