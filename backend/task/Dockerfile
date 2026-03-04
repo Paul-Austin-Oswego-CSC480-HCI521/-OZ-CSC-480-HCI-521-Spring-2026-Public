@@ -11,13 +11,13 @@ ARG VERSION=1.0
 ARG REVISION=SNAPSHOT
 
 LABEL org.opencontainers.image.source=https://github.com/Paul-Austin-Oswego-CSC480-HCI521/-OZ-CSC-480-HCI-521-Spring-2026-Public
-LABEL org.opencontainers.image.description="Backend microservice Finish with Open Liberty for OZ CSC 480"
+LABEL org.opencontainers.image.description="Backend microservice Task with Open Liberty for OZ CSC 480"
 LABEL org.opencontainers.image.licenses=MIT
 LABEL org.opencontainers.image.version="$VERSION"
 LABEL org.opencontainers.image.revision="$REVISION"
 LABEL org.opencontainers.image.authors="OZ Team"
 LABEL vendor="Open Liberty"
-LABEL name="backend-csc480-prod-finish"
+LABEL name="backend-csc480-prod-task"
 
 COPY --chown=1001:0 src/main/liberty/config /config/
 RUN features.sh
