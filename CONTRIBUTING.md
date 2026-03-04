@@ -65,7 +65,9 @@ Setup Mongodb Container
    timeout /t 5
    cd ..
    docker cp csc480-mongodb-container:/home/mongodb/certs/truststore.p12 ./backend/notification/src/main/liberty/config/resources/security
+   docker cp csc480-mongodb-container:/home/mongodb/certs/truststore.p12 ./backend/notification/src/main/liberty/config/resources/security
    docker cp csc480-mongodb-container:/home/mongodb/certs/truststore.p12 ./backend/worklog/src/main/liberty/config/resources/security
+   docker cp csc480-mongodb-container:/home/mongodb/certs/truststore.p12 ./backend/task/src/main/liberty/config/resources/security
    docker cp csc480-mongodb-container:/home/mongodb/certs/truststore.p12 ./backend/task/src/main/liberty/config/resources/security
    docker start csc480-mongodb-container
 ```
@@ -81,6 +83,7 @@ Terminal 1 — Frontend:
 Terminal 2 — Backend:
 
 ```bash
+   cd ./backend/notification
    cd ./backend/<microservice> # Options: worklog, task
    .\mvnw.cmd liberty:dev
 ```
@@ -99,11 +102,13 @@ Make sure it matches what is listed above^^^
 Then, run the following:
 ```bash
    cd ./backend/notification
+   cd ./backend/notification
    docker run -d -p 27017:27017 --name inventory-mongo mongo:4.4
    mvn clean liberty:dev
 ```
 If your POST does not work, try this:
 ```bash
+cd ./backend/notification/mongo/src/main/java/mongo
 cd ./backend/notification/mongo/src/main/java/mongo
 ls
 ```
@@ -122,12 +127,16 @@ Frontend
 
 Backend
 - notification backend [http://localhost:9080](http://localhost:9080)
+- notification backend [http://localhost:9080](http://localhost:9080)
 - worklog backend - [http://localhost:9081](http://localhost:9081)
+- task backend - [http://localhost:9082](http://localhost:9082)
 - task backend - [http://localhost:9082](http://localhost:9082)
 
 Backend documentation 
 - notification backend doc - [http://localhost:9080/openapi/ui](http://localhost:9080/openapi/ui)
+- notification backend doc - [http://localhost:9080/openapi/ui](http://localhost:9080/openapi/ui)
 - worklog backend doc - [http://localhost:9081/openapi/ui](http://localhost:9081/openapi/ui)
+- task backend doc - [http://localhost:9082/openapi/ui](http://localhost:9082/openapi/ui)
 - task backend doc - [http://localhost:9082/openapi/ui](http://localhost:9082/openapi/ui)
 
 ---
@@ -158,10 +167,12 @@ Then follow the [Installation](#installation).
 ## Writing/Running Tests
 
 From the `backend/<microservice>` directory:
+From the `backend/<microservice>` directory:
 
 **Mac/Linux**
 
 ```bash
+cd ./backend/<microservice>
 cd ./backend/<microservice>
 ./mvnw test      # unit tests only
 ./mvnw verify    # unit + integration tests
@@ -171,12 +182,21 @@ cd ./backend/<microservice>
 
 ```bash
 cd ./backend/<microservice>
+cd ./backend/<microservice>
 .\mvnw.cmd test      # unit tests only
 .\mvnw.cmd verify    # unit + integration tests
 ```
 
 **Unit tests** are named `*Test.java`.  
 **Integration tests** are named `*IT.java`.
+
+---
+## Backend
+
+Check out the OpenAPI UI to explore and test the backend endpoints:
+http://localhost:9080/openapi/ui/
+http://localhost:9081/openapi/ui/
+http://localhost:9082/openapi/ui/
 
 ---
 
@@ -216,6 +236,8 @@ When opening a pull request, include a concise description of the feature or fix
    A previous Liberty process may still be running in the background. Kill it:
 ```bash
    kill -9 $(lsof -t -i :9080)
+   kill -9 $(lsof -t -i :9081)
+   kill -9 $(lsof -t -i :9082)
    kill -9 $(lsof -t -i :9081)
    kill -9 $(lsof -t -i :9082)
    kill -9 $(lsof -t -i :3000)

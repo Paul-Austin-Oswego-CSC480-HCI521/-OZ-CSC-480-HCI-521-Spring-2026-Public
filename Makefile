@@ -27,6 +27,12 @@ dev-mongodb:
 
 dev-backend:
 	make -j dev-backend-worklog dev-backend-notification dev-backend-task
+<<<<<<< HEAD
+=======
+
+dev-backend-finish:
+	cd ./backend/finish && ./mvnw liberty:dev
+>>>>>>> main
 
 dev-backend-worklog:
 	cd ./backend/worklog && ./mvnw liberty:dev
@@ -38,11 +44,19 @@ dev-backend-task:
 	cd ./backend/task && ./mvnw liberty:dev
 
 dev-backend-clean clean-backend:
+<<<<<<< HEAD
+=======
+	cd ./backend/finish && ./mvnw clean &
+>>>>>>> main
 	cd ./backend/worklog && ./mvnw clean
 	cd ./backend/notification && ./mvnw clean
 	cd ./backend/task && ./mvnw clean
 
 dev-backend-stop stop-backend:
+<<<<<<< HEAD
+=======
+	cd ./backend/finish && ./mvnw liberty:stop &
+>>>>>>> main
 	cd ./backend/worklog && ./mvnw liberty:stop
 	cd ./backend/notification && ./mvnw liberty:stop
 	cd ./backend/task && ./mvnw liberty:stop
