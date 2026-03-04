@@ -23,7 +23,7 @@
     <!-- end::featureManager[] -->
 
     <variable name="http.port" defaultValue="9082"/>
-    <variable name="https.port" defaultValue="9443"/>
+    <variable name="https.port" defaultValue="9445"/>
     <variable name="app.context.root" defaultValue="/notifier"/>
 
     <!-- tag::httpEndpoint[] -->

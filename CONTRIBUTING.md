@@ -82,6 +82,8 @@ Terminal 2 — Backend:
    cd ./backend/worklog
    .\mvnw.cmd liberty:dev
 ```
+
+Note:
 Terminal 2 — continued:: IF YOU HAVE AN OLD PROCESSOR, you may need to specify your own version of Mongo. (the "name" field can be whatever you want. 4.4 seems to work on processors at least 8 years old.)
 Find this dependency in your POM.xml
 ```xml
@@ -117,10 +119,14 @@ Frontend
 - [http://localhost:3000](http://localhost:3000)
 
 Backend
+- task backend - [http://localhost:9080](http://localhost:9080)
 - worklog backend - [http://localhost:9081](http://localhost:9081)
+- notification backend - [http://localhost:9082](http://localhost:9082)
 
-Backend documentation 
+Backend documentation
+- task backend doc - [http://localhost:9080/openapi/ui](http://localhost:9080/openapi/ui)
 - worklog backend doc - [http://localhost:9081/openapi/ui](http://localhost:9081/openapi/ui)
+- notification backend doc - [http://localhost:9082/openapi/ui](http://localhost:9082/openapi/ui)
 
 ---
 
@@ -169,12 +175,6 @@ cd ./backend/worklog
 
 **Unit tests** are named `*Test.java`.  
 **Integration tests** are named `*IT.java`.
-
----
-## Backend
-
-Check out the OpenAPI UI to explore and test the backend endpoints:
-http://localhost:9080/openapi/ui/
 
 ---
 
