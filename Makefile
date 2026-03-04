@@ -1,5 +1,20 @@
 .PHONY: dev dev-frontend dev-backend dev-mongodb setup setup-frontend setup-backend setup-mongodb checkout-latest checkout clean
 
+start-backend: 
+	make -j start-backend-worklog start-backend-notification start-backend-task
+
+start-backend-finish:
+	cd ./backend/finish && ./mvnw liberty:start
+
+start-backend-worklog:
+	cd ./backend/worklog && ./mvnw liberty:start
+
+start-backend-notification:
+	cd ./backend/notification && ./mvnw liberty:start
+
+start-backend-task:
+	cd ./backend/task && ./mvnw liberty:start
+
 dev:
 	make dev-mongodb
 	make dev-frontend & make dev-backend & wait
@@ -22,12 +37,12 @@ dev-backend-notification:
 dev-backend-task:
 	cd ./backend/task && ./mvnw liberty:dev
 
-dev-backend-clean:
+dev-backend-clean clean-backend:
 	cd ./backend/worklog && ./mvnw clean
 	cd ./backend/notification && ./mvnw clean
 	cd ./backend/task && ./mvnw clean
 
-dev-backend-stop:
+dev-backend-stop stop-backend:
 	cd ./backend/worklog && ./mvnw liberty:stop
 	cd ./backend/notification && ./mvnw liberty:stop
 	cd ./backend/task && ./mvnw liberty:stop
