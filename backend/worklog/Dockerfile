@@ -1,25 +1,19 @@
-# Stage 1: Builder
 FROM maven:3.8-openjdk-11 AS builder
 WORKDIR /app
-COPY pom.xml .
-COPY src ./src
+COPY worklog/pom.xml .
+COPY worklog/src ./src
 RUN mvn clean package
 
-# Stage 2: Production
-FROM icr.io/appcafe/open-liberty:kernel-slim-java11-openj9-ubi AS production
-ARG VERSION=1.0
-ARG REVISION=SNAPSHOT
+FROM icr.io/appcafe/open-liberty:full-java11-openj9-ubi AS production
 
-LABEL org.opencontainers.image.source=https://github.com/Paul-Austin-Oswego-CSC480-HCI521/-OZ-CSC-480-HCI-521-Spring-2026-Public
-LABEL org.opencontainers.image.description="Backend microservice Worklog with Open Liberty for OZ CSC 480"
-LABEL org.opencontainers.image.licenses=MIT
-LABEL org.opencontainers.image.version="$VERSION"
-LABEL org.opencontainers.image.revision="$REVISION"
-LABEL org.opencontainers.image.authors="OZ Team"
-LABEL vendor="Open Liberty"
-LABEL name="backend-csc480-prod-worklog"
+RUN mkdir -p /opt/ol/wlp/output/defaultServer/resources/security && \
+    chown -R 1001:0 /opt/ol/wlp/output/defaultServer/resources/security
 
-COPY --chown=1001:0 src/main/liberty/config /config/
-RUN features.sh
 COPY --chown=1001:0 --from=builder /app/target/*.war /config/apps/
-RUN configure.sh
+COPY --chown=1001:0 certs/truststore.p12 /opt/ol/wlp/output/defaultServer/resources/security/truststore.p12
+COPY --chown=1001:0 worklog/src/main/liberty/config /config/
+
+ENV JVM_ARGS="-Djavax.net.ssl.trustStore=/opt/ol/wlp/output/defaultServer/resources/security/truststore.p12 \
+              -Djavax.net.ssl.trustStorePassword=mongodb \
+              -Djavax.net.ssl.trustStoreType=PKCS12 \
+              -Djavax.net.debug=ssl:handshake"

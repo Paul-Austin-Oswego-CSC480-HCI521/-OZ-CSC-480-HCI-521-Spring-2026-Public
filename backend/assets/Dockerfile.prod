@@ -1,0 +1,7 @@
+FROM mongo:7
+
+RUN mkdir -p /certs
+
+COPY certs/mongodb_tls.pem /certs/mongodb_tls.pem
+COPY certs/cert.pem /certs/cert.pem
+CMD ["mongod", "--tlsMode", "requireTLS", "--tlsCertificateKeyFile", "/certs/mongodb_tls.pem", "--bind_ip_all"]

@@ -86,7 +86,7 @@ public class MongoProducer {
         // tag::mongoClient[]
         return MongoClients.create(MongoClientSettings.builder()
                    .applyConnectionString(
-                       new ConnectionString("mongodb://" + hostname + ":" + port))
+                       new ConnectionString("mongodb://" + hostname + ":" + port + "/?authSource=admin"))
                    .credential(creds)
                    .applyToSslSettings(builder -> {
                        builder.enabled(true);

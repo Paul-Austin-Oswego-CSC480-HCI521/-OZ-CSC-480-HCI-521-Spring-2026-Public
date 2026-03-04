@@ -28,39 +28,61 @@ services:
   #     - ./logs/backend:/logs
   #   restart: unless-stopped
 
-  # backend-worklog:
-  #   build:
-  #     context: ./backend/worklog
-  #     dockerfile: Dockerfile
-  #   container_name: backend-worklog-csc480-prod-container
-  #   depends_on:
-  #     mongodb:
-  #       condition: service_healthy
-  #   ports:
-  #     - "7002:9081"
-  #   environment:
-  #     - NODE_ENV=production
-  #   volumes:
-  #     - ./logs/backend:/logs
-  #   restart: unless-stopped
-
+  backend-worklog:
+    build:
+      context: ./backend
+      dockerfile: worklog/Dockerfile
+    container_name: backend-worklog-csc480-prod-container
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    ports:
+      - "7002:9081"
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - ./logs/backend:/logs
+    restart: unless-stopped
+    networks:
+      - backend-network
   mongodb:
     build:
       context: ./backend
-      dockerfile: assets/Dockerfile
+      dockerfile: assets/Dockerfile.prod
     container_name: csc480-mongodb-container
+    restart: unless-stopped
+
     ports:
       - "7777:27017"
+
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: secret
+
     volumes:
       - mongo_data:/data/db
+
     healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      test: >
+        mongosh
+        --tls
+        --tlsCAFile /certs/cert.pem
+        --tlsCertificateKeyFile /certs/mongodb_tls.pem
+        --tlsAllowInvalidHostnames
+        --username admin
+        --password secret
+        --authenticationDatabase admin
+        --eval "db.adminCommand('ping')"
       interval: 10s
       timeout: 5s
       retries: 5
 
+    networks:
+      - backend-network
+
 volumes:
   mongo_data:
+
+networks:
+  backend-network:
+    driver: bridge
