@@ -1,32 +1,19 @@
 services:
-  # frontend:
-  #   build:
-  #     context: ./frontend
-  #     dockerfile: Dockerfile
-  #   container_name: frontend-csc480-prod-container
-  #   ports:
-  #     - "7000:3000"
-  #   environment:
-  #     - NODE_ENV=production
-  #   volumes:
-  #     - ./logs/frontend:/var/log/frontend
-  #   restart: unless-stopped
-
-  # backend-task:
-  #   build:
-  #     context: ./backend/task
-  #     dockerfile: Dockerfile
-  #   container_name: backend-task-csc480-prod-container
-  #   depends_on:
-  #     mongodb:
-  #       condition: service_healthy
-  #   ports:
-  #     - "7001:9080"
-  #   environment:
-  #     - NODE_ENV=production
-  #   volumes:
-  #     - ./logs/backend:/logs
-  #   restart: unless-stopped
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend-csc480-prod-container
+    
+    ports:
+      - "7000:3000"
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - ./logs/frontend:/var/log/frontend
+    restart: unless-stopped
+    networks:
+      - backend-network
 
   backend-worklog:
     build:
