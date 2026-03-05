@@ -62,6 +62,9 @@ services:
     volumes:
       - mongo_data:/data/db
 
+    security_opt:
+      - seccomp:unconfined
+
     healthcheck:
       test: >
         mongosh
