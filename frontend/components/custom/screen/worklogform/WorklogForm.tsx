@@ -37,22 +37,27 @@ import { useAtomValue } from "jotai";
 import { sessionIdAtom } from "@/components/custom/utils/context/state";
 
 export function WorkLogForm() {
-  // to show success
   const [showSuccess, setShowSuccess] = useState(false);
-  // for custom date
+  const [formError, setFormError] = useState<string | null>(null);
   const dateCreated = new Date().toLocaleDateString("en-CA", {
     timeZone: "America/New_York",
   });
-  // getting session id.
   const sessionId = useAtomValue(sessionIdAtom);
 
-  // creating default values
+  const weekNumber = (() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() + 4 - (d.getDay() || 7));
+    const yearStart = new Date(d.getFullYear(), 0, 1);
+    return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+  })();
+
   const emptyTask = {
     taskName: "",
     goal: "",
     collaborators: [] as string[],
     assignedUser: sessionId,
-    status: undefined as unknown as "not-started",
+    status: "not-started" as const,
     dueDate: "",
     creationDate: dateCreated,
     reflection: "",
@@ -71,6 +76,7 @@ export function WorkLogForm() {
     mutationFn: submitWorkLog,
     onSuccess: () => {
       setShowSuccess(true);
+      setFormError(null);
       setTimeout(() => setShowSuccess(false), 3000);
       form.reset({ tasks: [emptyTask] });
     },
@@ -92,56 +98,61 @@ export function WorkLogForm() {
     mutation.mutate(obj);
   }
 
+  const inputClass =
+    "bg-gray-100 border-gray-300 text-gray-900 placeholder:text-gray-500 focus-visible:ring-gray-400";
+
   return (
-    // to show success
-    <div className="p-10">
+    <div className="p-10 bg-white min-h-full">
       {showSuccess && (
-        <div className="fixed top-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-in fade-in slide-in-from-top-2">
+        <div className="fixed top-4 right-4 bg-gray-700 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-in fade-in slide-in-from-top-2">
           Work log submitted successfully!
         </div>
       )}
+      {formError && (
+        <div
+          className="mb-4 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800"
+          role="alert"
+        >
+          {formError}
+        </div>
+      )}
 
-      <h1 className="text-4xl mb-8">Work Logs</h1>
+      <h1 className="text-4xl mb-8 text-gray-900 font-bold">Work Logs</h1>
 
-      <Card className="w-full">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-2xl font-medium">
-            Weekly Work Log
+      <Card className="w-full border border-gray-300 bg-gray-100 shadow-sm">
+        <CardHeader className="flex flex-row items-center justify-between border-b border-gray-300 pb-4 bg-gray-100">
+          <CardTitle className="text-2xl font-medium text-gray-900">
+            Weekly Work Log {weekNumber}
           </CardTitle>
-          <div className="grid grid-cols-2 gap-4">
-            <Button
-              type="button"
-              variant="ghost"
-              className="hover:cursor-pointer"
-              onClick={() => append(emptyTask)}
-            >
-              Add New Task
-            </Button>
-            <Button
-              type="submit"
-              form="worklog-form"
-              className="bg-green-700 hover:cursor-pointer hover:bg-green-800"
-            >
-              Submit Work Log
-            </Button>
-          </div>
+          <Button
+            type="submit"
+            form="worklog-form"
+            className="bg-gray-500 hover:bg-gray-600 text-black border-0"
+          >
+            Submit Work Log
+          </Button>
         </CardHeader>
 
-        <CardContent className="max-h-[70vh] overflow-y-auto">
+        <CardContent className="max-h-[70vh] overflow-y-auto bg-gray-100 pt-6">
           <form
             id="worklog-form"
-            onSubmit={form.handleSubmit(onSubmit, (errors) =>
-              console.log("Validation errors:", errors),
-            )}
+            onSubmit={form.handleSubmit(onSubmit, () => {
+              setFormError(
+                "Please fix the errors below. Check required fields and correct any invalid data.",
+              );
+            })}
           >
-            <div className="space-y-8 text-muted-foreground">
+            <div className="space-y-8 text-gray-900">
               {fields.map((field, index) => (
-                <Card key={field.id} className="relative">
-                  <CardContent className="pt-2">
+                <Card
+                  key={field.id}
+                  className="relative border-gray-300 bg-gray-50"
+                >
+                  <CardContent className="pt-4 pb-4">
                     <div className="flex">
                       <div className="flex-1">
                         <FieldGroup>
-                          <p className="font-semibold">
+                          <p className="font-semibold text-gray-900">
                             {index + 1}. Task Name
                           </p>
 
@@ -152,6 +163,7 @@ export function WorkLogForm() {
                               <Field data-invalid={fieldState.invalid}>
                                 <Input
                                   {...field}
+                                  className={inputClass}
                                   placeholder="Task name"
                                   aria-invalid={fieldState.invalid}
                                 />
@@ -167,9 +179,12 @@ export function WorkLogForm() {
                             control={form.control}
                             render={({ field, fieldState }) => (
                               <Field data-invalid={fieldState.invalid}>
-                                <FieldLabel>Main Goal</FieldLabel>
+                                <FieldLabel className="text-gray-900">
+                                  Main Goal
+                                </FieldLabel>
                                 <Input
                                   {...field}
+                                  className={inputClass}
                                   placeholder="Main goal"
                                   aria-invalid={fieldState.invalid}
                                 />
@@ -187,14 +202,16 @@ export function WorkLogForm() {
                               const [input, setInput] = React.useState("");
                               return (
                                 <Field>
-                                  <FieldLabel>Collaborators</FieldLabel>
+                                  <FieldLabel className="text-gray-900">
+                                    Collaborators
+                                  </FieldLabel>
                                   <div className="flex flex-wrap gap-2 mb-2">
                                     {field.value
                                       .filter((name) => name !== "")
                                       .map((name, i) => (
                                         <span
                                           key={i}
-                                          className="flex items-center gap-1 bg-gray-100 text-sm px-2 py-1 rounded-full"
+                                          className="flex items-center gap-1 bg-gray-200 text-gray-900 text-sm px-2 py-1 rounded-full"
                                         >
                                           {name}
                                           <button
@@ -238,6 +255,7 @@ export function WorkLogForm() {
                                         );
                                       }
                                     }}
+                                    className={inputClass}
                                     placeholder="Type a name and press Enter"
                                   />
                                 </Field>
@@ -250,9 +268,12 @@ export function WorkLogForm() {
                             control={form.control}
                             render={({ field, fieldState }) => (
                               <Field data-invalid={fieldState.invalid}>
-                                <FieldLabel>Deadline</FieldLabel>
+                                <FieldLabel className="text-gray-900">
+                                  Deadline
+                                </FieldLabel>
                                 <Input
                                   {...field}
+                                  className={inputClass}
                                   type="date"
                                   aria-invalid={fieldState.invalid}
                                 />
@@ -268,12 +289,16 @@ export function WorkLogForm() {
                             control={form.control}
                             render={({ field, fieldState }) => (
                               <Field data-invalid={fieldState.invalid}>
-                                <FieldLabel>Completion</FieldLabel>
+                                <FieldLabel className="text-gray-900">
+                                  Completion
+                                </FieldLabel>
                                 <Select
                                   onValueChange={field.onChange}
                                   value={field.value}
                                 >
-                                  <SelectTrigger>
+                                  <SelectTrigger
+                                    className={inputClass + " text-gray-900"}
+                                  >
                                     <SelectValue placeholder="Select status" />
                                   </SelectTrigger>
                                   <SelectContent>
@@ -300,17 +325,21 @@ export function WorkLogForm() {
                             control={form.control}
                             render={({ field, fieldState }) => (
                               <Field data-invalid={fieldState.invalid}>
-                                <FieldLabel>Reflection</FieldLabel>
-                                <InputGroup>
+                                <FieldLabel className="text-gray-900">
+                                  Reflection
+                                </FieldLabel>
+                                <InputGroup className="border-gray-300 bg-gray-100">
                                   <InputGroupTextarea
                                     {...field}
                                     placeholder="Write your reflection..."
                                     rows={4}
-                                    className="min-h-24 resize-none"
+                                    className={
+                                      "min-h-24 resize-none " + inputClass
+                                    }
                                     aria-invalid={fieldState.invalid}
                                   />
                                   <InputGroupAddon align="block-end">
-                                    <InputGroupText className="tabular-nums">
+                                    <InputGroupText className="tabular-nums text-gray-600">
                                       {field.value.length}/500 characters
                                     </InputGroupText>
                                   </InputGroupAddon>
@@ -328,7 +357,7 @@ export function WorkLogForm() {
                         <Button
                           type="button"
                           variant="outline"
-                          className="self-center [writing-mode:vertical-lr] h-auto py-4 bg-red-500/90 hover:bg-red-500 hover:text-white text-white"
+                          className="self-center [writing-mode:vertical-lr] h-auto py-4 bg-orange-500 hover:bg-orange-600 text-white border-0"
                           onClick={() => remove(index)}
                         >
                           Remove Task
@@ -338,6 +367,16 @@ export function WorkLogForm() {
                   </CardContent>
                 </Card>
               ))}
+            </div>
+            <div className="flex justify-center pt-6 pb-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="border-gray-400 bg-gray-200 text-gray-900 hover:bg-gray-300"
+                onClick={() => append(emptyTask)}
+              >
+                Add New Task
+              </Button>
             </div>
           </form>
         </CardContent>
