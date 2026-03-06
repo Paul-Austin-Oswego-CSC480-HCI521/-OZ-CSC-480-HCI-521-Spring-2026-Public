@@ -45,11 +45,27 @@ export function WorkLogForm() {
   const sessionId = useAtomValue(sessionIdAtom);
 
   const weekNumber = (() => {
-    const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    d.setDate(d.getDate() + 4 - (d.getDay() || 7));
-    const yearStart = new Date(d.getFullYear(), 0, 1);
-    return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const msPerDay = 86400000;
+
+    // Semester boundaries: Spring Jan–May, Summer Jun–Jul, Fall Aug–Dec
+    let semesterStart: Date;
+    if (month >= 0 && month <= 4) {
+      semesterStart = new Date(year, 0, 1);
+    } else if (month >= 5 && month <= 6) {
+      semesterStart = new Date(year, 5, 1);
+    } else {
+      semesterStart = new Date(year, 7, 1);
+    }
+    semesterStart.setHours(0, 0, 0, 0);
+
+    const daysSinceStart = Math.floor(
+      (now.getTime() - semesterStart.getTime()) / msPerDay,
+    );
+    return Math.max(1, Math.floor(daysSinceStart / 7) + 1);
   })();
 
   const emptyTask = {
