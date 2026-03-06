@@ -15,7 +15,7 @@ export const taskSchema = z.object({
   creationDate: z.string(),
   dueDate: dateStringSchema,
   status: z.enum(["not-started", "in-progress", "complete"], {
-    errorMap: () => ({ message: "Please select a completion status." }),
+    message: "Please select a completion status.",
   }),
   reflection: z
     .string()
