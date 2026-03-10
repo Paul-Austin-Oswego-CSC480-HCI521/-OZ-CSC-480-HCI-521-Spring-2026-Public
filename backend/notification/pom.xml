@@ -15,21 +15,14 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
-        <!-- tag::defaultHttpPort[] -->
-        <liberty.var.http.port>9080</liberty.var.http.port>
-        <!-- end::defaultHttpPort[] -->
-        <!-- tag::defaultHttpsPort[] -->
-        <liberty.var.https.port>9442</liberty.var.https.port>
-        <!-- end::defaultHttpsPort[] -->
+        <liberty.var.http.port>9082</liberty.var.http.port>
+        <liberty.var.https.port>9443</liberty.var.https.port>
         <app.name>${project.artifactId}</app.name>
-        <!-- tag::appContextRoot[] -->
         <liberty.var.app.context.root>/notifier</liberty.var.app.context.root>
-        <!-- end::appContextRoot[] -->
         <package.file>${project.build.directory}/${app.name}.zip</package.file>
     </properties>
 
     <dependencies>
-        <!-- Provided dependencies -->
         <dependency>
             <groupId>jakarta.platform</groupId>
             <artifactId>jakarta.jakartaee-api</artifactId>
@@ -43,33 +36,23 @@
             <type>pom</type>
             <scope>provided</scope>
         </dependency>
-        <!-- tag::passwordUtilDependency[] -->
         <dependency>
             <groupId>com.ibm.websphere.appserver.api</groupId>
             <artifactId>com.ibm.websphere.appserver.api.passwordUtil</artifactId>
             <version>1.0.106</version>
             <scope>provided</scope>
         </dependency>
-        <!-- end::passwordUtilDependency[] -->
-        <!-- tag::sslDependency[] -->
         <dependency>
             <groupId>com.ibm.websphere.appserver.api</groupId>
             <artifactId>com.ibm.websphere.appserver.api.ssl</artifactId>
             <version>1.8.106</version>
             <scope>provided</scope>
         </dependency>
-        <!-- end::sslDependency[] -->
-        <!-- Required dependencies -->
-        <!-- tag::mongoDriver[] -->
         <dependency>
             <groupId>org.mongodb</groupId>
             <artifactId>mongodb-driver-sync</artifactId>
             <version>5.6.1</version>
-            <!-- <groupId>org.mongodb</groupId>
-            <artifactId>mongodb-driver-sync</artifactId>
-            <version>4.11.1</version> -->
         </dependency>
-        <!-- end::mongoDriver[] -->
         <!-- For tests -->
         <dependency>
             <groupId>org.jboss.resteasy</groupId>
