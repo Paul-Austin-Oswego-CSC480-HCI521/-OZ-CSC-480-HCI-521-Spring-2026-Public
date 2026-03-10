@@ -110,6 +110,7 @@
                 <version>3.11.5</version>
                 <configuration>
                     <serverName>worklogManager</serverName>
+                    <libertyDebugPort>7771</libertyDebugPort>
                 </configuration>
                 <executions>
                     <execution>

@@ -96,6 +96,7 @@
                 <version>3.11.5</version>
                 <configuration>
                     <serverName>notificationManager</serverName>
+                    <libertyDebugPort>7770</libertyDebugPort>
                 </configuration>
                 <executions>
                     <execution>
