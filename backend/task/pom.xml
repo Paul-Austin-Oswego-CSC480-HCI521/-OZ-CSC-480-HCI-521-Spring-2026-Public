@@ -15,16 +15,10 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
-        <!-- tag::defaultHttpPort[] -->
         <liberty.var.http.port>9082</liberty.var.http.port>
-        <!-- end::defaultHttpPort[] -->
-        <!-- tag::defaultHttpsPort[] -->
-        <liberty.var.https.port>9443</liberty.var.https.port>
-        <!-- end::defaultHttpsPort[] -->
+        <liberty.var.https.port>9445</liberty.var.https.port>
         <app.name>${project.artifactId}</app.name>
-        <!-- tag::appContextRoot[] -->
         <liberty.var.app.context.root>/task</liberty.var.app.context.root>
-        <!-- end::appContextRoot[] -->
         <package.file>${project.build.directory}/${app.name}.zip</package.file>
     </properties>
 

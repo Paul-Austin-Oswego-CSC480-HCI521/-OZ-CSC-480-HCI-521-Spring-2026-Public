@@ -24,17 +24,6 @@
     </featureManager>
     <!-- end::featureManager[] -->
 
-    <!-- cors allowed -->
-    <cors domain="*"
-        allowedOrigins="*"
-        allowedMethods="GET, POST, PUT, DELETE, OPTIONS"
-        allowedHeaders="Content-Type, Authorization"
-        maxAge="3600" />
-
-    <variable name="http.port" defaultValue="9081" />
-    <variable name="https.port" defaultValue="9444" />
-    <variable name="app.context.root" defaultValue="/worklog" />
-
     <!-- tag::httpEndpoint[] -->
     <httpEndpoint
         host="*"

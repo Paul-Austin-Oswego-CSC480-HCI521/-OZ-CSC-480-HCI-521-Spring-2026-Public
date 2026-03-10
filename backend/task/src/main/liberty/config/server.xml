@@ -1,36 +1,22 @@
 <server description="Task server">
-    <!-- tag::featureManager[] -->
     <featureManager>
         <platform>jakartaee-10.0</platform>
         <platform>microprofile-7.1</platform>
         <feature>beanValidation</feature>
-        <!-- tag::cdiFeature[] -->
         <feature>cdi</feature>
-        <!-- end::cdiFeature[] -->
         <feature>jsonb</feature>
-        <!-- tag::passwordUtilFeature[] -->
         <feature>passwordUtilities-1.1</feature>
-        <!-- end::passwordUtilFeature[] -->
         <feature>restfulWS</feature>
-        <!-- tag::sslFeature[] -->
         <feature>ssl-1.0</feature>
-        <!-- end::sslFeature[] -->
-        <!-- tag::mpConfigFeature[] -->
         <feature>mpConfig</feature>
-        <!-- end::mpConfigFeature[] -->
         <feature>mpOpenAPI</feature>
     </featureManager>
-    <!-- end::featureManager[] -->
 
     <cors domain="*"
         allowedOrigins="*"
         allowedMethods="GET, POST, PUT, DELETE, OPTIONS"
         allowedHeaders="Content-Type, Authorization"
         maxAge="3600" />
-
-    <variable name="http.port" defaultValue="9082" />
-    <variable name="https.port" defaultValue="9443" />
-    <variable name="app.context.root" defaultValue="/task" />
 
     <!-- tag::httpEndpoint[] -->
     <httpEndpoint
