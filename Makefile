@@ -1,4 +1,4 @@
-.PHONY: dev dev-frontend dev-backend dev-mongodb setup setup-frontend setup-backend setup-mongodb checkout-latest checkout clean
+.PHONY: dev dev-frontend dev-backend dev-mongodb setup setup-frontend setup-backend setup-mongodb stop-mongodb checkout-latest checkout clean
 
 start-backend: 
 	make -j start-backend-worklog start-backend-notification start-backend-task
@@ -21,9 +21,6 @@ dev:
 
 dev-frontend:
 	cd ./frontend && npm run dev
-
-dev-mongodb:
-	docker start csc480-mongodb-container 2>/dev/null || true
 
 dev-backend:
 	make -j dev-backend-worklog dev-backend-notification dev-backend-task
@@ -82,29 +79,11 @@ setup-backend:
 	cd ./backend/notification && ./mvnw clean install
 	cd ./backend/task && ./mvnw clean install
 
-setup-mongodb:
-	docker rm -f csc480-mongodb-container 2>/dev/null || true
-	cd ./backend && docker build -t csc480-mongodb -f assets/Dockerfile .
-	docker run --name csc480-mongodb-container -p 27017:27017 -d csc480-mongodb
-	sleep 5
-	docker cp \
-		csc480-mongodb-container:/home/mongodb/certs/truststore.p12 \
-		./backend/finish/src/main/liberty/config/resources/security
-	docker cp \
-		csc480-mongodb-container:/home/mongodb/certs/truststore.p12 \
-		./backend/worklog/src/main/liberty/config/resources/security
-	docker cp \
-		csc480-mongodb-container:/home/mongodb/certs/truststore.p12 \
-		./backend/notification/src/main/liberty/config/resources/security
-	docker cp \
-		csc480-mongodb-container:/home/mongodb/certs/truststore.p12 \
-		./backend/task/src/main/liberty/config/resources/security
+setup-mongodb dev-mongodb:
+	docker compose -f docker-compose.dev.yml up -d
+
+stop-mongodb:
+	docker compose -f docker-compose.dev.yml down
 
 clean:
-	docker rm -fv csc480-mongodb-container 2>/dev/null || true
-	docker rmi -f csc480-mongodb 2>/dev/null || true
-	rm -f ./backend/finish/src/main/liberty/config/resources/security/truststore.p12
-	rm -f ./backend/worklog/src/main/liberty/config/resources/security/truststore.p12
-	rm -f ./backend/notification/src/main/liberty/config/resources/security/truststore.p12
-	rm -f ./backend/task/src/main/liberty/config/resources/security/truststore.p12
-	
+	docker compose -f docker-compose.dev.yml down -v
