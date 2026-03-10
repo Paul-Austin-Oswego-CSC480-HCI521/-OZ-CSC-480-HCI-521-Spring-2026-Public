@@ -15,7 +15,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
-        <liberty.var.http.port>9082</liberty.var.http.port>
+        <liberty.var.http.port>9080</liberty.var.http.port>
         <liberty.var.https.port>9443</liberty.var.https.port>
         <app.name>${project.artifactId}</app.name>
         <liberty.var.app.context.root>/notifier</liberty.var.app.context.root>

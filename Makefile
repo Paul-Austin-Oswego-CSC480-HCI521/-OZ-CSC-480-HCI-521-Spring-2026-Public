@@ -1,10 +1,7 @@
-.PHONY: dev dev-frontend dev-backend dev-mongodb setup setup-frontend setup-backend setup-mongodb stop-mongodb checkout-latest checkout clean
+.PHONY: dev dev-frontend dev-backend dev-mongodb setup setup-frontend setup-backend setup-mongodb stop-mongodb checkout-latest checkout clean clean-frontend clean-backend clean-mongodb
 
 start-backend: 
 	make -j start-backend-worklog start-backend-notification start-backend-task
-
-start-backend-finish:
-	cd ./backend/finish && ./mvnw liberty:start
 
 start-backend-worklog:
 	cd ./backend/worklog && ./mvnw liberty:start
@@ -15,6 +12,11 @@ start-backend-notification:
 start-backend-task:
 	cd ./backend/task && ./mvnw liberty:start
 
+stop-backend:
+	cd backend/worklog && ./mvnw liberty:stop || true
+	cd backend/notification && ./mvnw liberty:stop || true
+	cd backend/task && ./mvnw liberty:stop || true
+
 dev:
 	make dev-mongodb
 	make dev-frontend & make dev-backend & wait
@@ -22,11 +24,8 @@ dev:
 dev-frontend:
 	cd ./frontend && npm run dev
 
-dev-backend:
+dev-backend: stop-backend
 	make -j dev-backend-worklog dev-backend-notification dev-backend-task
-
-dev-backend-finish:
-	cd ./backend/finish && ./mvnw liberty:dev
 
 dev-backend-worklog:
 	cd ./backend/worklog && ./mvnw liberty:dev
@@ -38,13 +37,11 @@ dev-backend-task:
 	cd ./backend/task && ./mvnw liberty:dev
 
 dev-backend-clean clean-backend:
-	cd ./backend/finish && ./mvnw clean &
 	cd ./backend/worklog && ./mvnw clean
 	cd ./backend/notification && ./mvnw clean
 	cd ./backend/task && ./mvnw clean
 
 dev-backend-stop stop-backend:
-	cd ./backend/finish && ./mvnw liberty:stop &
 	cd ./backend/worklog && ./mvnw liberty:stop
 	cd ./backend/notification && ./mvnw liberty:stop
 	cd ./backend/task && ./mvnw liberty:stop
@@ -74,7 +71,6 @@ setup-backend:
 	else \
 		echo "MongoDB container already running, skipping setup."; \
 	fi
-	cd ./backend/finish && ./mvnw clean install
 	cd ./backend/worklog && ./mvnw clean install
 	cd ./backend/notification && ./mvnw clean install
 	cd ./backend/task && ./mvnw clean install
@@ -85,5 +81,15 @@ setup-mongodb dev-mongodb:
 stop-mongodb:
 	docker compose -f docker-compose.dev.yml down
 
-clean:
+clean: clean-backend clean-frontend clean-mongodb
+
+clean-frontend:
+	cd frontend && rm -rf node_modules dist .next
+
+clean-backend:
+	cd backend/task && ./mvnw clean
+	cd backend/worklog && ./mvnw clean
+	cd backend/notification && ./mvnw clean
+
+clean-mongodb:
 	docker compose -f docker-compose.dev.yml down -v
