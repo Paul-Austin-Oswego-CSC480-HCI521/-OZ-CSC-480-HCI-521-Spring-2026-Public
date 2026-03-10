@@ -1,13 +1,10 @@
 package worklog.application;
 
 import java.time.LocalDate;
-import java.util.HashMap;
 import java.util.List;
-import java.util.HashMap;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Size;
 import worklog.application.classes.Task;
 
@@ -16,11 +13,9 @@ public class WorklogEntry {
     @NotEmpty(message = "Worklog must have an author!")
     private String authorName;
 
-    // @PastOrPresent(message = "Can't be created in the future")
     @NotNull(message = "Date created required")
     private LocalDate dateCreated;
 
-    // @PastOrPresent(message = "Can't be submitted in the future")
     private LocalDate dateSubmitted;
 
     @Valid
@@ -29,6 +24,7 @@ public class WorklogEntry {
     @NotNull(message = "Need tasks!")
     private List<Task> taskList;
 
+    private boolean isDraft;
 
     public void setAuthorName(String name) {
         this.authorName = name;
@@ -68,6 +64,14 @@ public class WorklogEntry {
 
     public List<Task> getTaskList() {
         return taskList;
+    }
+
+    public void setisDraft(boolean isDraft) {
+        this.isDraft = isDraft;
+    }
+
+    public boolean getisDraft() {
+        return isDraft;
     }
 
 }

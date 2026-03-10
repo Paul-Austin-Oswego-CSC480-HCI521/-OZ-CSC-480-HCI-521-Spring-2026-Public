@@ -1,16 +1,14 @@
 package worklog.application;
 
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Set;
 
-import org.bson.Document;
-import org.bson.types.ObjectId;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.json.Json;
 import jakarta.json.JsonArray;
@@ -19,6 +17,7 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Valid;
 import jakarta.validation.Validator;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
@@ -32,42 +31,26 @@ import jakarta.ws.rs.core.Response;
 @Path("/")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
+@ApplicationScoped
 public class WorklogService {
     @Inject
     Validator validator;
 
     @Inject
-    private WorklogRepository repo = new WorklogRepository();
+    private WorklogRepository repo;
     
-    private JsonArray getViolations(WorklogEntry crewMember) {
-        Set<ConstraintViolation<WorklogEntry>> violations = validator.validate(
-                crewMember);
-
-        JsonArrayBuilder messages = Json.createArrayBuilder();
-
-        for (ConstraintViolation<WorklogEntry> v : violations) {
-            messages.add(v.getMessage());
-        }
-
-        return messages.build();
-    }
-
 
 
     @GET
     @Path("/getall")
     public Response getAllWorklogs() {
-        return Response.ok(repo.getAll()).build();
+        return repo.getAll();
     }
 
     @GET
     @Path("/author/{authorName}")
     public Response getWorklogByAuthorName(@jakarta.ws.rs.PathParam("authorName") String authorName) {
-        List<WorklogEntry> results = repo.findByAuthor(authorName);
-        if (!results.isEmpty()) {
-            return Response.ok(results).build();
-        }
-        return Response.status(Response.Status.NOT_FOUND).build();
+       return  repo.findByAuthor(authorName);
     }
 
     @POST
@@ -78,17 +61,17 @@ public class WorklogService {
             entry.setDateCreated(LocalDate.now());
         }
 
-        repo.addWorklog(entry);
+        return repo.addWorklog(entry);
 
-        return Response
-                .status(Response.Status.CREATED)
-                .entity(entry)
-                .build();
     }
 
 
+
+
+    //Draft saving
+    //TODO NEED TO MAKE BASED ON ID NOT AUTHOR_NAME
     @PUT
-    @Path("/{userId}")
+    @Path("/draft/{userId}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @APIResponses({
@@ -104,36 +87,18 @@ public class WorklogService {
     @Operation(summary = "Save draft in the database.")
     public Response update(WorklogEntry worklog,
         @Parameter(
-            description = "Object id of the crew member to update.",
+            description = "studentID of owner.",
             required = true
         )
-        @PathParam("id") String id) {
+        @PathParam("userId") String userId) {
 
-        JsonArray violations = getViolations(worklog);
+        return repo.addWorklogDraft(worklog, userId);
 
-        if (!violations.isEmpty()) {
-            return Response
-                    .status(Response.Status.BAD_REQUEST)
-                    .entity(violations.toString())
-                    .build();
-        }
+    }
+    @DELETE
+    @Path("/delAll")
+    public Response deleteAll() {
 
-        ObjectId oid;
-        Document newWorklog = new Document();
-
-        try {
-            oid = new ObjectId(id);
-        } catch (Exception e) {
-            return Response
-                .status(Response.Status.BAD_REQUEST)
-                .entity("[\"Inva    lid object id!\"]")
-                .build();
-        }
-
-
-        return Response
-            .status(Response.Status.OK)
-            .entity(newWorklog.toJson())
-            .build();
+        return repo.deleteAll();
     }
 }
