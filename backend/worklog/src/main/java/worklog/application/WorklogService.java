@@ -35,20 +35,30 @@ public class WorklogService {
     private WorklogRepository repo;
     
 
-
     @GET
     @Path("/getall")
+    @Produces(MediaType.APPLICATION_JSON)
     public Response getAllWorklogs() {
         return repo.getAll();
     }
 
     @GET
+    @Path("/draft")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getCurrentDraft() {
+        return repo.getDraft();
+    }
+
+    @GET
     @Path("/author/{authorName}")
+    @Produces(MediaType.APPLICATION_JSON)
     public Response getWorklogByAuthorName(@jakarta.ws.rs.PathParam("authorName") String authorName) {
        return  repo.findByAuthor(authorName);
     }
 
     @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
     public Response createWorklog(@Valid WorklogEntry entry) {
 
         // Automatically set dateCreated if not provided
@@ -61,6 +71,14 @@ public class WorklogService {
     }
 
 
+    @PUT
+    @Path("/id/{id}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Update worklog draft in the database.")
+    public Response updateWorklog(@jakarta.ws.rs.PathParam("id") String id, @Valid WorklogEntry updatedEntry) {
+        return repo.updateWorklog(id, updatedEntry);
+    }
 
 
     //Draft saving
@@ -69,27 +87,15 @@ public class WorklogService {
     @Path("/draft/{userId}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @APIResponses({
-        @APIResponse(
-            responseCode = "200",
-            description = "Successfully saved draft."),
-        @APIResponse(
-            responseCode = "400",
-            description = "Invalid object id or draft configuration."),
-        @APIResponse(
-            responseCode = "404",
-            description = "User id was not found.") })
     @Operation(summary = "Save draft in the database.")
     public Response update(WorklogEntry worklog,
-        @Parameter(
-            description = "studentID of owner.",
-            required = true
-        )
+        @Parameter(description = "studentID of owner.",required = true) 
         @PathParam("userId") String userId) {
 
         return repo.addWorklogDraft(worklog, userId);
-
     }
+
+
     @DELETE
     @Path("/delAll")
     public Response deleteAll() {
@@ -97,24 +103,11 @@ public class WorklogService {
         return repo.deleteAll();
     }
 
-    @PUT
-    @Path("/id/{id}")
-    public Response updateWorklog(@jakarta.ws.rs.PathParam("id") String id, @Valid WorklogEntry updatedEntry) {
-        boolean updated = repo.updateWorklog(id, updatedEntry);
-        if (updated) {
-            return Response.ok(updatedEntry).build();
-        }
-        return Response.status(Response.Status.NOT_FOUND).build();
-    }
 
     @DELETE
     @Path("/id/{id}")
     public Response deleteWorklog(@jakarta.ws.rs.PathParam("id") String id) {
-        boolean deleted = repo.deleteWorklog(id);
-        if (deleted) {
-            return Response.noContent().build();
-        }
-        return Response.status(Response.Status.NOT_FOUND).build();
+        return repo.deleteWorklog(id);
     }
 
 }

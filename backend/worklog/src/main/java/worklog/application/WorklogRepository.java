@@ -16,9 +16,11 @@ import jakarta.enterprise.context.ApplicationScoped;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
+import org.bson.conversions.Bson;
+import org.bson.types.ObjectId;
+
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
-import com.mongodb.client.result.DeleteResult;
 
 import static com.mongodb.client.model.Filters.eq;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
@@ -28,11 +30,9 @@ import com.mongodb.MongoClientSettings;
 import java.io.StringWriter;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 
 @ApplicationScoped // Add this so CDI can manage this class
@@ -44,20 +44,21 @@ public class WorklogRepository {
     Validator validator;
 
     DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    Bson excludeDraft = Filters.or(
+        Filters.exists("isDraft", false),  
+        Filters.eq("isDraft", false)         
+    );
 
-    // Use Inject! The MongoProducer will provide the 'db' automatically
     @Inject
     public void setCollection(MongoDatabase db) {
-        // 1. Set up your POJO translator
         CodecRegistry pojoCodecRegistry = fromRegistries(
             MongoClientSettings.getDefaultCodecRegistry(),
             fromProviders(PojoCodecProvider.builder().automatic(true).build())
         );
 
-        // 2. Apply the registry to the database provided by the producer
+        // Apply the registry to the database provided by the producer
         MongoDatabase codecDb = db.withCodecRegistry(pojoCodecRegistry);
 
-        // 3. Initialize the collection
         this.collection = codecDb.getCollection("worklogs");
     }
 
@@ -112,11 +113,16 @@ public class WorklogRepository {
     }
 
 	public Response getAll() {
-		return responseByQuery(null);
+		return responseByQuery(excludeDraft);
+	}
+
+    //TODO ADD FILTER FOR CURRENT USER
+    public Response getDraft() {
+		return responseByQuery(Filters.eq("isDraft", true));
 	}
 
 	public Response findByAuthor(String authorName) {
-        return responseByQuery(new Document("authorName", authorName));
+        return responseByQuery(Filters.and(Filters.eq("authorName", authorName), excludeDraft));
 	}
 
     public Response deleteAll() {
@@ -128,7 +134,7 @@ public class WorklogRepository {
 
 
     //input null for getAll
-    private Response responseByQuery(Document query) {
+    private Response responseByQuery(Bson query) {
         StringWriter sb = new StringWriter();
         try {
             sb.append("[");
@@ -149,6 +155,7 @@ public class WorklogRepository {
         }
         return Response.status(Response.Status.OK).entity(sb.toString()).build();
     }
+
 
     private List<Document> formatTask(List<Task> taskList) {
         List<Document> taskDocs = new ArrayList<>();
@@ -182,7 +189,8 @@ public class WorklogRepository {
 
     //Need to make other functions to update specific fields like title, duedate, etc.
     //Right now this replaces the entire entry.
-    public boolean updateWorklog(String id, WorklogEntry updatedEntry) {
+    // (Xander): ^May not be needed, worklog aspects dont really have to be updated once they're in the db.... question for requirments?
+    public Response updateWorklog(String id, WorklogEntry updatedEntry) {
         Document newDoc = new Document();
 
         newDoc.put("authorName", updatedEntry.getAuthorName());
@@ -190,14 +198,37 @@ public class WorklogRepository {
         newDoc.put("dateSubmitted", updatedEntry.getDateSubmitted().format(dateTimeFormatter));
         newDoc.put("collaborators", updatedEntry.getCollaborators());
         newDoc.put("taskList", formatTask(updatedEntry.getTaskList()));
+        
 
-        var result = collection.replaceOne(eq("_id", new org.bson.types.ObjectId(id)), newDoc);
-        return result.getModifiedCount() > 0;
+        ObjectId oid; // ID of mongo collection entry
+        try {
+            oid = new ObjectId(id);
+        } catch (Exception e) {
+            return Response
+                .status(Response.Status.BAD_REQUEST)
+                .entity("[\"Invalid object id!\"]")
+                .build();
+        }
+
+        collection.replaceOne(eq("_id", oid), newDoc);
+        return Response.ok(updatedEntry).build();
+        
     }
 
-    public boolean deleteWorklog(String id) {
-        var result = collection.deleteOne(eq("_id", new org.bson.types.ObjectId(id)));
-        return result.getDeletedCount() > 0;
+    public Response deleteWorklog(String id) {
+
+        ObjectId oid; // ID of mongo collection entry
+        try {
+            oid = new ObjectId(id);
+        } catch (Exception e) {
+            return Response
+                .status(Response.Status.BAD_REQUEST)
+                .entity("[\"Invalid object id!\"]")
+                .build();
+        }
+
+        collection.deleteOne(eq("_id", oid));
+        return Response.noContent().build();
     }
 
     private JsonArray getViolations(WorklogEntry worklog) {
