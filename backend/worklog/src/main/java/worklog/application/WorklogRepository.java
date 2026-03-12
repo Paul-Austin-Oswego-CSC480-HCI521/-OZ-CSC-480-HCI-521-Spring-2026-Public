@@ -20,6 +20,7 @@ import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.result.DeleteResult;
 
+import static com.mongodb.client.model.Filters.eq;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 import com.mongodb.MongoClientSettings;
@@ -179,6 +180,25 @@ public class WorklogRepository {
         return taskDocs;
     }
 
+    //Need to make other functions to update specific fields like title, duedate, etc.
+    //Right now this replaces the entire entry.
+    public boolean updateWorklog(String id, WorklogEntry updatedEntry) {
+        Document newDoc = new Document();
+
+        newDoc.put("authorName", updatedEntry.getAuthorName());
+        newDoc.put("dateCreated", updatedEntry.getDateCreated().format(dateTimeFormatter));
+        newDoc.put("dateSubmitted", updatedEntry.getDateSubmitted().format(dateTimeFormatter));
+        newDoc.put("collaborators", updatedEntry.getCollaborators());
+        newDoc.put("taskList", formatTask(updatedEntry.getTaskList()));
+
+        var result = collection.replaceOne(eq("_id", new org.bson.types.ObjectId(id)), newDoc);
+        return result.getModifiedCount() > 0;
+    }
+
+    public boolean deleteWorklog(String id) {
+        var result = collection.deleteOne(eq("_id", new org.bson.types.ObjectId(id)));
+        return result.getDeletedCount() > 0;
+    }
 
     private JsonArray getViolations(WorklogEntry worklog) {
         Set<ConstraintViolation<WorklogEntry>> violations = validator.validate(worklog);
@@ -188,5 +208,6 @@ public class WorklogRepository {
         }
         return messages.build();
     }
+    
     
 }

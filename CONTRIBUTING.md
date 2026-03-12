@@ -41,7 +41,8 @@ docker info    # just checks if Docker Desktop is running
 **Mac/Linux**
 
 ```bash
-   make setup
+   make clean # Remove existing system residue that might conflict with this project
+   make setup # Install required dependencies for frontend, backend and mongodb
 ```
 
 Then start the project:

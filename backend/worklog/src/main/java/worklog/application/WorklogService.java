@@ -1,7 +1,6 @@
 package worklog.application;
 
 import java.time.LocalDate;
-import java.util.Set;
 
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
@@ -10,10 +9,6 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.json.Json;
-import jakarta.json.JsonArray;
-import jakarta.json.JsonArrayBuilder;
-import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Valid;
 import jakarta.validation.Validator;
 import jakarta.ws.rs.Consumes;
@@ -101,4 +96,25 @@ public class WorklogService {
 
         return repo.deleteAll();
     }
+
+    @PUT
+    @Path("/id/{id}")
+    public Response updateWorklog(@jakarta.ws.rs.PathParam("id") String id, @Valid WorklogEntry updatedEntry) {
+        boolean updated = repo.updateWorklog(id, updatedEntry);
+        if (updated) {
+            return Response.ok(updatedEntry).build();
+        }
+        return Response.status(Response.Status.NOT_FOUND).build();
+    }
+
+    @DELETE
+    @Path("/id/{id}")
+    public Response deleteWorklog(@jakarta.ws.rs.PathParam("id") String id) {
+        boolean deleted = repo.deleteWorklog(id);
+        if (deleted) {
+            return Response.noContent().build();
+        }
+        return Response.status(Response.Status.NOT_FOUND).build();
+    }
+
 }
