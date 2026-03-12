@@ -1,17 +1,21 @@
 package worklog.application;
 
 import java.time.LocalDate;
-import java.util.HashMap;
 import java.util.List;
-import java.util.HashMap;
+import org.bson.codecs.pojo.annotations.BsonId;
+import org.bson.types.ObjectId;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Size;
 import worklog.application.classes.Task;
+import java.util.HashMap;
 
 public class WorklogEntry {
+
+    @BsonId
+    private ObjectId id;
 
     @NotEmpty(message = "Worklog must have an author!")
     private String authorName;
@@ -68,6 +72,14 @@ public class WorklogEntry {
 
     public HashMap<String, Task> getTaskList() {
         return taskList;
+    }
+
+    public void setId(ObjectId id) {
+        this.id = id;
+    }
+
+    public ObjectId getId() {
+        return id;
     }
 
 }

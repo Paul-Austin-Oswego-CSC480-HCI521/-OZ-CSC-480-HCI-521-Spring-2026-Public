@@ -6,7 +6,6 @@ import jakarta.inject.Inject;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
-import com.mongodb.client.model.Filters;
 import static com.mongodb.client.model.Filters.eq;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
@@ -46,5 +45,17 @@ public class WorklogRepository {
 	public List<WorklogEntry> findByAuthor(String authorName) {
 		return collection.find(eq("authorName", authorName)).into(new ArrayList<>());
 	}
+
+    //Need to make other functions to update specific fields like title, duedate, etc.
+    //Right now this replaces the entire entry.
+    public boolean updateWorklog(String id, WorklogEntry updatedEntry) {
+        var result = collection.replaceOne(eq("_id", new org.bson.types.ObjectId(id)), updatedEntry);
+        return result.getModifiedCount() > 0;
+    }
+
+    public boolean deleteWorklog(String id) {
+        var result = collection.deleteOne(eq("_id", new org.bson.types.ObjectId(id)));
+        return result.getDeletedCount() > 0;
+    }
     
 }
