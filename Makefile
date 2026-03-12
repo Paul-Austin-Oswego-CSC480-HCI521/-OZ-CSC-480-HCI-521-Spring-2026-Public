@@ -67,7 +67,7 @@ setup-backend:
 	@echo "This will spin up mongodb container using Docker"
 	@if [ -z "$$(docker ps -q -f name=csc480-mongodb-container)" ]; then \
 		echo "MongoDB container not running, starting it..."; \
-		$(MAKE) setup-mongodb; \
+		"$(MAKE)" setup-mongodb; \
 	else \
 		echo "MongoDB container already running, skipping setup."; \
 	fi
