@@ -12,16 +12,6 @@ jobs:
               with:
                   context: ./frontend
                   push: false
-                  
-    build_backend_finish:
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v6
-            - name: Build Backend Docker Image
-              uses: docker/build-push-action@v5
-              with:
-                  context: ./backend/finish
-                  push: false
 
     build_backend_worklog:
         runs-on: ubuntu-latest
@@ -31,4 +21,24 @@ jobs:
               uses: docker/build-push-action@v5
               with:
                   context: ./backend/worklog
+                  push: false
+
+    build_backend_notification:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v6
+            - name: Build Backend Docker Image
+              uses: docker/build-push-action@v5
+              with:
+                  context: ./backend/notification
+                  push: false
+
+    build_backend_task:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v6
+            - name: Build Backend Docker Image
+              uses: docker/build-push-action@v5
+              with:
+                  context: ./backend/task
                   push: false
