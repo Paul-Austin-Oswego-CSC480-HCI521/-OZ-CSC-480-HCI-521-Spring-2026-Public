@@ -61,7 +61,7 @@ check-deps:
 setup: setup-env check-deps setup-mongodb setup-frontend setup-backend
 
 setup-env:
-	cd ./utils && node setup-env.js
+	node ./utils/setup-env.js
 
 setup-frontend:
 	cd ./frontend && npm install
