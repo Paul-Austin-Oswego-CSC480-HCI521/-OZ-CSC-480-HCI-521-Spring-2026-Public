@@ -1,11 +1,11 @@
 import {
-  workLogPostSchema,
   workLogPostType,
 } from "@/types/worklog/worklogTypes";
 import axios from "axios";
+import { env } from 'next-runtime-env';
 
 const API_BASE =
-  process.env.NEXT_PUBLIC_WORKLOGS_API_URL ||
+  env("NEXT_PUBLIC_WORKLOGS_API_URL") ||
   "http://localhost:9081/worklog/api/";
 
 export async function submitWorkLog(data: workLogPostType) {

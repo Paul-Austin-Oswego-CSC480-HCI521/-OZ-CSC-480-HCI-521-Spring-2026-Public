@@ -4,6 +4,7 @@ import "./globals.css";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/custom/screen/sidebar/Sidebar";
 import Topbar from "@/components/custom/screen/topbar/Topbar";
+import { PublicEnvScript } from 'next-runtime-env';
 import { Providers } from "@/provider";
 
 const geistSans = Geist({
@@ -28,6 +29,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <PublicEnvScript />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
