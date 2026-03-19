@@ -1,0 +1,43 @@
+<server description="Social Login Guide Server">
+    <featureManager>
+        <platform>jakartaee-10.0</platform>
+        <platform>microprofile-7.1</platform>
+        <feature>pages</feature>
+        <feature>appSecurity</feature>
+        <feature>mpConfig</feature>
+        <feature>restfulWSClient</feature>
+        <feature>cdi</feature>
+        <feature>jsonb</feature>
+        <feature>jwt-1.0</feature>
+        <feature>socialLogin-1.0</feature>
+        <feature>transportSecurity-1.0</feature>
+    </featureManager>
+
+    <httpEndpoint httpPort="${http.port}"
+                  httpsPort="${https.port}"
+                  id="defaultHttpEndpoint"
+                  host="*" />
+
+    <!-- Set up default key store, trust stores for auth APIs -->
+    <keyStore id="defaultKeyStore"
+              password="changeit" />
+
+    <!-- SSL configuration for auth services -->
+    <ssl id="defaultSSLConfig"
+         keyStoreRef="defaultKeyStore"
+         trustDefaultCerts="true" />
+
+    <!-- Social Login Configuration -->
+    <!-- Github Login -->
+    <githubLogin clientId="${github.client.id}"
+                 clientSecret="${github.client.secret}" />
+
+    <webApplication location="guide-social-login.war"
+                    contextRoot="${app.context.root}">
+        <application-bnd>
+            <security-role name="users">
+                <special-subject type="ALL_AUTHENTICATED_USERS"/>
+            </security-role>
+        </application-bnd>
+    </webApplication>
+</server>
