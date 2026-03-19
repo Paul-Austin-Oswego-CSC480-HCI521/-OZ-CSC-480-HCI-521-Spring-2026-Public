@@ -37,9 +37,9 @@
     />
     <!-- end::webApplication[] -->
 
-    <variable name="mongo.hostname" value="localhost" />
-    <variable name="mongo.port" value="27017" />
-    <variable name="mongo.dbname" value="appdb" />
-    <variable name="mongo.username" value="appuser" />
-    <variable name="mongo.password" value="secret123" />
+    <variable name="mongo.hostname" defaultValue="localhost" />
+    <variable name="mongo.port" defaultValue="27017" />
+    <variable name="mongo.dbname" defaultValue="appdb" />
+    <variable name="mongo.username" defaultValue="appuser" />
+    <variable name="mongo.password" defaultValue="secret123" />
 </server>
