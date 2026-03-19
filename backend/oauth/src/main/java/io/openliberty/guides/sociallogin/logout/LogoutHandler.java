@@ -20,17 +20,17 @@ import jakarta.inject.Inject;
 public class LogoutHandler {
 
     @Inject
-    private GitHubLogout gitHubLogout;
+    private GoogleLogout googleLogout;
 
-    private static final String GITHUB_LOGIN = "githubLogin";
+    private static final String GOOGLE_LOGIN = "googleLogin";
 
     public ILogout getLogout() {
 
         String socialMediaName = UserProfileManager.getUserProfile()
                                                    .getSocialMediaName();
         switch (socialMediaName) {
-            case GITHUB_LOGIN:
-                return gitHubLogout;
+            case GOOGLE_LOGIN:
+                return googleLogout;
             default:
                 throw new UnsupportedOperationException("Cannot find the right logout "
                         + "service for social media name " + socialMediaName);

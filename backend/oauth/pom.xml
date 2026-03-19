@@ -16,13 +16,13 @@
         <maven.compiler.target>11</maven.compiler.target>
 
         <!-- tag::defaultHttpPort[] -->
-        <liberty.var.http.port>9080</liberty.var.http.port>
+        <liberty.var.http.port>9084</liberty.var.http.port>
         <!-- end::defaultHttpPort[] -->
         <!-- tag::defaultHttpsPort[] -->
-        <liberty.var.https.port>9443</liberty.var.https.port>
+        <liberty.var.https.port>9446</liberty.var.https.port>
         <!-- end::defaultHttpsPort[] -->
         <!-- tag::appContextRoot[] -->
-        <liberty.var.app.context.root>api</liberty.var.app.context.root>
+        <liberty.var.app.context.root>/auth</liberty.var.app.context.root>
         <!-- end::appContextRoot[] -->
     </properties>
 
