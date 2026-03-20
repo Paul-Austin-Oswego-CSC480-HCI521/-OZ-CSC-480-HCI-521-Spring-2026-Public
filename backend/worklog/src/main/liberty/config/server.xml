@@ -42,4 +42,5 @@
     <variable name="mongo.dbname" defaultValue="appdb" />
     <variable name="mongo.username" defaultValue="appuser" />
     <variable name="mongo.password" defaultValue="secret123" />
+    <variable name="app.context.root" defaultValue="/worklog"/>
 </server>

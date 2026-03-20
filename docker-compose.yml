@@ -1,55 +1,41 @@
-version: "3.8"
 services:
   frontend:
-    image: ghcr.io/paul-austin-oswego-csc480-hci521/oz-csc-480-hci-521-spring-2026-public/frontend:${VERSION:-latest}
+    build:
+      context: ./frontend
     container_name: frontend-csc480-prod-container
     ports:
       - "7000:3000"
+    env_file:
+      - ./.secrets/frontend.env
     environment:
       - NODE_ENV=production
-    volumes:
-      - ./logs/frontend:/var/log/frontend
-    restart: unless-stopped
-
-  backend-finish:
-    image: ghcr.io/paul-austin-oswego-csc480-hci521/oz-csc-480-hci-521-spring-2026-public/backend-finish:${VERSION:-latest}
-    container_name: backend-finish-csc480-prod-container
-    depends_on:
-      mongodb:
-        condition: service_healthy
-    ports:
-      - "7001:9080"
-    environment:
-      - NODE_ENV=production
-    volumes:
-      - ./logs/backend:/logs
     restart: unless-stopped
   
   backend-worklog:
-    image: ghcr.io/paul-austin-oswego-csc480-hci521/oz-csc-480-hci-521-spring-2026-public/backend-worklog:${VERSION:-latest}
-    container_name: backend-worklog-csc480-prod-container
+    build:
+      context: ./backend/worklog
+    volumes:
+      - ./.secrets/backend-worklog.env:/config/server.env:ro
+    ports:
+      - "7002:9081"
+    env_file:
+      - ./.secrets/backend-worklog.env
+    restart: unless-stopped
     depends_on:
       mongodb:
         condition: service_healthy
-    ports:
-      - "7002:9080"
-    environment:
-      - NODE_ENV=production
-    volumes:
-      - ./logs/backend:/logs
-    restart: unless-stopped
 
   mongodb:
-    image: mongo:6.0-focal
+    image: mongo:7
+    container_name: csc480-mongodb-container
+    restart: unless-stopped
     ports:
-      - "7777:27017"
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: secret
+      - "27017:27017"
     volumes:
-      - ./certs:/home/mongodb/certs
-      - ./mongodb.conf:/home/mongodb/mongodb.conf
       - mongo_data:/data/db
+      - ./mongodb/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    env_file:
+      - ./.secrets/mongodb.env
     healthcheck:
       test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
       interval: 10s
