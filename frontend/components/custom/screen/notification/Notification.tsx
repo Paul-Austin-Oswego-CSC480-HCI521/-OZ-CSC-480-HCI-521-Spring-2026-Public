@@ -40,7 +40,7 @@ export const Notification = () => {
   );
 
   return (
-    <div className="p-10">
+    <div className="p-10 sticky top-0 z-50" >
       <h1 className="text-4xl  mb-8">Notifications</h1>
 
       <div className="space-y-8">
