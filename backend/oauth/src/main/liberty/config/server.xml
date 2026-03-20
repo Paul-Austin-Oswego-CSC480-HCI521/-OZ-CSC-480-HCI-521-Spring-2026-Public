@@ -9,6 +9,8 @@
         <feature>cdi</feature>
         <feature>jsonb</feature>
         <feature>jwt-1.0</feature>
+        <feature>mpJwt-2.1</feature>
+        <feature>mpRestClient</feature>
         <feature>socialLogin-1.0</feature>
         <feature>restfulWS</feature> 
         <feature>transportSecurity-1.0</feature>
@@ -17,7 +19,7 @@
     <httpEndpoint httpPort="${http.port}"
                   httpsPort="${https.port}"
                   id="defaultHttpEndpoint"
-                  host="*" />
+                  host="localhost" />
 
     <!-- Set up default key store, trust stores for auth APIs -->
     <keyStore id="defaultKeyStore"
@@ -28,6 +30,10 @@
          keyStoreRef="defaultKeyStore"
          trustStoreRef="defaultKeyStore"
          trustDefaultCerts="true" />
+    
+    <jwtBuilder id="myBuilder" 
+            keyStoreRef="defaultKeyStore" 
+            keyAlias="default" />
 
     <!-- Social Login Configuration -->
     <!-- Github Login -->

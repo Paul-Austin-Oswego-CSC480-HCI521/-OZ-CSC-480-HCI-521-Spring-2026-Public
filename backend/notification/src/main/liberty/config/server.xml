@@ -1,4 +1,5 @@
 <server description="Notification Microservice">
+<logging traceSpecification="*=info:com.ibm.ws.security.jwt.*=all:com.ibm.ws.security.mp.jwt.*=all" />
     <featureManager>
         <platform>jakartaee-10.0</platform>
         <platform>microprofile-7.1</platform>
@@ -10,6 +11,8 @@
         <feature>ssl-1.0</feature>
         <feature>mpConfig</feature>
         <feature>mpOpenAPI</feature>
+        <feature>appSecurity</feature>
+        <feature>mpJwt</feature>
     </featureManager>
 
     <!-- cors allowed -->
@@ -39,7 +42,7 @@
     <variable name="mongo.hostname" value="localhost" />
     <variable name="mongo.port" value="27017" />
     <variable name="mongo.dbname" value="appdb" />
-    <variable name="mongo.username" value="appuser" />
+    <variable name="mongo.username" value="admin" />
     <variable name="mongo.password" value="secret123" />
 
 

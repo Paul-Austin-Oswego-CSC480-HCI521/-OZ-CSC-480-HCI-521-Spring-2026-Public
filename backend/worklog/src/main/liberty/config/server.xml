@@ -20,13 +20,22 @@
         <!-- end::mpConfigFeature[] -->
         <feature>mpOpenAPI</feature>
 
+        <feature>mpJwt-2.1</feature>
+
 
     </featureManager>
     <!-- end::featureManager[] -->
 
+    <keyStore id="defaultKeyStore" password="changeit" />
+
+    <ssl id="defaultSSLConfig" 
+         keyStoreRef="defaultKeyStore" 
+         trustStoreRef="defaultKeyStore" 
+         trustDefaultCerts="true" />
+
     <!-- tag::httpEndpoint[] -->
     <httpEndpoint
-        host="*"
+        host="localhost"
         httpPort="${http.port}"
         httpsPort="${https.port}"
         id="defaultHttpEndpoint"

@@ -16,6 +16,7 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.json.Json;
@@ -60,6 +61,7 @@ public class NotificationService {
     @APIResponses({
         @APIResponse(responseCode = "200", description = "Successfully created notification."),
         @APIResponse(responseCode = "400", description = "Invalid notification config.") })
+    @RolesAllowed({"user", "admin"})
     @Operation(summary = "Create a new notification.")
     public Response add(Notification notification) {
         JsonArray violations = getViolations(notification);
@@ -82,6 +84,7 @@ public class NotificationService {
     @GET
     @Path("/")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({"user", "admin"})
     @Operation(summary = "List all notifications.")
     public Response retrieve() {
         StringWriter sb = new StringWriter();
@@ -97,6 +100,7 @@ public class NotificationService {
             }
             sb.append("]");
         } catch (Exception e) {
+            e.printStackTrace();
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
         }
         return Response.status(Response.Status.OK).entity(sb.toString()).build();
@@ -116,6 +120,7 @@ public class NotificationService {
         @APIResponse(
             responseCode = "404",
             description = "Notification object id was not found.") })
+    @RolesAllowed({"user", "admin"})
     @Operation(summary = "Delete a Notification from the database.")
     // tag::remove[]
     public Response remove(
@@ -180,6 +185,7 @@ public class NotificationService {
         @APIResponse(
             responseCode = "404",
             description = "Crew member object id was not found.") })
+    @RolesAllowed({"user", "admin"})
     @Operation(summary = "Update a crew member in the database.")
     // tag::update[]
     public Response update(Notification notification,

@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
@@ -35,6 +36,7 @@ public class WorklogService {
 
     @GET
     @Path("/")
+    @RolesAllowed("users")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Gets all worklogs in the db")
     public Response getAllWorklogs() {
