@@ -14,7 +14,7 @@ export const Notification = () => {
     queryFn: () => getWorkLog(sessionId),
   });
 
-  if (isLoading) return <p className="p-10">Loading notifications...</p>;
+ // if (isLoading) return <p className="p-10">Loading notifications...</p>;
 
   if (error || !data || data.length === 0) {
     return (
