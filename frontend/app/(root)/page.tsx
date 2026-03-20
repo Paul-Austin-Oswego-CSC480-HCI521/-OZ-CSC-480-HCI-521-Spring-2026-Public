@@ -1,7 +1,7 @@
 import { NotifCenter } from "@/components/custom/screen/home/NotifCenter";
 import Welcome from "@/components/custom/screen/home/Welcome";
 
-const TaskTracker = () => {
+const Page = () => {
   return (
     <div className="w-full m-10">
       <Welcome />
@@ -10,4 +10,4 @@ const TaskTracker = () => {
   );
 };
 
-export default TaskTracker;
+export default Page;

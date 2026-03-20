@@ -6,6 +6,7 @@ import { AppSidebar } from "@/components/custom/screen/sidebar/Sidebar";
 import Topbar from "@/components/custom/screen/topbar/Topbar";
 import { Providers } from "@/provider";
 
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
