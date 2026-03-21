@@ -5,7 +5,7 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>io.openliberty.guides</groupId>
+    <groupId>auth</groupId>
     <artifactId>auth</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>war</packaging>
@@ -19,7 +19,7 @@
         <liberty.var.http.port>9084</liberty.var.http.port>
         <!-- end::defaultHttpPort[] -->
         <!-- tag::defaultHttpsPort[] -->
-        <liberty.var.https.port>9443</liberty.var.https.port>
+        <liberty.var.https.port>9444</liberty.var.https.port>
         <!-- end::defaultHttpsPort[] -->
         <app.name>${project.artifactId}</app.name>
         <!-- tag::appContextRoot[] -->
@@ -92,6 +92,11 @@
             <version>5.14.0</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>2.0.9</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -109,7 +114,8 @@
                 <artifactId>liberty-maven-plugin</artifactId>
                 <version>3.11.5</version>
                 <configuration>
-                    <serverName>authServer</serverName>
+                    <serverName>auth</serverName>
+                    <libertyDebugPort>7771</libertyDebugPort>
                 </configuration>
                 <executions>
                     <execution>
