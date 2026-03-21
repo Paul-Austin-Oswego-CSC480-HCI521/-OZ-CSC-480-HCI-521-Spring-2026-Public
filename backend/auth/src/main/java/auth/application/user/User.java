@@ -1,4 +1,4 @@
-package application.user;
+package auth.application.user;
 
 
 public class User{
@@ -7,8 +7,10 @@ public class User{
     private String role;
     private String createdAt;
 
-    public User{
-        public User(String email, String name, String role, String createdAt){
+    public User(){}
+
+
+    public User(String email, String name, String role, String createdAt){
             this.email = email;
             this.name = name;
             this.role = role;
@@ -22,7 +24,7 @@ public class User{
             this.email = email;
         }
         public String getName(){
-            return name
+            return name;
         }
         public void setName(String name){
             this.name = name;
@@ -42,4 +44,3 @@ public class User{
             this.createdAt = createdAt;
         }
     }
-}
