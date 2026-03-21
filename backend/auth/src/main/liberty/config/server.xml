@@ -29,6 +29,9 @@
     </featureManager>
     <!-- end::featureManager[] -->
 
+<variable name="http.port" defaultValue="9084"/>
+<variable name="https.port" defaultValue="9444"/>
+<variable name="app.context.root" defaultValue="/auth/"/>
 
     <!-- tag::httpEndpoint[] -->
     <httpEndpoint

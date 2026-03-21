@@ -1,15 +1,18 @@
-package application.mongo;
+package auth.mongo;
 
 import java.util.List;
+
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
+
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.context.Disposes;
+import jakarta.enterprise.inject.Disposes;
 import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Inject;
 
@@ -30,7 +33,7 @@ public class MongoProducer{
     @Produces
     @ApplicationScoped
     public MongoClient createMongo(){
-        MongoCredential creds = MongoCredential.createCredential(user, dbName, password.toCharArray());
+        MongoCredential creds = MongoCredential.createCredential(user, dbname, password.toCharArray());
         MongoClientSettings settings = MongoClientSettings.builder()
         .credential(creds)
         .applyToClusterSettings(b->b.hosts(List.of(new ServerAddress(hostname, port)))).build();
@@ -39,7 +42,7 @@ public class MongoProducer{
 
     @Produces
     public MongoDatabase createDB(MongoClient client){
-        return client.getDatabase(dbName);
+        return client.getDatabase(dbname);
     }
     public void clode(@Disposes MongoClient toClose){
         toClose.close();
