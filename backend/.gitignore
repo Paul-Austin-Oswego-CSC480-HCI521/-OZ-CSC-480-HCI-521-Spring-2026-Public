@@ -28,3 +28,6 @@ README.html
 # Security certificates
 **/truststore.p12
 **/security/*.p12
+
+
+auth/src/main/liberty/config/bootstrap.properties

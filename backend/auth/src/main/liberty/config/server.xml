@@ -72,11 +72,11 @@
     <!-- end::ssl[] -->
     <!-- for google oauth  -->
     <!-- havent included secrets -->
-    <googleLogin id="googleLogin" clientId = "" clientSecret="" scope="openid profile email"/>
+    <googleLogin id="googleLogin" clientId = "${google.client.id}" clientSecret="${google.client.secret}" scope="openid profile email"/>
     <!-- for jwt -->
-    <jwtBuilder id="" issuer="" expiry="1h" audiences="worklog" signatureAlgorithm="RS256"/>
+    <jwtBuilder id="" issuer="LakerTracks" expiry="1h" audiences="worklog" signatureAlgorithm="RS256"/>
     <!-- keystore to sign JWT -->
-    <keyStore id="defaultKeyStore" password="" location="${server.config.dir}/resources/security/key.p12" type="PKCS12"/>
+    <keyStore id="defaultKeyStore" password="goolgle" location="${server.config.dir}/resources/security/key.p12" type="PKCS12"/>
     <!-- SSL FOR GOOGLE -->
     <ssl 
         id="defaultSSLConfig" 
