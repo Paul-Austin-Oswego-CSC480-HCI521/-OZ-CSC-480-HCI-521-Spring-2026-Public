@@ -2,7 +2,10 @@ import axios from "axios";
 import { createClient } from "./client";
 
 export async function googleSignIn(credential: string, role?: string) {
-  const res = await axios.post("http://localhost:9084/auth/api/auth/login", {
+  const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
+  const AUTHPORT = process.env.NEXT_PUBLIC_AUTH_PORT;
+  const client = createClient(BASE_URL || "http://localhost");
+  const res = await client.post(`${BASE_URL}:${AUTHPORT}/auth/api/auth/login`, {
     token_id: credential,
     role,
   });

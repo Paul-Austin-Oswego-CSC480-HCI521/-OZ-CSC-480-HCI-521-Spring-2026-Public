@@ -8,8 +8,9 @@ export function createClient(baseURL: string) {
   const client = axios.create({ baseURL });
 
   client.interceptors.request.use((config) => {
-    const token = store.get(tokenAtom);
-    if (token) {
+    const raw = localStorage.getItem("csc_480_token");
+    if (raw) {
+      const token = JSON.parse(raw);
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;

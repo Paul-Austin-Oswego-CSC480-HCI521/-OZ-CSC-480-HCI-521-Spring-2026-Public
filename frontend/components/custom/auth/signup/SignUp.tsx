@@ -32,7 +32,7 @@ export default function SignUp() {
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const [role, setRole] = useState<string>("");
   const setToken = useSetAtom(tokenAtom);
-  const setUser = useSetAtom(userAtom);
+
   const router = useRouter();
 
   const { mutate } = useMutation({
@@ -41,12 +41,7 @@ export default function SignUp() {
       setToken(data.token);
       // setting in cookie as well as setting token in localstorage is redundant but wc will work on next sprint
       document.cookie = `token=${data.token}; path=/;`;
-      setUser({
-        email: data.email,
-        role: data.role,
-        name: data.name,
-        id: data.id,
-      });
+
       router.push("/");
     },
     onError: (error) => {
@@ -65,7 +60,6 @@ export default function SignUp() {
       client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
       callback: async (response: { credential: string }) => {
         mutate(response.credential);
-
       },
     });
 

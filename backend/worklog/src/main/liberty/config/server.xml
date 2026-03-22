@@ -20,7 +20,7 @@
         <!-- end::mpConfigFeature[] -->
         <feature>mpOpenAPI</feature>
         <!-- to verify JWT -->
-        <!-- <feature>mpJwt</feature> -->
+        <feature>mpJwt</feature>
 
 
     </featureManager>
@@ -41,6 +41,12 @@
         contextRoot="${app.context.root}"
     />
     <!-- end::webApplication[] -->
+    <mpJwt id="defaultMpJwt"                                                                                                                                                                                                                          
+         issuer="LakerTracks"                                                                                                                                                                                                                       
+         audiences="worklog"                                                                                                                                                                                                                        
+         signatureAlgorithm="RS256"   
+         userNameAttribute="email"                                                                                                                                                                                                              
+         publicKeyLocation="${server.config.dir}/resources/security/publickey.pem"/>
 
     <variable name="mongo.hostname" value="localhost" />
     <variable name="mongo.port" value="27017" />

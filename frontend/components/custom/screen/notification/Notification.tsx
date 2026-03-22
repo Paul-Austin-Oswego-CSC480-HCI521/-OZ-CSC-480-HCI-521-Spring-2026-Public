@@ -2,19 +2,20 @@
 import { useQuery } from "@tanstack/react-query";
 import { getWorkLog } from "@/components/custom/utils/api_utils/worklogs/allReq";
 import { useAtomValue } from "jotai";
-import { sessionIdAtom } from "@/components/custom/utils/context/state";
+// import { sessionIdAtom } from "@/components/custom/utils/context/state";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+import { userAtom } from "@/components/custom/utils/context/state";
+
 export const Notification = () => {
-  const sessionId = useAtomValue(sessionIdAtom);
+  // const sessionId = useAtomValue(sessionIdAtom);
+  const userInfo = useAtomValue(userAtom);
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["worklogs", sessionId],
-    enabled: !!sessionId,
-    queryFn: () => getWorkLog(sessionId),
+    queryKey: ["worklogs", userInfo?.id],
+    enabled: !!userInfo?.id,
+    queryFn: () => getWorkLog(userInfo?.id),
   });
-  console.log(sessionId);
-  console.log(data);
 
   if (isLoading) return <p className="p-10">Loading notifications...</p>;
 

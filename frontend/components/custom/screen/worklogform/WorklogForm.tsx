@@ -34,7 +34,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAtomValue } from "jotai";
-import { sessionIdAtom } from "@/components/custom/utils/context/state";
+import { userAtom } from "@/components/custom/utils/context/state";
+
 
 export function WorkLogForm() {
   // to show success
@@ -44,14 +45,14 @@ export function WorkLogForm() {
     timeZone: "America/New_York",
   });
   // getting session id.
-  const sessionId = useAtomValue(sessionIdAtom);
+  const userInfo = useAtomValue(userAtom);
 
   // creating default values
   const emptyTask = {
     taskName: "",
     goal: "",
     collaborators: [] as string[],
-    assignedUser: sessionId,
+    assignedUser: "",
     status: undefined as unknown as "not-started",
     dueDate: "",
     creationDate: dateCreated,
@@ -83,15 +84,20 @@ export function WorkLogForm() {
   });
 
   function onSubmit(data: taskType) {
-    console.log(data);
-    const obj: workLogPostType = {
-      authorName: sessionId,
-      dateCreated: dateCreated,
-      dateSubmitted: dateCreated,
-      collaborators: [],
-      taskList: data.tasks,
-    };
-    mutation.mutate(obj);
+    if (userInfo) {
+      const tasks = data.tasks.map((t) => ({
+        ...t,
+        assignedUser: userInfo.id,
+      }));
+      const obj: workLogPostType = {
+        authorName: userInfo.id,
+        dateCreated: dateCreated,
+        dateSubmitted: dateCreated,
+        collaborators: [],
+        taskList: tasks,
+      };
+      mutation.mutate(obj);
+    }
   }
 
   return (
