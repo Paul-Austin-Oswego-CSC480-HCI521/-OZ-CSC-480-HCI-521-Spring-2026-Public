@@ -6,8 +6,6 @@ import com.google.api.client.json.gson.GsonFactory;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.resource.spi.IllegalStateException;
-
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.util.Collections;
@@ -27,7 +25,7 @@ public class GoogleTokenVerifier {
                 GsonFactory.getDefaultInstance()
             ).setAudience(Collections.singletonList(googleClientId)).build();
         } catch(Exception e){
-            throw new IllegalStateException("failed to initialize Google token verifier");
+            throw new RuntimeException("failed to initialize Google token verifier");
         }
     }
 
