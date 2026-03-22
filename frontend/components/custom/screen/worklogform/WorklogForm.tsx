@@ -3,7 +3,7 @@ import React, { useState } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
-import { submitWorkLog } from "../../utils/tanstack_utils/worklogs/allReq";
+import { submitWorkLog } from "../../utils/api_utils/worklogs/allReq";
 
 import {
   workLogPostType,

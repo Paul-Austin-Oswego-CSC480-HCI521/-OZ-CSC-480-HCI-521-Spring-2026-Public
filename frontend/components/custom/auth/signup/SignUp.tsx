@@ -3,6 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import Script from "next/script";
 import Link from "next/link";
+import { useSetAtom } from "jotai";
+import { useMutation } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { tokenAtom, userAtom } from "@/components/custom/utils/context/state";
+import { googleSignIn } from "@/components/custom/utils/api_utils/req/req";
 import {
   Card,
   CardContent,
@@ -20,15 +25,25 @@ declare global {
   }
 }
 
-export default function Page() {
+export default function SignUp() {
   const buttonRef = useRef<HTMLDivElement>(null);
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const [role, setRole] = useState<string>("");
+  const setToken = useSetAtom(tokenAtom);
+  const setUser = useSetAtom(userAtom);
+  const router = useRouter();
+
+  const { mutate } = useMutation({
+    mutationFn: (credential: string) => googleSignIn(credential, role),
+    onSuccess: (data) => {
+      setToken(data.token);
+      setUser(data.user);
+      router.push("/dashboard");
+    },
+  });
 
   useEffect(() => {
-    if (window.google) {
-      setScriptLoaded(true);
-    }
+    if (window.google) setScriptLoaded(true);
   }, []);
 
   useEffect(() => {
@@ -36,9 +51,9 @@ export default function Page() {
 
     window.google.accounts.id.initialize({
       client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
-      callback: async (response: { credential: string }) => {
-        console.log("Google token:", response.credential);
-        console.log("Selected role:", role);
+      callback: (response: { credential: string }) => {
+        console.log("logged in");
+        mutate(response.credential);
       },
     });
 
@@ -47,7 +62,7 @@ export default function Page() {
       size: "large",
       text: "signup_with",
     });
-  }, [scriptLoaded, role]);
+  }, [scriptLoaded, mutate, role]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">

@@ -1,6 +1,6 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
-import { getWorkLog } from "@/components/custom/utils/tanstack_utils/worklogs/allReq";
+import { getWorkLog } from "@/components/custom/utils/api_utils/worklogs/allReq";
 import { useAtomValue } from "jotai";
 import { sessionIdAtom } from "@/components/custom/utils/context/state";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

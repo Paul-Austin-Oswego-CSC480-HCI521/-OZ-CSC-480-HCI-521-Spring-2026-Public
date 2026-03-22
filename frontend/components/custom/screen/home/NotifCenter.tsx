@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getWorkLog } from "@/components/custom/utils/tanstack_utils/worklogs/allReq";
+import { getWorkLog } from "@/components/custom/utils/api_utils/worklogs/allReq";
 import { useAtomValue } from "jotai";
 import { sessionIdAtom } from "@/components/custom/utils/context/state";
 import {
