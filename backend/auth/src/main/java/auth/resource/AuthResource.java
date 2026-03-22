@@ -1,4 +1,4 @@
-package auth.application;
+package auth.resource;
 
 import java.util.HashMap;
 import java.util.List;
@@ -6,8 +6,6 @@ import java.util.Map;
 
 
 
-import java.util.Collections;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 
 import org.bson.Document;
@@ -15,24 +13,21 @@ import org.bson.Document;
 import com.ibm.websphere.security.jwt.Claims;
 import com.ibm.websphere.security.jwt.JwtBuilder;
 
-import jakarta.annotation.security.RolesAllowed;
+import auth.service.AuthService;
+
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
-import jakarta.servlet.http.HttpServletRequest;
+
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.core.Context;
+
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
-import com.google.api.client.json.gson.GsonFactory;
-import com.google.gson.Gson;
+
 
 
 @Path("/auth")
@@ -41,11 +36,7 @@ import com.google.gson.Gson;
 public class AuthResource{
 
     @Inject 
-    private AuthRepository repo;
-
-    @Inject
-    @ConfigProperty(name="google.client.id")
-    private String googleClientId;
+    private AuthService authservice;
 
     @POST
     @Path("/login")
@@ -63,35 +54,11 @@ public class AuthResource{
                 .build();
             }
             // verify google tokem
-            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
-                GoogleNetHttpTransport.newTrustedTransport(),
-                GsonFactory.getDefaultInstance()
-            ).setAudience(Collections.singletonList(googleClientId)).build();
+            Document user = authservice.verifyAndGetUser(tokenIdFrontend, rolerequested);
+            String email = user.getString("email");
+            String name = user.getString("name");
+            String role = user.getString("role");
 
-            GoogleIdToken googletoken = verifier.verify(tokenIdFrontend);
-            if(googletoken==null){
-                return Response.status(Response.Status.UNAUTHORIZED)
-                .entity("invalid google token")
-                .build();
-            }
-            // get user info
-            GoogleIdToken.Payload payload = googletoken.getPayload();
-            String email = payload.getEmail();
-            String name = (String) payload.get("name");
-
-            // does user exists in db if not create a user
-            Document user = repo.findByEmail(email);
-            String role;
-
-            if(user==null){
-                // Create new user
-                Document newuser = repo.createUser(email, name, rolerequested);
-                role = newuser.getString("role");
-            }
-            else{
-            role = user.getString("role");
-            name = user.getString("name");
-            }
 
             // build JWT
             String token = JwtBuilder.create("jwtAuthBuilder")
@@ -124,7 +91,7 @@ public class AuthResource{
     @Produces(MediaType.APPLICATION_JSON)
     public Response getAllUsers(){
         try {
-            List<Document> users = repo.getAllUsers();
+            List<Document> users = authservice.getAllUsers();
             return Response.ok(users).build();
         } catch(Exception e){
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)

@@ -1,4 +1,4 @@
-package auth.application.user;
+package auth.user;
 
 
 public class User{
