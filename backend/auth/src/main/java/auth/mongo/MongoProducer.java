@@ -16,7 +16,6 @@ import jakarta.enterprise.inject.Disposes;
 import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Inject;
 
-
 @ApplicationScoped
 public class MongoProducer{
     @Inject @ConfigProperty(name = "mongo.hostname", defaultValue="localhost")

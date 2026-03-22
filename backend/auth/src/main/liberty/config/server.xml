@@ -20,7 +20,6 @@
         <!-- end::mpConfigFeature[] -->
         <feature>mpOpenAPI</feature>
         <!-- for google oauth -->
-        <feature>socialLogin-1.0</feature>
         <!-- to create JWT -->
         <feature>jwt-1.0</feature>
         <!-- to validate jwt i dont think if we need here but does not harm to have it  -->
@@ -68,8 +67,7 @@
     <!-- end::ssl[] -->
     <!-- for google oauth  -->
     <!-- havent included secrets -->
-    <googleLogin id="googleLogin" clientId = "${google.client.id}" clientSecret="${google.client.secret}" scope="openid profile email"/>
-    <!-- for jwt -->
+\ <!-- for jwt -->
     <jwtBuilder id="jwtAuthBuilder" issuer="LakerTracks" expiry="1h" audiences="worklog" signatureAlgorithm="RS256"/>
     <!-- keystore to sign JWT -->
     <keyStore id="defaultKeyStore" password="google" location="${server.config.dir}/resources/security/key.p12" type="PKCS12"/>

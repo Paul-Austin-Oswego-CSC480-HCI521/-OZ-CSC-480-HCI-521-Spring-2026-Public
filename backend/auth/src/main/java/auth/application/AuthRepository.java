@@ -25,10 +25,14 @@ public class AuthRepository{
         return collection.find(new Document("email", email)).first();
     }
 
-    public Document createUser(String email){
+    public Document createUser(String email, String name, String role){
+        if(role==null || (!role.equals("student") && !role.equals("instructor"))){
+            role = "student";
+        }
         Document newUser = new Document()
             .append("email", email)
-            .append("role", "user")
+            .append("name", name)
+            .append("role", role)
             .append("createdAt", Instant.now().toString());
         collection.insertOne(newUser);
         return newUser;
