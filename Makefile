@@ -1,4 +1,4 @@
-.PHONY: dev dev-frontend dev-backend dev-mongodb setup setup-env setup-frontend setup-backend setup-mongodb stop-mongodb checkout-latest checkout clean clean-frontend clean-backend clean-mongodb
+.PHONY: dev dev-frontend dev-backend dev-mongodb setup setup-env setup-frontend setup-backend setup-mongodb stop-mongodb checkout-latest checkout clean clean-frontend clean-backend clean-mongodb setup-docker-compose-env
 
 start-backend: 
 	make -j start-backend-worklog start-backend-notification start-backend-task
@@ -36,12 +36,12 @@ dev-backend-notification:
 dev-backend-task:
 	cd ./backend/task && ./mvnw liberty:dev
 
-dev-backend-clean clean-backend:
+dev-backend-clean:
 	cd ./backend/worklog && ./mvnw clean
 	cd ./backend/notification && ./mvnw clean
 	cd ./backend/task && ./mvnw clean
 
-dev-backend-stop stop-backend:
+dev-backend-stop:
 	cd ./backend/worklog && ./mvnw liberty:stop
 	cd ./backend/notification && ./mvnw liberty:stop
 	cd ./backend/task && ./mvnw liberty:stop
@@ -62,6 +62,9 @@ setup: setup-env check-deps setup-mongodb setup-frontend setup-backend
 
 setup-env:
 	node ./utils/setup-env.js
+
+setup-docker-compose-env:
+	node ./utils/setup-env-docker-compose.js
 
 setup-frontend:
 	cd ./frontend && npm install
@@ -97,3 +100,11 @@ clean-backend:
 clean-mongodb:
 	docker rm -f csc480-mongodb-container || true
 	docker compose -f docker-compose.dev.yml down -v
+
+run-docker-compose:
+	make setup-docker-compose-env
+	docker compose -f docker-compose.yml up -d
+	docker ps
+
+stop-docker-compose:
+	docker compose -f docker-compose.yml down

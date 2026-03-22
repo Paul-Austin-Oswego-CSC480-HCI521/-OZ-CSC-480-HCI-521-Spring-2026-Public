@@ -34,7 +34,7 @@ Install dependencies and run the project:
 
 ```bash
    make clean # Remove existing system residue that might conflict with this project
-   make setup # Install required dependencies for frontend, backend and mongodb
+   make setup # Setup environment variables and install required dependencies for frontend, backend and mongodb
 ```
 
 Then start the project:
