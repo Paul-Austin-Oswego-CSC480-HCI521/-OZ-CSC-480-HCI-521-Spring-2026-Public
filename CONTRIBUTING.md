@@ -1,17 +1,5 @@
 # Contributing to the Project
 
-## Prerequisites
-
-Make sure you have the following installed before getting started:
-
-- [Git](https://git-scm.com/)
-- [Node.js / npm](https://nodejs.org/)
-- [Java 21+](https://adoptium.net/)
-- [Docker](https://www.docker.com/products/docker-desktop)
-- Maven (or use the included `mvnw` wrapper — no install needed)
-
-> Windows Command Prompt and PowerShell use different commands that this project does not support. See [Windows](#windows) for instructions.
-
 ## Cloning the project
 
 Clone the repository and navigate into it:
@@ -25,6 +13,19 @@ Clone the repository and navigate into it:
    ```bash
       make check-deps # Check if you have all dependencies installed.
    ```
+
+## Prerequisites
+
+Make sure you have the following installed before getting started:
+
+- [Git](https://git-scm.com/)
+- [Node.js / npm](https://nodejs.org/)
+- [Java 21+](https://adoptium.net/)
+- [Docker](https://www.docker.com/products/docker-desktop)
+- Maven (or use the included `mvnw` wrapper — no install needed)
+
+> Windows Command Prompt and PowerShell use different commands that this project does not support. See [Windows](#windows) for instructions.
+
 
 ## Installation
 
