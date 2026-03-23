@@ -22,5 +22,10 @@
     },
     "frontend": {
         "NEXT_PUBLIC_WORKLOGS_API_URL": "http://localhost:7002/worklog/api"
+    },
+    "mongodb": {
+        "MONGO_INITDB_ROOT_USERNAME": "admin",
+        "MONGO_INITDB_ROOT_PASSWORD": "secret123",
+        "MONGO_INITDB_DATABASE": "appdb"
     }
 }
