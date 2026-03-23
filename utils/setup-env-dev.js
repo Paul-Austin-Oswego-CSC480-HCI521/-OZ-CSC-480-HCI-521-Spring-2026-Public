@@ -8,19 +8,7 @@ const MICROSERVICE_PATHS = {
 };
 
 function loadConfig() {
-  const base = JSON.parse(fs.readFileSync("config/env-dev.json", "utf8"));
-
-  if (fs.existsSync("config/env-dev.json")) {
-    const local = JSON.parse(fs.readFileSync("config/env-dev.json", "utf8"));
-    for (const key of Object.keys(local)) {
-      if (key in base && typeof base[key] === "object") {
-        Object.assign(base[key], local[key]);
-      } else {
-        base[key] = local[key];
-      }
-    }
-  }
-  return base;
+  return JSON.parse(fs.readFileSync("config/env-dev.json", "utf-8"));
 }
 
 function writeBackendEnv(servicePath, vars) {

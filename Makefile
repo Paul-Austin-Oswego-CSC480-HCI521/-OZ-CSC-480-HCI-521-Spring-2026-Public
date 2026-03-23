@@ -61,7 +61,7 @@ check-deps:
 setup: setup-env check-deps setup-mongodb setup-frontend setup-backend
 
 setup-env:
-	node ./utils/setup-env.js
+	node ./utils/setup-env-dev.js
 
 setup-docker-compose-env:
 	node ./utils/setup-env-docker-compose.js
