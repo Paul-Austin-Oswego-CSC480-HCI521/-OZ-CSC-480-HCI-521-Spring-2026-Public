@@ -16,5 +16,21 @@ export function createClient(baseURL: string) {
     return config;
   });
 
+  // once token expires, redirect to login again
+
+  client.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      if (error.response?.status === 401) {
+        localStorage.removeItem("csc_480_token");
+        store.set(tokenAtom, null);
+        document.cookie =
+          "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        window.location.href = "/signin";
+      }
+      return Promise.reject(error);
+    },
+  );
+
   return client;
 }
