@@ -50,15 +50,8 @@
     </webApplication>
     <!-- end::webApplication[] -->
     <mpJwt id="defaultMpJwt"
-         issuer="LakerTracks"
-         audiences="worklog"
-         signatureAlgorithm="RS256"
          userNameAttribute="email"
-         mapToUserRegistry="false"/>
+         mapToUserRegistry="false"
+         />
 
-    <variable name="mongo.hostname" value="localhost" />
-    <variable name="mongo.port" value="27017" />
-    <variable name="mongo.dbname" value="appdb" />
-    <variable name="mongo.username" value="appuser" />
-    <variable name="mongo.password" value="secret123" />
 </server>
