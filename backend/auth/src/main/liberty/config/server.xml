@@ -59,11 +59,11 @@
     <!-- end::keyStore[] -->
     <!-- tag::ssl[] -->
 
-    <variable name="mongo.hostname" value="localhost" />
+    <!-- <variable name="mongo.hostname" value="localhost" />
     <variable name="mongo.port" value="27017" />
     <variable name="mongo.dbname" value="appdb" />
     <variable name="mongo.username" value="appuser" />
-    <variable name="mongo.password" value="secret123" />
+    <variable name="mongo.password" value="secret123" /> -->
 
     <!-- end::ssl[] -->
     <!-- for google oauth  -->

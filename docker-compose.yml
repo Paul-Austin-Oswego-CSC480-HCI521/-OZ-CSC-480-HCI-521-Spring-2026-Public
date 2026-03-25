@@ -16,8 +16,6 @@ services:
       context: ./backend/worklog
     ports:
       - "7001:9081"
-    environment:
-      - MONGO_HOSTNAME=mongodb
     restart: unless-stopped
     depends_on:
       mongodb:

@@ -13,8 +13,8 @@ const client = createClient(API_BASE);
 export async function submitWorkLog(data: workLogPostType) {
   const res = await client.post(
     // const res = await axios.post(
-    // `${API_BASE}:${WORKLOG_PORT}/worklog/api`,
-    `http://localhost:9081/worklog/api`,
+    `${API_BASE}:${WORKLOG_PORT}/worklog/api`,
+    // `http://localhost:9081/worklog/api`,
     data,
   );
   return res.data;
@@ -22,8 +22,8 @@ export async function submitWorkLog(data: workLogPostType) {
 export async function getWorkLog(authorName: string | undefined) {
   try {
     const res = await client.get(
-      // `${API_BASE}:${WORKLOG_PORT}/worklog/api/author/${authorName}`,
-      `http://localhost:9081/worklog/api/author/${authorName}`,
+      `${API_BASE}:${WORKLOG_PORT}/worklog/api/author/${authorName}`,
+      // `http://localhost:9081/worklog/api/author/${authorName}`,
     );
 
     return res.data;
