@@ -15,7 +15,7 @@ services:
     build:
       context: ./backend/worklog
     ports:
-      - "7002:9081"
+      - "7001:9081"
     environment:
       - MONGO_HOSTNAME=mongodb
     restart: unless-stopped
@@ -27,7 +27,7 @@ services:
     build:
       context: ./backend/auth
     ports:
-      - "7001:9084"
+      - "7002:9084"
     restart: unless-stopped
     depends_on:
       mongodb:
