@@ -299,7 +299,7 @@ export const Notification = () => {
             Click a week to take action.
           </p>
         </CardHeader>
-        <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0 max-h-[50vh] overflow-y-auto">
+        <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0 ">
           <div className="space-y-0">
             {entries.map((entry, i) => {
               const isSelected = selectedWeek === entry.week;
