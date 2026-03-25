@@ -21,6 +21,8 @@ import task.application.classes.Task;
 
 import java.io.StringWriter;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * TaskService implementation for use with REST API functions. Adapted from the code seen in CrewService.java, to be changed as needed
@@ -35,53 +37,8 @@ public class TaskService {
     @Inject
     Validator validator;
 
-    private JsonArray getViolations(Task task) {
-        Set<ConstraintViolation<Task>> violations = validator.validate(task);
-        JsonArrayBuilder messages = Json.createArrayBuilder();
-        for (ConstraintViolation<Task> v : violations) {
-            messages.add(v.getMessage());
-        }
-        return messages.build();
-    }
-
-    @POST
-    @Path("/")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    @APIResponses({
-            @APIResponse(
-                    responseCode = "200",
-                    description = "Successfully added task."),
-            @APIResponse(
-                    responseCode = "400",
-                    description = "Invalid task configuration.") })
-    @Operation(summary = "Add or modify a new task.")
-    public Response add(Task task) {
-        JsonArray violations = getViolations(task);
-
-        if (!violations.isEmpty()) {
-            return Response
-                    .status(Response.Status.BAD_REQUEST)
-                    .entity(violations.toString())
-                    .build();
-        }
-        MongoCollection<Document> taskCollection = db.getCollection("Tasks");
-
-        Document newTask = new Document();
-        newTask.put("taskName", task.getTaskName());
-        newTask.put("goal", task.getGoal());
-        newTask.put("assignedName", task.getAssignedName());
-        newTask.put("deadline", task.getDeadline());
-        newTask.put("status", task.getStatus());
-
-        taskCollection.insertOne(newTask);
-
-        return Response
-                .status(Response.Status.OK)
-                .entity(newTask.toJson())
-                .build();
-    }
-
+    @Inject
+    Logger logger;
 
     @GET
     @Path("/")
@@ -89,12 +46,19 @@ public class TaskService {
     @APIResponses({
             @APIResponse(
                     responseCode = "200",
-                    description = "Successfully listed tasks."),
+                    description = "Successfully listed tasks."
+            ),
+            @APIResponse(
+                    responseCode = "400",
+                    description = "BAD REQUEST: client provided malformed HTTP GET request"
+            ),
             @APIResponse(
                     responseCode = "500",
-                    description = "Failed to list tasks.") })
+                    description = "INTERNAL SERVER ERROR: issue with server prevented HTTP GET request")
+    })
     @Operation(summary = "List the tasks within database.")
     public Response retrieve() {
+        Response response;
         StringWriter sb = new StringWriter();
 
         try {
@@ -111,19 +75,80 @@ public class TaskService {
                 sb.append(d.toJson());
             }
             sb.append("]");
+
+            response = Response
+                    .status(Response.Status.OK)
+                    .entity(sb.toString())
+                    .build();
         } catch (Exception e) {
             e.printStackTrace(System.out);
-            return Response
+            response = Response
                     .status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity("[\"Unable to list crew members!\"]")
                     .build();
         }
 
-        return Response
-                .status(Response.Status.OK)
-                .entity(sb.toString())
-                .build();
+        logger.log(Level.INFO, "TaskService HTTP GET request returned with code: " + response.getStatus());
+
+        return response;
     }
 
+    @POST
+    @Path("/")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @APIResponses({
+            @APIResponse(
+                    responseCode = "200",
+                    description = "Successfully added task."
+            ),
+            @APIResponse(
+                    responseCode = "400",
+                    description = "BAD REQUEST: client provided malformed HTTP POST request"
+            ),
+            @APIResponse(
+                    responseCode = "500",
+                    description = "INTERNAL SERVER ERROR: issue with server prevented HTTP POST request")
+    })
+    @Operation(summary = "Add or modify a new task.")
+    public Response add(Task task) {
+        Response response;
+        JsonArray violations = getViolations(task);
+
+        if (!violations.isEmpty()) {
+            response = Response
+                    .status(Response.Status.BAD_REQUEST)
+                    .entity(violations.toString())
+                    .build();
+            logger.log(Level.INFO, "HTTP POST request returned code: " + response.getStatus());
+            return response;
+        }
+        MongoCollection<Document> taskCollection = db.getCollection("Tasks");
+
+        Document newTask = new Document();
+        newTask.put("taskName", task.getTaskName());
+        newTask.put("goal", task.getGoal());
+        newTask.put("assignedName", task.getAssignedName());
+        newTask.put("deadline", task.getDeadline());
+        newTask.put("status", task.getStatus());
+
+        taskCollection.insertOne(newTask);
+
+        response = Response
+                .status(Response.Status.OK)
+                .entity(newTask.toJson())
+                .build();
+        logger.log(Level.INFO, "HTTP POST request returned code: " + response.getStatus());
+        return response;
+    }
+
+    private JsonArray getViolations(Task task) {
+        Set<ConstraintViolation<Task>> violations = validator.validate(task);
+        JsonArrayBuilder messages = Json.createArrayBuilder();
+        for (ConstraintViolation<Task> v : violations) {
+            messages.add(v.getMessage());
+        }
+        return messages.build();
+    }
 
 }
