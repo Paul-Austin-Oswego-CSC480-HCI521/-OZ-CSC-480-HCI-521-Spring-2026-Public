@@ -273,7 +273,6 @@ function StudentRow({ student }: { student: StudentSummary }) {
 const InstructorDashboard = () => {
   const userInfo = useAtomValue(userAtom);
 
-
   const [search, setSearch] = useState("");
   const worklogInfo = getWorklogDate(new Date("2026-01-26"));
   const currentWeek = worklogInfo ? parseInt(worklogInfo.weekNumber) : 0;
@@ -402,7 +401,7 @@ const InstructorDashboard = () => {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-2 max-h-[60vh] overflow-y-auto">
+        <CardContent className="space-y-2 ">
           {filtered.length === 0 ? (
             <div className="text-center py-10">
               <Users className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
