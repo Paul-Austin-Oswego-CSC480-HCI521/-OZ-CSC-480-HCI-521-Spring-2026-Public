@@ -112,9 +112,34 @@ jobs:
                   tags: |
                     ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}/backend-task:${{ env.VERSION }}
 
+    build_backend_auth:
+        name: build_backend_auth
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            packages: write
+        steps:
+            - uses: actions/checkout@v6
+            - name: Log in to GHCR
+              uses: docker/login-action@v3
+              with:
+                  registry: ${{ env.REGISTRY }}
+                  username: ${{ github.actor }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
+            - name: Set lowercase image name
+              id: image
+              run: echo "name=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]' | sed 's/\/-oz-/\/oz-/')" >> $GITHUB_OUTPUT
+            - name: Build and push Backend
+              uses: docker/build-push-action@v5
+              with:
+                  context: ./backend/auth
+                  push: true
+                  tags: |
+                    ${{ env.REGISTRY }}/${{ steps.image.outputs.name }}/backend-auth:${{ env.VERSION }}
+
     create_release:
         name: create_release
-        needs: [build_frontend, build_backend_worklog, build_backend_notification, build_backend_task]
+        needs: [build_frontend, build_backend_worklog, build_backend_notification, build_backend_task, build_backend_auth]
         runs-on: ubuntu-latest
         permissions:
             contents: write
