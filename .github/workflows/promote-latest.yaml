@@ -31,7 +31,7 @@ jobs:
                   BASE=${{ env.REGISTRY }}/${{ steps.image.outputs.name }}
                   VERSION=${{ inputs.version }}
 
-                  for service in frontend backend-worklog backend-notification backend-task; do
+                  for service in frontend backend-worklog backend-notification backend-task backend-auth; do
                     docker pull $BASE/$service:$VERSION
                     docker tag  $BASE/$service:$VERSION $BASE/$service:latest
                     docker push $BASE/$service:latest
