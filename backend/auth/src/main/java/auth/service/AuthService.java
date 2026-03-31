@@ -48,6 +48,12 @@ public class AuthService {
             
         }
 
+        public Document getUserByEmail(String email) {
+            Document user = repo.findByEmail(email);
+            if (user == null) throw new SecurityException("User not found");
+            return user;
+        }
+
         public List<Document> getAllUsers(){
             return repo.getAllUsers();
         }
