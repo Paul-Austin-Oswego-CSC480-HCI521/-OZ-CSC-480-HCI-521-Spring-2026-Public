@@ -40,15 +40,6 @@ public class WorklogService {
     private Logger logger;
 
     @GET
-    @Path("/logs")
-    @Produces(MediaType.TEXT_PLAIN)
-    @Operation(summary = "Testing for logging")
-    public String testLogs() {
-        logger.log(Level.INFO, "LOG TEST LOG");
-        return "Log test";
-    }
-
-    @GET
     @Path("/")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Gets all worklogs in the db")
