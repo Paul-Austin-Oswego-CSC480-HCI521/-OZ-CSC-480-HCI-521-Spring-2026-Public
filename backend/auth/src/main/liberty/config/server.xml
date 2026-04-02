@@ -66,8 +66,8 @@
     <!-- end::ssl[] -->
     <!-- for google oauth  -->
     <!-- havent included secrets -->
-\ <!-- for jwt -->
-    <jwtBuilder id="jwtAuthBuilder" keyAlias="default" issuer="LakerTracks" expiry="2h" audiences="worklog" signatureAlgorithm="RS256"/>  
+ <!-- for jwt -->
+    <jwtBuilder id="jwtAuthBuilder" keyAlias="default" issuer="LakerTracks" expiresInSeconds="900" audiences="worklog" signatureAlgorithm="RS256"/>  
     <!-- keystore to sign JWT -->
     <keyStore id="defaultKeyStore" password="google" location="${server.config.dir}/resources/security/key.p12" type="PKCS12"/>
     <!-- SSL FOR GOOGLE -->
