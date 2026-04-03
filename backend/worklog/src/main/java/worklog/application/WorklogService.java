@@ -7,6 +7,7 @@ import java.util.logging.Logger;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
@@ -19,9 +20,10 @@ import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import jakarta.annotation.security.RolesAllowed;
+import jakarta.ws.rs.core.SecurityContext;
 
 
 @Path("/")
@@ -57,6 +59,8 @@ public class WorklogService {
         return repo.getDraft();
     }
 
+
+    
     @GET
     @Path("/author/{authorName}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -84,14 +88,16 @@ public class WorklogService {
     }
 
 
+    @Context
+    SecurityContext securityContext;
     @PUT
     @Path("/id/{id}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Update worklog draft by mongo ID in the database.")
     public Response updateWorklog(@jakarta.ws.rs.PathParam("id") String id, @Valid WorklogEntry updatedEntry) {
-        logger.log(Level.INFO, "PUT: updateWorklog()");
-        return repo.updateWorklog(id, updatedEntry);
+        boolean isInstructor = securityContext.isUserInRole("instructor");
+        return repo.updateWorklog(id, updatedEntry, isInstructor);
     }
 
 
