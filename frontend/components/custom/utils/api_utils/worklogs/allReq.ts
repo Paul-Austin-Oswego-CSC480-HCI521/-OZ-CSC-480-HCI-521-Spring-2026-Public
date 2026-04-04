@@ -27,7 +27,13 @@ export async function getAllWorkLogs() {
     const res = await client.get(`${WORKLOG_API_URL}`);
     return res.data;
   } catch (err: any) {
+<<<<<<< HEAD
     if (err.response?.status === 404) return [];
+=======
+    if (err.response?.status === 404) {
+      return [];
+    }
+>>>>>>> origin/almira-sprint4
     throw err;
   }
 }

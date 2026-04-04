@@ -5,14 +5,19 @@ import { workLogPostType } from "@/types/worklog/worklogTypes";
 export const userAtom = atom((get) => {
   const token = get(tokenAtom);
   if (!token) return null;
-  const payload = JSON.parse(atob(token.split(".")[1]));
-
-  return {
-    id: payload.id as string,
-    email: payload.email as string,
-    role: payload.role as string,
-    name: payload.name as string,
-  };
+  try {
+    const parts = token.split(".");
+    if (parts.length < 2) return null;
+    const payload = JSON.parse(atob(parts[1]));
+    return {
+      id: payload.id as string,
+      email: payload.email as string,
+      role: payload.role as string,
+      name: payload.name as string,
+    };
+  } catch {
+    return null;
+  }
 });
 
 export const worklogEditAtom = atom<{
