@@ -7,7 +7,7 @@ import axios from "axios";
 import { env } from "next-runtime-env";
 
 const API_BASE = env("NEXT_PUBLIC_BASE_URL") || "http://localhost";
-const WORKLOG_PORT = env("NEXT_PUBLIC_WORKLOG_PORT");
+const WORKLOG_PORT = env("NEXT_PUBLIC_WORKLOG_PORT") || "9081";
 
 const client = createClient(API_BASE);
 export async function submitWorkLog(data: workLogPostType) {
@@ -20,18 +20,16 @@ export async function submitWorkLog(data: workLogPostType) {
   return res.data;
 }
 export async function getWorkLog(authorName: string | undefined) {
+  if (!authorName) return [];
   try {
     const res = await client.get(
-      `${API_BASE}:${WORKLOG_PORT}/worklog/api/author/${authorName}`,
-      // `http://localhost:9081/worklog/api/author/${authorName}`,
+      `${API_BASE}:${WORKLOG_PORT}/worklog/api/author/${encodeURIComponent(authorName)}`,
     );
-
-    return res.data;
-
-    return [];
+    const data = res.data;
+    return Array.isArray(data) ? data : [];
   } catch (err: any) {
     if (err.response?.status === 404) {
-      return err;
+      return [];
     }
     throw err;
   }
@@ -43,7 +41,7 @@ export async function getAllWorkLogs() {
     return res.data;
   } catch (err: any) {
     if (err.response?.status === 404) {
-      return err;
+      return [];
     }
     throw err;
   }
