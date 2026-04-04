@@ -93,7 +93,7 @@ public class AuthResource{
             .value(refreshToken)
             .httpOnly(true)
             .secure(ISHTTPS) //Set to true once https is up and running
-            .path("/api/auth")
+            .path("/")
             .maxAge(REFRESH_MAX_AGE)
             .sameSite(NewCookie.SameSite.STRICT)
             .build();
@@ -187,7 +187,7 @@ public class AuthResource{
             .value("")
             .httpOnly(true)
             .secure(true)
-            .path("/api/auth")
+            .path("/")
             .maxAge(0)
             .build();
 

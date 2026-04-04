@@ -19,3 +19,12 @@ export async function googleSignIn(credential: string, role?: string) {
     id: string;
   };
 }
+
+export async function logout() {
+  const AUTH_URL = env("NEXT_PUBLIC_AUTH_API_URL") || "http://localhost:9084/auth/api";
+  try {
+    await axios.post(`${AUTH_URL}/auth/logout`, {}, { withCredentials: true });
+  } catch {
+    // logout best-effort — continue clearing local state even if it fails
+  }
+}

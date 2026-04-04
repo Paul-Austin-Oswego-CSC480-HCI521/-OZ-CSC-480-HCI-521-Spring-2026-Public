@@ -233,8 +233,26 @@ export function WorkLogForm() {
   });
 
   useEffect(() => {
-    if (worklogEdit) {
-      // ── Existing: populate from worklogEdit (resubmit via atom) ──
+    if (pendingWorklog?.taskList?.length) {
+      // ── Restore form when student navigates back from confirm page ──
+      const populatedTasks = pendingWorklog.taskList.map((t: any) => ({
+        taskName: t.taskName || "",
+        goal: t.goal || "",
+        collaborators: t.collaborators || [],
+        assignedUser: t.assignedUser || "",
+        status: t.status || ("not-started" as const),
+        dueDate: t.dueDate || "",
+        creationDate: t.creationDate || dateCreated,
+        reflection: t.reflection || "",
+      }));
+      form.reset({ tasks: populatedTasks });
+      const openState: Record<string, boolean> = {};
+      populatedTasks.forEach((_: any, i: number) => {
+        openState[String(i)] = true;
+      });
+      setOpenTasks(openState);
+    } else if (worklogEdit) {
+      // ── Populate from worklogEdit (resubmit via atom) ──
       if (worklogEdit.mode === "resubmit" && worklogEdit.tasks?.length) {
         const populatedTasks = worklogEdit.tasks.map((t: any) => ({
           taskName: t.taskName || "",
@@ -257,7 +275,7 @@ export function WorkLogForm() {
         setOpenTasks({});
       }
     } else if (weekFromUrl && modeFromUrl === "resubmit" && allWorklogs) {
-      // ── Existing: populate from URL params + fetched worklogs ──
+      // ── Populate from URL params + fetched worklogs ──
       const weekLogs = allWorklogs
         .filter((log: any) => String(log.worklogName) === weekFromUrl)
         .sort(
@@ -284,24 +302,6 @@ export function WorkLogForm() {
         });
         setOpenTasks(openState);
       }
-    } else if (pendingWorklog?.taskList?.length) {
-      // ── FIX: restore form when student navigates back from confirm page ──
-      const populatedTasks = pendingWorklog.taskList.map((t: any) => ({
-        taskName: t.taskName || "",
-        goal: t.goal || "",
-        collaborators: t.collaborators || [],
-        assignedUser: t.assignedUser || "",
-        status: t.status || ("not-started" as const),
-        dueDate: t.dueDate || "",
-        creationDate: t.creationDate || dateCreated,
-        reflection: t.reflection || "",
-      }));
-      form.reset({ tasks: populatedTasks });
-      const openState: Record<string, boolean> = {};
-      populatedTasks.forEach((_: any, i: number) => {
-        openState[String(i)] = true;
-      });
-      setOpenTasks(openState);
     }
   }, [worklogEdit, allWorklogs, weekFromUrl, modeFromUrl, pendingWorklog]);
 

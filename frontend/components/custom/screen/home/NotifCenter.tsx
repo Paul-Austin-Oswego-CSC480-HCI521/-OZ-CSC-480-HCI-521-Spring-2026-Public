@@ -75,7 +75,13 @@ export const NotifCenter = () => {
               </Link>
             </div>
           ) : (
-            worklogs.slice(0, 4).map((log: any, i: number) => {
+            [...worklogs]
+              .sort(
+                (a: any, b: any) =>
+                  (parseInt(b.worklogName) || 0) -
+                  (parseInt(a.worklogName) || 0),
+              )
+              .slice(0, 4).map((log: any, i: number) => {
               const lateDays = getLateDays(log);
               return (
                 <div
