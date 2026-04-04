@@ -282,13 +282,13 @@ const InstructorDashboard = () => {
     queryFn: getAllWorkLogs,
   });
 
-  if (userInfo && userInfo?.role != "instructor") {
-    return (
-      <>
-        <h1>Sorry you dont have access to this page!</h1>;
-      </>
-    );
-  }
+  // if (userInfo && userInfo?.role != "instructor") {
+  //   return (
+  //     <>
+  //       <h1>Sorry you dont have access to this page!</h1>;
+  //     </>
+  //   );
+  // }
   if (isLoading) return <p className="p-4 sm:p-10">Loading</p>;
 
   const allWorklogs = data ?? [];

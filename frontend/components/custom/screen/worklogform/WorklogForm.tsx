@@ -417,7 +417,7 @@ export function WorkLogForm() {
           </div>
         </CardHeader>
 
-        <CardContent className="max-h-[70vh] overflow-y-auto">
+        <CardContent>
           <form
             id="worklog-form"
             onSubmit={form.handleSubmit(onSubmit, (errors) =>

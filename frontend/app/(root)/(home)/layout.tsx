@@ -38,7 +38,7 @@ export default function RootLayout({
             <Topbar />
             <div className="flex flex-1 overflow-hidden">
               <AppSidebar />
-              <main className="w-full">{children}</main>
+              <main className="w-full overflow-y-auto">{children}</main>
             </div>
           </div>
         </SidebarProvider>

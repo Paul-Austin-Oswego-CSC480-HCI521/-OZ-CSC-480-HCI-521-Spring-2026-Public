@@ -25,7 +25,7 @@ export default function ConfirmPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+    <div className="flex items-center justify-center p-6 sm:p-10">
       <div className="w-full max-w-4xl rounded-3xl bg-white shadow-lg p-16 text-center">
         <h1 className="text-5xl font-bold mb-12">
           Are you sure you want to submit your log?
