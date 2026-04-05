@@ -17,7 +17,6 @@ import {
   FileText,
   Hourglass,
 } from "lucide-react";
-import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 type WorklogStatus = "submitted" | "late" | "missing" | "current" | "upcoming";
@@ -30,6 +29,7 @@ interface WeekEntry {
   lateByDays?: number;
   overdueDays?: number;
   taskList?: any[];
+  isCurrent?: boolean;
 }
 
 const accentGreen = "#1E4B35";
@@ -63,7 +63,10 @@ function getStatusIcon(status: WorklogStatus) {
       );
     case "upcoming":
       return (
-        <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-zinc-400 shrink-0" />
+        <FileText
+          className="h-5 w-5 sm:h-6 sm:w-6 shrink-0"
+          style={{ color: accentGreen }}
+        />
       );
   }
 }
@@ -76,33 +79,20 @@ function getStatusBadge(entry: WeekEntry) {
       return null;
     case "late":
       return (
-        <span
-          className={cn(
-            base,
-            "border-red-200 bg-red-50 text-red-800",
-          )}
-        >
+        <span className={cn(base, "border-red-200 bg-red-50 text-red-800")}>
           Submitted Late ({entry.lateByDays} days)
         </span>
       );
     case "missing":
       return (
-        <span
-          className={cn(
-            base,
-            "border-red-200 bg-red-50 text-red-800",
-          )}
-        >
+        <span className={cn(base, "border-red-200 bg-red-50 text-red-800")}>
           Overdue ({entry.overdueDays} days)
         </span>
       );
     case "current":
       return (
         <span
-          className={cn(
-            base,
-            "border-[#1E4B35]/35 bg-[#1E4B35] text-white",
-          )}
+          className={cn(base, "border-[#1E4B35]/35 bg-[#1E4B35] text-white")}
         >
           Current Week
         </span>
@@ -112,7 +102,7 @@ function getStatusBadge(entry: WeekEntry) {
         <span
           className={cn(
             base,
-            "border-amber-200/80 bg-amber-50 text-amber-900",
+            "border-[#1E4B35]/30 bg-[#1E4B35]/10 text-[#1E4B35]",
           )}
         >
           Upcoming
@@ -122,10 +112,10 @@ function getStatusBadge(entry: WeekEntry) {
 }
 
 function buildWeekEntries(worklogs: any[]): WeekEntry[] {
-  const semesterStart = new Date("2026-01-26T00:00:00-05:00");
+  const semesterStart = new Date("2026-01-26T00:00:00");
   const now = new Date();
   const worklogInfo = getWorklogDate(semesterStart);
-  const currentWeek = worklogInfo ? parseInt(worklogInfo.weekNumber) : 0;
+  const currentWeek = worklogInfo ? parseInt(worklogInfo.weekNumber) - 1 : 0;
 
   const submittedMap = new Map<number, any>();
   worklogs.forEach((log: any) => {
@@ -150,58 +140,51 @@ function buildWeekEntries(worklogs: any[]): WeekEntry[] {
     const log = submittedMap.get(w);
 
     if (w > currentWeek) {
-      if (log) {
-        entries.push({
-          week: w,
-          dueDate: dueDateStr,
-          submittedDate: new Date(log.dateSubmitted).toLocaleDateString(
-            "en-US",
-            {
+      entries.push({
+        week: w,
+        dueDate: dueDateStr,
+        submittedDate: log
+          ? new Date(log.dateSubmitted + "T00:00:00").toLocaleDateString("en-US", {
               month: "short",
               day: "numeric",
-              hour: "numeric",
-              minute: "2-digit",
-            },
-          ),
-          status: "submitted",
-          taskList: log.taskList,
-        });
-      } else {
-        entries.push({ week: w, dueDate: dueDateStr, status: "upcoming" });
-      }
+              year: "numeric",
+            })
+          : undefined,
+        status: "upcoming",
+        taskList: log?.taskList,
+      });
     } else if (w === currentWeek) {
       if (log) {
         entries.push({
           week: w,
           dueDate: dueDateStr,
-          submittedDate: new Date(log.dateSubmitted).toLocaleDateString(
+          submittedDate: new Date(log.dateSubmitted + "T00:00:00").toLocaleDateString(
             "en-US",
             {
               month: "short",
               day: "numeric",
-              hour: "numeric",
-              minute: "2-digit",
+              year: "numeric",
             },
           ),
           status: "submitted",
+          isCurrent: true,
           taskList: log.taskList,
         });
       } else {
-        entries.push({ week: w, dueDate: dueDateStr, status: "current" });
+        entries.push({ week: w, dueDate: dueDateStr, status: "current", isCurrent: true });
       }
     } else if (log) {
-      const submitted = new Date(log.dateSubmitted);
+      const submitted = new Date(log.dateSubmitted + "T00:00:00");
       const diffDays = Math.floor(
         (submitted.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24),
       );
       entries.push({
         week: w,
         dueDate: dueDateStr,
-        submittedDate: submitted.toLocaleDateString("en-US", {
+        submittedDate: new Date(log.dateSubmitted + "T00:00:00").toLocaleDateString("en-US", {
           month: "short",
           day: "numeric",
-          hour: "numeric",
-          minute: "2-digit",
+          year: "numeric",
         }),
         status: diffDays > 0 ? "late" : "submitted",
         lateByDays: diffDays > 0 ? diffDays : undefined,
@@ -211,12 +194,17 @@ function buildWeekEntries(worklogs: any[]): WeekEntry[] {
       const overdueDays = Math.floor(
         (now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24),
       );
-      entries.push({
-        week: w,
-        dueDate: dueDateStr,
-        status: "missing",
-        overdueDays,
-      });
+      if (overdueDays < 0) {
+        // Due date hasn't passed yet — treat as current
+        entries.push({ week: w, dueDate: dueDateStr, status: "current" });
+      } else {
+        entries.push({
+          week: w,
+          dueDate: dueDateStr,
+          status: "missing",
+          overdueDays,
+        });
+      }
     }
   }
 
@@ -228,22 +216,26 @@ export const Notification = () => {
   const userInfo = useAtomValue(userAtom);
   const worklogEdit = useAtomValue(worklogEditAtom);
   const setWorklogEdit = useSetAtom(worklogEditAtom);
-  const [selectedWeek, setSelectedWeek] = useState<number | null>(null);
-
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ["worklogs", userInfo?.id],
     enabled: !!userInfo?.id,
     queryFn: () => getWorkLog(userInfo?.email),
   });
 
   if (isLoading) return <p className="p-4 sm:p-10">Loading...</p>;
+  if (error) return (
+    <div className="p-4 sm:p-10">
+      <p className="text-red-600 font-medium">Failed to load worklogs</p>
+      <p className="text-sm text-muted-foreground mt-1">{(error as any)?.message}</p>
+    </div>
+  );
 
   const worklogs = data ?? [];
   const entries = buildWeekEntries(worklogs);
 
-  const semesterStart = new Date("2026-01-26T00:00:00-05:00");
+  const semesterStart = new Date("2026-01-26T00:00:00");
   const worklogInfo = getWorklogDate(semesterStart);
-  const currentWeekNum = worklogInfo ? parseInt(worklogInfo.weekNumber) : 0;
+  const currentWeekNum = worklogInfo ? parseInt(worklogInfo.weekNumber) - 1 : 0;
   const currentWeekEntry = entries.find((e) => e.week === currentWeekNum);
 
   const pastEntries = entries.filter((e) => e.status !== "upcoming");
@@ -265,94 +257,54 @@ export const Notification = () => {
           : "Create Current Week Work Log"
       : null;
 
-  const handleStartWorklog = (entry: WeekEntry) => {
-    setWorklogEdit({
-      mode: "new",
-      weekNumber: String(entry.week),
-    });
-    router.push(`/worklogs?week=${entry.week}&mode=new`);
-  };
-
-  const handleResubmit = (entry: WeekEntry) => {
-    // Get all submissions for this week, sorted oldest first
-    const weekSubmissions = worklogs
-      .filter((log: any) => parseInt(log.worklogName) === entry.week)
-      .sort(
-        (a: any, b: any) =>
-          new Date(a.dateSubmitted).getTime() -
-          new Date(b.dateSubmitted).getTime(),
-      );
-
-    const latest = weekSubmissions[weekSubmissions.length - 1];
-
-    setWorklogEdit({
-      mode: "resubmit",
-      weekNumber: String(entry.week),
-      tasks: latest?.taskList,
-      previousSubmissions: weekSubmissions,
-    });
-    router.push(`/worklogs?week=${entry.week}&mode=resubmit`); // adjust to your route
+  const handleWeekClick = (entry: WeekEntry) => {
+    const hasSubmission = entry.status === "submitted" || entry.status === "late" || entry.submittedDate;
+    if (hasSubmission) {
+      router.push(`/worklogs/review?week=${entry.week}`);
+    } else {
+      setWorklogEdit({
+        mode: "new",
+        weekNumber: String(entry.week),
+      });
+      router.push(`/worklogs?week=${entry.week}&mode=new`);
+    }
   };
 
   const handlePrimaryCurrentWeek = () => {
     if (!currentWeekNum || !currentWeekEntry) return;
-    if (
-      currentWeekEntry.status === "submitted" ||
-      currentWeekEntry.status === "late"
-    ) {
-      handleResubmit(currentWeekEntry);
-      return;
-    }
-    if (
-      worklogEdit?.weekNumber === String(currentWeekNum) &&
-      worklogEdit.mode === "new"
-    ) {
-      router.push(`/worklogs?week=${currentWeekNum}&mode=new`);
-      return;
-    }
-    handleStartWorklog(currentWeekEntry);
+    handleWeekClick(currentWeekEntry);
   };
 
   return (
-    <div className="p-4 sm:p-6 md:p-10 h-full overflow-y-auto max-w-[1000px] mx-auto w-full">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-6 mb-8">
+    <div className="p-3 sm:p-4 md:p-6 w-full">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4 mb-4 sm:mb-5">
         <div>
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-2 flex items-center gap-3">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight mb-1 flex items-center gap-2.5">
             <span
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border-2 bg-white shadow-sm"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border-2 bg-white shadow-sm"
               style={{ borderColor: accentGreen }}
             >
               <FileText
-                className="h-6 w-6"
+                className="h-5 w-5"
                 style={{ color: accentGreen }}
                 aria-hidden
               />
             </span>
             Weekly Work Logs
           </h1>
-          <p className="text-sm sm:text-base text-muted-foreground pl-0 sm:pl-14">
+          <p className="text-xs sm:text-sm text-muted-foreground pl-0 sm:pl-[46px]">
             Track and submit your weekly progress
           </p>
         </div>
-        {currentWeekPrimaryLabel && (
-          <Button
-            type="button"
-            className="shrink-0 rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:opacity-95 border-0"
-            style={{ backgroundColor: accentGreen }}
-            onClick={handlePrimaryCurrentWeek}
-          >
-            {currentWeekPrimaryLabel}
-          </Button>
-        )}
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-8">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-4 sm:mb-5 w-3/4">
         <Card
           className="border-2 py-0 shadow-none rounded-xl overflow-hidden"
           style={{ borderColor: `${accentGreen}33` }}
         >
-          <CardContent className="p-3 sm:py-3 sm:px-4 text-center bg-[rgba(109,155,129,0.08)]">
+          <CardContent className="p-2.5 sm:py-2.5 sm:px-3 text-center bg-[rgba(109,155,129,0.08)]">
             <p className="text-xs sm:text-sm text-muted-foreground flex items-center justify-center gap-1.5 mb-1">
               <CheckCircle2
                 className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0"
@@ -360,7 +312,10 @@ export const Notification = () => {
               />
               Submitted
             </p>
-            <p className="text-xl sm:text-3xl font-bold tabular-nums" style={{ color: accentGreen }}>
+            <p
+              className="text-lg sm:text-2xl font-bold tabular-nums"
+              style={{ color: accentGreen }}
+            >
               {submitted}
               <span className="text-muted-foreground text-sm sm:text-lg font-normal">
                 /{total}
@@ -372,7 +327,7 @@ export const Notification = () => {
           className="border-2 py-0 shadow-none rounded-xl overflow-hidden"
           style={{ borderColor: `${accentGreen}33` }}
         >
-          <CardContent className="p-3 sm:py-3 sm:px-4 text-center bg-[rgba(109,155,129,0.08)]">
+          <CardContent className="p-2.5 sm:py-2.5 sm:px-3 text-center bg-[rgba(109,155,129,0.08)]">
             <p className="text-xs sm:text-sm text-muted-foreground flex items-center justify-center gap-1.5 mb-1">
               <Clock
                 className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0"
@@ -380,7 +335,10 @@ export const Notification = () => {
               />
               Late
             </p>
-            <p className="text-xl sm:text-3xl font-bold tabular-nums" style={{ color: accentGreen }}>
+            <p
+              className="text-lg sm:text-2xl font-bold tabular-nums"
+              style={{ color: accentGreen }}
+            >
               {late}
               <span className="text-muted-foreground text-sm sm:text-lg font-normal">
                 /{total}
@@ -392,7 +350,7 @@ export const Notification = () => {
           className="border-2 py-0 shadow-none rounded-xl overflow-hidden"
           style={{ borderColor: `${accentGreen}33` }}
         >
-          <CardContent className="p-3 sm:py-3 sm:px-4 text-center bg-[rgba(109,155,129,0.08)]">
+          <CardContent className="p-2.5 sm:py-2.5 sm:px-3 text-center bg-[rgba(109,155,129,0.08)]">
             <p className="text-xs sm:text-sm text-muted-foreground flex items-center justify-center gap-1.5 mb-1">
               <Hourglass
                 className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0"
@@ -400,7 +358,10 @@ export const Notification = () => {
               />
               Missing
             </p>
-            <p className="text-xl sm:text-3xl font-bold tabular-nums" style={{ color: accentGreen }}>
+            <p
+              className="text-lg sm:text-2xl font-bold tabular-nums"
+              style={{ color: accentGreen }}
+            >
               {missing}
               <span className="text-muted-foreground text-sm sm:text-lg font-normal">
                 /{total}
@@ -410,111 +371,84 @@ export const Notification = () => {
         </Card>
       </div>
 
-      {/* Work log list — Figma frame: 20px radius, 2px #1E4B35 border, fill #6D9B81 @ 20% */}
+      {currentWeekPrimaryLabel && (
+        <div className="mb-4 sm:mb-5 flex justify-end">
+          <Button
+            type="button"
+            className="rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:opacity-95 border-0"
+            style={{ backgroundColor: accentGreen }}
+            onClick={handlePrimaryCurrentWeek}
+          >
+            {currentWeekPrimaryLabel}
+          </Button>
+        </div>
+      )}
+
+      {/* Work log list */}
       <div
-        className="rounded-[20px] border-2 p-5 sm:p-6 md:p-8 shadow-sm"
+        className="rounded-[20px] border-2 p-3 sm:p-4 md:p-5 shadow-sm"
         style={{
           borderColor: accentGreen,
           backgroundColor: "rgba(109, 155, 129, 0.2)",
         }}
       >
-        <div className="mb-6">
-          <h2 className="text-lg sm:text-2xl font-bold text-[#1E4B35]">
+        <div className="mb-3 sm:mb-4">
+          <h2 className="text-lg sm:text-xl font-bold text-[#1E4B35]">
             Work Log Status
           </h2>
-          <p className="text-sm text-[#1E4B35]/80 mt-1.5">
+          <p className="text-xs sm:text-sm text-[#1E4B35]/80 mt-1">
             Track your submission progress for each week.
           </p>
         </div>
 
-        <div className="flex flex-col gap-4 sm:gap-5">
-          {entries.map((entry) => {
-            const isSelected = selectedWeek === entry.week;
-
-            return (
-              <div
-                key={entry.week}
-                className={cn(
-                  "flex gap-4 rounded-xl border bg-white p-4 sm:p-5 shadow-sm transition-colors",
-                  entry.status === "current" &&
-                    "border-[#1E4B35]/40 bg-[rgba(109,155,129,0.22)]",
-                  entry.status === "missing" && "border-2 border-red-400",
-                  entry.status === "upcoming" && "border-zinc-200",
-                  entry.status !== "current" &&
-                    entry.status !== "missing" &&
-                    entry.status !== "upcoming" &&
-                    "border-zinc-200/90",
-                )}
-              >
-                <div className="pt-0.5 shrink-0">{getStatusIcon(entry.status)}</div>
-
-                <div
-                  className={cn(
-                    "flex-1 min-w-0 cursor-pointer rounded-lg -m-1 p-1 transition-colors",
-                    isSelected && "bg-white/60 ring-2 ring-[#1E4B35]/25 ring-offset-2",
-                    !isSelected && "hover:bg-white/40",
-                  )}
-                  onClick={() =>
-                    setSelectedWeek(isSelected ? null : entry.week)
-                  }
-                >
-                  <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 mb-2">
-                    <h3 className="text-base sm:text-lg font-bold text-zinc-900">
-                      Week {entry.week}
-                    </h3>
-                    {getStatusBadge(entry)}
-                  </div>
-                  <div className="flex flex-col sm:flex-row sm:gap-6 gap-1 text-xs sm:text-sm text-zinc-600">
-                    <span className="flex items-center gap-1.5">
-                      <CalendarDays className="h-3.5 w-3.5 shrink-0 opacity-70" />
-                      Due: {entry.dueDate}
+        <div className="flex flex-col gap-3">
+          {entries.map((entry) => (
+            <div
+              key={entry.week}
+              onClick={() => handleWeekClick(entry)}
+              className={cn(
+                "flex gap-3 rounded-xl border bg-white p-3 sm:p-4 shadow-sm transition-colors cursor-pointer hover:bg-white/80",
+                (entry.status === "current" || entry.isCurrent) &&
+                  "border-[#1E4B35] border-2 bg-[rgba(109,155,129,0.28)] hover:bg-[rgba(109,155,129,0.35)]",
+                entry.status === "missing" &&
+                  "border-2 border-red-400 bg-red-50/70 hover:bg-red-50",
+                entry.status === "upcoming" && "border-zinc-200",
+                !entry.isCurrent && entry.status !== "current" &&
+                  entry.status !== "missing" &&
+                  entry.status !== "upcoming" &&
+                  "border-zinc-200/90",
+              )}
+            >
+              <div className="pt-0.5 shrink-0">
+                {getStatusIcon(entry.status)}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 mb-1">
+                  <h3 className="text-base sm:text-lg font-bold text-zinc-900">
+                    Week {entry.week}
+                  </h3>
+                  {entry.isCurrent && entry.status !== "current" && (
+                    <span className="inline-flex items-center text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-md border border-[#1E4B35]/30 bg-[#1E4B35]/10 text-[#1E4B35]">
+                      Current Week
                     </span>
-                    {entry.submittedDate && (
-                      <span className="flex items-center gap-1.5">
-                        <Clock className="h-3.5 w-3.5 shrink-0 opacity-70" />
-                        Submitted: {entry.submittedDate}
-                      </span>
-                    )}
-                  </div>
-
-                  {isSelected && (
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {(entry.status === "missing" ||
-                        entry.status === "current" ||
-                        entry.status === "upcoming") && (
-                        <Button
-                          size="sm"
-                          className="rounded-lg font-semibold text-white border-0"
-                          style={{ backgroundColor: accentGreen }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleStartWorklog(entry);
-                          }}
-                        >
-                          Start Worklog
-                        </Button>
-                      )}
-                      {(entry.status === "submitted" ||
-                        entry.status === "late") && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="rounded-lg border-2 font-semibold"
-                          style={{ borderColor: accentGreen, color: accentGreen }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleResubmit(entry);
-                          }}
-                        >
-                          Resubmit
-                        </Button>
-                      )}
-                    </div>
+                  )}
+                  {getStatusBadge(entry)}
+                </div>
+                <div className="flex flex-col sm:flex-row sm:gap-6 gap-1 text-xs sm:text-sm text-zinc-600">
+                  <span className="flex items-center gap-1.5">
+                    <CalendarDays className="h-3.5 w-3.5 shrink-0 opacity-70" />
+                    Due: {entry.dueDate}
+                  </span>
+                  {entry.submittedDate && (
+                    <span className="flex items-center gap-1.5">
+                      <Clock className="h-3.5 w-3.5 shrink-0 opacity-70" />
+                      Submitted: {entry.submittedDate}
+                    </span>
                   )}
                 </div>
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       </div>
     </div>

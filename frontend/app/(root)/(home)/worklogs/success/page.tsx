@@ -7,7 +7,7 @@ export default function SuccessPage() {
   const router = useRouter();
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6">
+    <div className="flex flex-col items-center justify-center p-6 sm:p-10">
       <h1 className="text-3xl font-bold mb-6">Worklog Submitted!</h1>
       <p className="mb-6 text-lg text-gray-700">
         Your worklog has been successfully submitted.

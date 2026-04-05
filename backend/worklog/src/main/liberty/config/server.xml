@@ -54,6 +54,7 @@
     <mpJwt id="defaultMpJwt"
         userNameAttribute="email"
         mapToUserRegistry="false"
+        clockSkew="0s"
     />
 
 </server>

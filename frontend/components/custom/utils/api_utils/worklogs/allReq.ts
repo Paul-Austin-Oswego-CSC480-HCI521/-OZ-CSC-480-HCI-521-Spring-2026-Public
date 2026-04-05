@@ -31,3 +31,23 @@ export async function getAllWorkLogs() {
     throw err;
   }
 }
+
+export async function updateWorklog(id: string, data: any) {
+  const res = await client.put(`${WORKLOG_API_URL}/id/${id}`, data);
+  return res.data;
+}
+
+export async function saveDraft(userId: string, data: any) {
+  const res = await client.put(`${WORKLOG_API_URL}/draft/${userId}`, data);
+  return res.data;
+}
+
+export async function getDrafts() {
+  try {
+    const res = await client.get(`${WORKLOG_API_URL}/draft`);
+    return res.data;
+  } catch (err: any) {
+    if (err.response?.status === 404) return [];
+    throw err;
+  }
+}

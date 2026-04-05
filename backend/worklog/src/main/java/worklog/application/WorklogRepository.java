@@ -209,6 +209,7 @@ public class WorklogRepository {
         newDoc.put("dateSubmitted", updatedEntry.getDateSubmitted().format(dateTimeFormatter));
         newDoc.put("collaborators", updatedEntry.getCollaborators());
         newDoc.put("taskList", formatTask(updatedEntry.getTaskList()));
+        newDoc.put("worklogName", updatedEntry.getWorklogName());
         
         if (isInstructor) {
             newDoc.put("reviewed", updatedEntry.isReviewed());

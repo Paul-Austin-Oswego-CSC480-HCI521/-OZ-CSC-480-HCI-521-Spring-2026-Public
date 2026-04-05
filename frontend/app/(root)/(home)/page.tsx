@@ -17,7 +17,7 @@ const Page = () => {
 
   // if (userInfo && userInfo.role == "student") {
   return (
-    <div className="w-full h-full overflow-y-auto p-10">
+    <div className="w-full p-4 sm:p-6 md:p-8 space-y-6">
       <Welcome />
       <NotifCenter />
     </div>

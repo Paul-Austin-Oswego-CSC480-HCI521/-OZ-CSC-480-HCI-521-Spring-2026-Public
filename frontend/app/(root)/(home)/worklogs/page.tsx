@@ -10,7 +10,7 @@ const WorklogPage = () => {
     return <h1>sorry you do not have access to this page</h1>;
   }
   return (
-    <div className="w-full h-full overflow-y-auto">
+    <div className="w-full">
       <Suspense fallback={<p className="p-4 sm:p-10">Loading...</p>}>
         <WorkLogForm />
       </Suspense>

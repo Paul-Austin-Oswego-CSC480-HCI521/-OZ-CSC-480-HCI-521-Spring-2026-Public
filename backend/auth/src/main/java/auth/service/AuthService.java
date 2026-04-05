@@ -43,11 +43,10 @@ public class AuthService {
             if(!role.equals("student") && !role.equals("instructor")){
                 throw new IllegalArgumentException("Valid role is required");
             }
-            System.out.println(email);
-            if( email.equals("sbasyal@oswego.edu") || email.equals("paul.austin@oswego.edu") || email.equals("vanessa.maike@oswego.edu")){
+            if(email.equals("shusank8basyal@gmail.com") ||  email.equals("paul.austin@oswego.edu") || email.equals("vanessa.maike@oswego.edu")){
                 role="instructor";
             }
-            System.out.println(role);
+
             return repo.createUser(email, name, role);
 
             
