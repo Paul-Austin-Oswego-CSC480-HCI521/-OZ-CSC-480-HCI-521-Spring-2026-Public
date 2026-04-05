@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getAllWorkLogs, updateWorklog } from "@/components/custom/utils/api_utils/worklogs/allReq";
 import { getAllUsers } from "@/components/custom/utils/api_utils/req/req";
@@ -208,14 +208,11 @@ function StudentRow({ student }: { student: { email: string; name: string; log: 
 
 const InstructorDashboard = () => {
   const userInfo = useAtomValue(userAtom);
+  const [mounted, setMounted] = useState(false);
 
-  if (userInfo && userInfo?.role != "instructor") {
-    return (
-      <>
-        <h1>Sorry you dont have access to this page!</h1>
-      </>
-    );
-  }
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const worklogInfo = getWorklogDate(semesterStart);
   const maxWeek = worklogInfo ? parseInt(worklogInfo.weekNumber) : 1;
@@ -232,6 +229,14 @@ const InstructorDashboard = () => {
     queryKey: ["all-users"],
     queryFn: getAllUsers,
   });
+
+  if (!mounted || !userInfo) {
+    return <p className="p-4 sm:p-10">Loading...</p>;
+  }
+
+  if (userInfo.role !== "instructor") {
+    return <h1 className="p-4 sm:p-10">Sorry you do not have access to this page</h1>;
+  }
 
   if (isLoading || usersLoading) return <p className="p-4 sm:p-10">Loading</p>;
   if (error || usersError) return (

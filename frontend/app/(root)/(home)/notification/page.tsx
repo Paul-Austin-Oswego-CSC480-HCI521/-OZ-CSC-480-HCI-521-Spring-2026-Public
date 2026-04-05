@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getWorkLog } from "@/components/custom/utils/api_utils/worklogs/allReq";
 import { useAtomValue } from "jotai";
@@ -31,12 +31,25 @@ function getLateDays(log: any): number {
 
 export default function NotificationPage() {
   const userInfo = useAtomValue(userAtom);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["worklogs", userInfo?.id],
     enabled: !!userInfo?.id,
     queryFn: () => getWorkLog(userInfo?.email),
   });
+
+  if (!mounted || !userInfo) {
+    return <p className="p-4 sm:p-10">Loading...</p>;
+  }
+
+  if (userInfo.role === "instructor") {
+    return <h1 className="p-4 sm:p-10">Sorry you do not have access to this page</h1>;
+  }
 
   if (isLoading) return <p className="p-4 sm:p-10">Loading...</p>;
   if (error)

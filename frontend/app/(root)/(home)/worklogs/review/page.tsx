@@ -12,7 +12,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { ArrowLeft, CalendarDays, Clock, ChevronDown, ChevronRight } from "lucide-react";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 
 const statusLabel: Record<string, string> = {
   "not-started": "Not Started",
@@ -217,6 +217,21 @@ function ReviewContent() {
 }
 
 export default function ReviewPage() {
+  const userInfo = useAtomValue(userAtom);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted || !userInfo) {
+    return <p className="p-4 sm:p-10">Loading...</p>;
+  }
+
+  if (userInfo.role === "instructor") {
+    return <h1 className="p-4 sm:p-10">Sorry you do not have access to this page</h1>;
+  }
+
   return (
     <Suspense fallback={<p className="p-6">Loading...</p>}>
       <ReviewContent />
