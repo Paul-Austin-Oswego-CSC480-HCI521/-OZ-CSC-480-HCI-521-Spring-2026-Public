@@ -35,11 +35,11 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <SidebarProvider>
-          <div className="flex flex-col w-full h-screen">
+          <div className="flex flex-col w-full min-h-screen h-screen">
             <Topbar />
             <div className="flex flex-1 overflow-hidden">
               <AppSidebar />
-              <main className="w-full overflow-y-auto">{children}</main>
+              <main className="w-full overflow-y-auto min-h-0">{children}</main>
             </div>
           </div>
           <Toaster position="top-right" richColors />

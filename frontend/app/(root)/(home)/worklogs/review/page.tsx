@@ -40,11 +40,10 @@ function SubmissionCollapsible({
               <h2 className="text-base font-semibold">Submission {subNum}</h2>
               <span className="text-xs text-muted-foreground flex items-center gap-1">
                 <Clock className="h-3 w-3" />
-                {new Date(submission.dateSubmitted).toLocaleDateString("en-US", {
+                {new Date(submission.dateSubmitted + "T00:00:00").toLocaleDateString("en-US", {
                   month: "short",
                   day: "numeric",
-                  hour: "numeric",
-                  minute: "2-digit",
+                  year: "numeric",
                 })}
               </span>
             </div>
@@ -118,13 +117,19 @@ function ReviewContent() {
   const userInfo = useAtomValue(userAtom);
   const setWorklogEdit = useSetAtom(worklogEditAtom);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ["worklogs", userInfo?.id],
     enabled: !!userInfo?.id,
     queryFn: () => getWorkLog(userInfo?.email),
   });
 
   if (isLoading) return <p className="p-6">Loading...</p>;
+  if (error) return (
+    <div className="p-6">
+      <p className="text-red-600 font-medium">Failed to load worklogs</p>
+      <p className="text-sm text-muted-foreground mt-1">{(error as any)?.message}</p>
+    </div>
+  );
   if (!weekNum) return <p className="p-6">No week specified.</p>;
 
   const worklogs = data ?? [];

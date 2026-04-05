@@ -29,6 +29,7 @@ interface WeekEntry {
   lateByDays?: number;
   overdueDays?: number;
   taskList?: any[];
+  isCurrent?: boolean;
 }
 
 const accentGreen = "#1E4B35";
@@ -111,7 +112,7 @@ function getStatusBadge(entry: WeekEntry) {
 }
 
 function buildWeekEntries(worklogs: any[]): WeekEntry[] {
-  const semesterStart = new Date("2026-01-26T00:00:00-05:00");
+  const semesterStart = new Date("2026-01-26T00:00:00");
   const now = new Date();
   const worklogInfo = getWorklogDate(semesterStart);
   const currentWeek = worklogInfo ? parseInt(worklogInfo.weekNumber) - 1 : 0;
@@ -143,11 +144,10 @@ function buildWeekEntries(worklogs: any[]): WeekEntry[] {
         week: w,
         dueDate: dueDateStr,
         submittedDate: log
-          ? new Date(log.dateSubmitted).toLocaleDateString("en-US", {
+          ? new Date(log.dateSubmitted + "T00:00:00").toLocaleDateString("en-US", {
               month: "short",
               day: "numeric",
-              hour: "numeric",
-              minute: "2-digit",
+              year: "numeric",
             })
           : undefined,
         status: "upcoming",
@@ -158,34 +158,33 @@ function buildWeekEntries(worklogs: any[]): WeekEntry[] {
         entries.push({
           week: w,
           dueDate: dueDateStr,
-          submittedDate: new Date(log.dateSubmitted).toLocaleDateString(
+          submittedDate: new Date(log.dateSubmitted + "T00:00:00").toLocaleDateString(
             "en-US",
             {
               month: "short",
               day: "numeric",
-              hour: "numeric",
-              minute: "2-digit",
+              year: "numeric",
             },
           ),
           status: "submitted",
+          isCurrent: true,
           taskList: log.taskList,
         });
       } else {
-        entries.push({ week: w, dueDate: dueDateStr, status: "current" });
+        entries.push({ week: w, dueDate: dueDateStr, status: "current", isCurrent: true });
       }
     } else if (log) {
-      const submitted = new Date(log.dateSubmitted);
+      const submitted = new Date(log.dateSubmitted + "T00:00:00");
       const diffDays = Math.floor(
         (submitted.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24),
       );
       entries.push({
         week: w,
         dueDate: dueDateStr,
-        submittedDate: submitted.toLocaleDateString("en-US", {
+        submittedDate: new Date(log.dateSubmitted + "T00:00:00").toLocaleDateString("en-US", {
           month: "short",
           day: "numeric",
-          hour: "numeric",
-          minute: "2-digit",
+          year: "numeric",
         }),
         status: diffDays > 0 ? "late" : "submitted",
         lateByDays: diffDays > 0 ? diffDays : undefined,
@@ -217,18 +216,24 @@ export const Notification = () => {
   const userInfo = useAtomValue(userAtom);
   const worklogEdit = useAtomValue(worklogEditAtom);
   const setWorklogEdit = useSetAtom(worklogEditAtom);
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ["worklogs", userInfo?.id],
     enabled: !!userInfo?.id,
     queryFn: () => getWorkLog(userInfo?.email),
   });
 
   if (isLoading) return <p className="p-4 sm:p-10">Loading...</p>;
+  if (error) return (
+    <div className="p-4 sm:p-10">
+      <p className="text-red-600 font-medium">Failed to load worklogs</p>
+      <p className="text-sm text-muted-foreground mt-1">{(error as any)?.message}</p>
+    </div>
+  );
 
   const worklogs = data ?? [];
   const entries = buildWeekEntries(worklogs);
 
-  const semesterStart = new Date("2026-01-26T00:00:00-05:00");
+  const semesterStart = new Date("2026-01-26T00:00:00");
   const worklogInfo = getWorklogDate(semesterStart);
   const currentWeekNum = worklogInfo ? parseInt(worklogInfo.weekNumber) - 1 : 0;
   const currentWeekEntry = entries.find((e) => e.week === currentWeekNum);
@@ -291,20 +296,10 @@ export const Notification = () => {
             Track and submit your weekly progress
           </p>
         </div>
-        {currentWeekPrimaryLabel && (
-          <Button
-            type="button"
-            className="shrink-0 rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:opacity-95 border-0"
-            style={{ backgroundColor: accentGreen }}
-            onClick={handlePrimaryCurrentWeek}
-          >
-            {currentWeekPrimaryLabel}
-          </Button>
-        )}
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-4 sm:mb-5">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-4 sm:mb-5 w-3/4">
         <Card
           className="border-2 py-0 shadow-none rounded-xl overflow-hidden"
           style={{ borderColor: `${accentGreen}33` }}
@@ -376,6 +371,19 @@ export const Notification = () => {
         </Card>
       </div>
 
+      {currentWeekPrimaryLabel && (
+        <div className="mb-4 sm:mb-5 flex justify-end">
+          <Button
+            type="button"
+            className="rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:opacity-95 border-0"
+            style={{ backgroundColor: accentGreen }}
+            onClick={handlePrimaryCurrentWeek}
+          >
+            {currentWeekPrimaryLabel}
+          </Button>
+        </div>
+      )}
+
       {/* Work log list */}
       <div
         className="rounded-[20px] border-2 p-3 sm:p-4 md:p-5 shadow-sm"
@@ -400,12 +408,12 @@ export const Notification = () => {
               onClick={() => handleWeekClick(entry)}
               className={cn(
                 "flex gap-3 rounded-xl border bg-white p-3 sm:p-4 shadow-sm transition-colors cursor-pointer hover:bg-white/80",
-                entry.status === "current" &&
+                (entry.status === "current" || entry.isCurrent) &&
                   "border-[#1E4B35] border-2 bg-[rgba(109,155,129,0.28)] hover:bg-[rgba(109,155,129,0.35)]",
                 entry.status === "missing" &&
                   "border-2 border-red-400 bg-red-50/70 hover:bg-red-50",
                 entry.status === "upcoming" && "border-zinc-200",
-                entry.status !== "current" &&
+                !entry.isCurrent && entry.status !== "current" &&
                   entry.status !== "missing" &&
                   entry.status !== "upcoming" &&
                   "border-zinc-200/90",
@@ -419,6 +427,11 @@ export const Notification = () => {
                   <h3 className="text-base sm:text-lg font-bold text-zinc-900">
                     Week {entry.week}
                   </h3>
+                  {entry.isCurrent && entry.status !== "current" && (
+                    <span className="inline-flex items-center text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-md border border-[#1E4B35]/30 bg-[#1E4B35]/10 text-[#1E4B35]">
+                      Current Week
+                    </span>
+                  )}
                   {getStatusBadge(entry)}
                 </div>
                 <div className="flex flex-col sm:flex-row sm:gap-6 gap-1 text-xs sm:text-sm text-zinc-600">

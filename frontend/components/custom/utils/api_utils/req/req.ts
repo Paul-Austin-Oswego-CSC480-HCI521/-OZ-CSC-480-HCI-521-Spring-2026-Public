@@ -20,6 +20,13 @@ export async function googleSignIn(credential: string, role?: string) {
   };
 }
 
+export async function getAllUsers() {
+  const AUTH_URL = env("NEXT_PUBLIC_AUTH_API_URL") || "http://localhost:9084/auth/api";
+  const client = createClient(AUTH_URL);
+  const res = await client.get("/auth/users");
+  return res.data;
+}
+
 export async function logout() {
   const AUTH_URL = env("NEXT_PUBLIC_AUTH_API_URL") || "http://localhost:9084/auth/api";
   try {

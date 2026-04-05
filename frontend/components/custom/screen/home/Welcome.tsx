@@ -15,7 +15,7 @@ const Welcome = () => {
   const worklogEdit = useAtomValue(worklogEditAtom);
   const setWorklogEdit = useSetAtom(worklogEditAtom);
   const name = userInfo?.name || userInfo?.email;
-  const worklogdayInfo = getWorklogDate(new Date("2026-01-26"));
+  const worklogdayInfo = getWorklogDate(new Date("2026-01-26T00:00:00"));
   const weekNumber = worklogdayInfo ? String(parseInt(worklogdayInfo.weekNumber) - 1) : "—";
 
   const { data } = useQuery({
@@ -35,7 +35,7 @@ const Welcome = () => {
   let handleClick: () => void;
 
   if (hasSubmission) {
-    buttonLabel = `Access Week ${weekNumber} Worklog`;
+    buttonLabel = `Review Week ${weekNumber} Worklog`;
     handleClick = () => router.push(`/worklogs/review?week=${weekNumber}`);
   } else if (hasDraft) {
     buttonLabel = `Continue Week ${weekNumber} Worklog`;

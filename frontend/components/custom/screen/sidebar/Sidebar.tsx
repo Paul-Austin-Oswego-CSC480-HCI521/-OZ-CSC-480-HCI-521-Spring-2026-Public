@@ -24,9 +24,9 @@ export function AppSidebar() {
   if (userInfo && userInfo.role == "student") {
     items = [
       { title: "Home", url: "/", icon: Home },
-      { title: "Worklog Status", url: "/notifications", icon: BellIcon },
-      { title: "Notification", url: "#", icon: Workflow },
-      { title: "Tasktracker", url: "#", icon: Workflow },
+      { title: "Notification", url: "/notification", icon: Workflow },
+      { title: "Weekly Work Logs", url: "/notifications", icon: BellIcon },
+      // { title: "Tasktracker", url: "/tasktracker", icon: Workflow },
     ];
   }
   const pathname = usePathname();

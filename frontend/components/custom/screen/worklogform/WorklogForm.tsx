@@ -8,6 +8,7 @@ import {
   submitWorkLog,
   getWorkLog,
 } from "../../utils/api_utils/worklogs/allReq";
+import { getAllUsers } from "../../utils/api_utils/req/req";
 import { useSearchParams } from "next/navigation";
 
 import {
@@ -43,6 +44,16 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import {
   userAtom,
@@ -178,8 +189,10 @@ export function WorkLogForm() {
   const router = useRouter();
   // ── FIX: read AND write pendingWorklogAtom so we can restore on back-nav ──
   const [pendingWorklog, setPendingWorklog] = useAtom(pendingWorklogAtom);
-  const worklogdayInfo = getWorklogDate(new Date("2026-01-26"));
+  const worklogdayInfo = getWorklogDate(new Date("2026-01-26T00:00:00"));
   const [showSuccess, setShowSuccess] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [showSubmitted, setShowSubmitted] = useState(false);
   const [openTasks, setOpenTasks] = useState<Record<string, boolean>>({});
   const [worklogEdit, setWorklogEdit] = useAtom(worklogEditAtom);
 
@@ -195,6 +208,15 @@ export function WorkLogForm() {
 
   const weekNumber =
     worklogEdit?.weekNumber || weekFromUrl || worklogdayInfo?.weekNumber;
+
+  const { data: allUsersData } = useQuery({
+    queryKey: ["all-users"],
+    queryFn: getAllUsers,
+  });
+
+  const studentList = (allUsersData ?? [])
+    .filter((u: any) => u.role === "student" && u.email !== userInfo?.email)
+    .map((u: any) => ({ name: u.name || u.email, email: u.email }));
 
   const { data: allWorklogs } = useQuery({
     queryKey: ["worklogs", userInfo?.id],
@@ -308,16 +330,11 @@ export function WorkLogForm() {
   const mutation = useMutation({
     mutationFn: submitWorkLog,
     onSuccess: () => {
-      setShowSuccess(true);
       form.reset({ tasks: [emptyTask] });
       setOpenTasks({});
       setWorklogEdit(null);
-      // ── FIX: clear pending worklog after a successful final submit ──
       setPendingWorklog(null);
-      setTimeout(() => {
-        setShowSuccess(false);
-        router.push("/");
-      }, 250);
+      setShowSubmitted(true);
     },
   });
 
@@ -336,8 +353,7 @@ export function WorkLogForm() {
     const tasks = data.tasks.map((t) => ({
       ...t,
       assignedUser: userInfo.id,
-        collaborators: t.collaborators.filter((c) => c !== ""), // ← add this
-
+      collaborators: t.collaborators.filter((c) => c !== ""),
     }));
 
     const obj: workLogPostType = {
@@ -349,23 +365,33 @@ export function WorkLogForm() {
       taskList: tasks,
     };
 
-    // Store in atom so confirm page can access it, and so back-nav restores it
-
     setPendingWorklog(obj);
-    router.push("/worklogs/confirm");
+    setShowConfirm(true);
+  }
+
+  function onConfirmSubmit() {
+    if (!pendingWorklog) return;
+    setShowConfirm(false);
+    mutation.mutate(pendingWorklog);
   }
 
 
   return (
     <div className="p-4 sm:p-6 md:p-10">
-      {showSuccess && (
-        <div className="fixed top-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-in fade-in slide-in-from-top-2">
-          Work log submitted successfully!
-        </div>
-      )}
-
       <h1 className="text-2xl sm:text-3xl md:text-4xl mb-1">
-        Week {weekNumber}
+        Week {weekNumber}{" "}
+        {(() => {
+          const semStart = new Date("2026-01-26T00:00:00");
+          const wk = parseInt(weekNumber ?? "0");
+          if (!wk) return null;
+          const start = new Date(semStart);
+          start.setDate(start.getDate() + (wk - 1) * 7);
+          const end = new Date(start);
+          end.setDate(end.getDate() + 6);
+          const fmt = (d: Date) =>
+            d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+          return <span className="text-muted-foreground font-normal">({fmt(start)} - {fmt(end)})</span>;
+        })()}
       </h1>
       <p className="text-sm text-muted-foreground mb-6 md:mb-8">
         Track and submit your weekly progress
@@ -373,7 +399,7 @@ export function WorkLogForm() {
 
       {/* Current submission form */}
       <Card className="w-full">
-        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <CardHeader>
           <div>
             <CardTitle className="text-xl sm:text-2xl font-medium">
               Weekly Work Log · Submission {submissionNumber}
@@ -383,37 +409,6 @@ export function WorkLogForm() {
                 Fill in the details for each task you worked on this week.
               </p>
             )}
-          </div>
-          <div className="flex gap-2 w-full sm:w-auto">
-            {(worklogEdit || modeFromUrl) && (
-              <Button
-                type="button"
-                variant="outline"
-                className="flex-1 sm:flex-none hover:cursor-pointer"
-                onClick={() => {
-                  setWorklogEdit(null);
-                  form.reset({ tasks: [emptyTask] });
-                  setOpenTasks({});
-                }}
-              >
-                Cancel
-              </Button>
-            )}
-            <Button
-              type="button"
-              variant="ghost"
-              className="flex-1 sm:flex-none hover:cursor-pointer"
-              onClick={() => append(emptyTask)}
-            >
-              + Add Task
-            </Button>
-            <Button
-              type="submit"
-              form="worklog-form"
-              className="flex-1 sm:flex-none bg-green-700 hover:cursor-pointer hover:bg-green-800"
-            >
-              Submit Work Log
-            </Button>
           </div>
         </CardHeader>
 
@@ -477,7 +472,7 @@ export function WorkLogForm() {
                               control={form.control}
                               render={({ field, fieldState }) => (
                                 <Field data-invalid={fieldState.invalid}>
-                                  <FieldLabel>Task Name</FieldLabel>
+                                  <FieldLabel>Task Name <span className="text-red-500">*</span></FieldLabel>
                                   <Input
                                     {...field}
                                     placeholder="Task name"
@@ -495,7 +490,7 @@ export function WorkLogForm() {
                               control={form.control}
                               render={({ field, fieldState }) => (
                                 <Field data-invalid={fieldState.invalid}>
-                                  <FieldLabel>Main Goal</FieldLabel>
+                                  <FieldLabel>Main Goal <span className="text-red-500">*</span></FieldLabel>
                                   <Input
                                     {...field}
                                     placeholder="Main goal"
@@ -541,34 +536,54 @@ export function WorkLogForm() {
                                           </span>
                                         ))}
                                     </div>
-                                    <Input
-                                      value={input}
-                                      onChange={(e) => setInput(e.target.value)}
-                                      onKeyDown={(e) => {
-                                        if (
-                                          (e.key === "Enter" ||
-                                            e.key === ",") &&
-                                          input.trim()
-                                        ) {
-                                          e.preventDefault();
-                                          field.onChange([
-                                            ...field.value,
-                                            input.trim(),
-                                          ]);
-                                          setInput("");
-                                        }
-                                        if (
-                                          e.key === "Backspace" &&
-                                          input === "" &&
-                                          field.value.length > 0
-                                        ) {
-                                          field.onChange(
-                                            field.value.slice(0, -1),
-                                          );
-                                        }
-                                      }}
-                                      placeholder="Type a name and press Enter"
-                                    />
+                                    <div className="relative">
+                                      <Input
+                                        value={input}
+                                        onChange={(e) => setInput(e.target.value)}
+                                        onKeyDown={(e) => {
+                                          if (e.key === "Backspace" && input === "" && field.value.length > 0) {
+                                            field.onChange(field.value.slice(0, -1));
+                                          }
+                                          if (e.key === "Escape") {
+                                            setInput("");
+                                          }
+                                        }}
+                                        placeholder="Search for a collaborator..."
+                                      />
+                                      {input.trim() && (
+                                        <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                                          {studentList
+                                            .filter(
+                                              (s: any) =>
+                                                (s.name.toLowerCase().includes(input.toLowerCase()) ||
+                                                 s.email.toLowerCase().includes(input.toLowerCase())) &&
+                                                !field.value.includes(s.name),
+                                            )
+                                            .map((s: any) => (
+                                              <button
+                                                key={s.email}
+                                                type="button"
+                                                className="w-full text-left px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                                                onClick={() => {
+                                                  field.onChange([...field.value, s.name]);
+                                                  setInput("");
+                                                }}
+                                              >
+                                                <p className="text-sm font-medium">{s.name}</p>
+                                                <p className="text-xs text-muted-foreground">{s.email}</p>
+                                              </button>
+                                            ))}
+                                          {studentList.filter(
+                                            (s: any) =>
+                                              (s.name.toLowerCase().includes(input.toLowerCase()) ||
+                                               s.email.toLowerCase().includes(input.toLowerCase())) &&
+                                              !field.value.includes(s.name),
+                                          ).length === 0 && (
+                                            <p className="px-3 py-2 text-sm text-muted-foreground">No matching students</p>
+                                          )}
+                                        </div>
+                                      )}
+                                    </div>
                                   </Field>
                                 );
                               }}
@@ -580,7 +595,7 @@ export function WorkLogForm() {
                                 control={form.control}
                                 render={({ field, fieldState }) => (
                                   <Field data-invalid={fieldState.invalid}>
-                                    <FieldLabel>Deadline</FieldLabel>
+                                    <FieldLabel>Deadline <span className="text-red-500">*</span></FieldLabel>
                                     <Input
                                       {...field}
                                       type="date"
@@ -598,7 +613,7 @@ export function WorkLogForm() {
                                 control={form.control}
                                 render={({ field, fieldState }) => (
                                   <Field data-invalid={fieldState.invalid}>
-                                    <FieldLabel>Completion</FieldLabel>
+                                    <FieldLabel>Completion <span className="text-red-500">*</span></FieldLabel>
                                     <Select
                                       onValueChange={field.onChange}
                                       value={field.value}
@@ -631,7 +646,7 @@ export function WorkLogForm() {
                               control={form.control}
                               render={({ field, fieldState }) => (
                                 <Field data-invalid={fieldState.invalid}>
-                                  <FieldLabel>Reflection</FieldLabel>
+                                  <FieldLabel>Reflection <span className="text-red-500">*</span></FieldLabel>
                                   <InputGroup>
                                     <InputGroupTextarea
                                       {...field}
@@ -664,6 +679,71 @@ export function WorkLogForm() {
         </CardContent>
       </Card>
 
+      <button
+        type="button"
+        onClick={() => append(emptyTask)}
+        className="w-full mt-4 py-4 border-2 border-dashed border-gray-300 rounded-xl text-muted-foreground hover:border-gray-400 hover:text-foreground transition-colors cursor-pointer text-sm font-medium"
+      >
+        + Add Task
+      </button>
+
+      <Button
+        type="submit"
+        form="worklog-form"
+        className="w-full mt-4 h-12 rounded-xl text-base bg-black hover:bg-black/90 text-white cursor-pointer"
+      >
+        Submit Work Log
+      </Button>
+
+      <p className="text-xs text-muted-foreground mt-3 text-center">
+        Once submitted, this log cannot be edited. You will need to create a new submission to make changes.
+      </p>
+
+      <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
+        <AlertDialogContent className="max-w-lg text-center p-8">
+          <AlertDialogHeader className="space-y-4">
+            <AlertDialogTitle className="text-2xl font-bold">
+              Are you sure you want to submit your log?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-base text-muted-foreground">
+              Once submitted, this log cannot be edited. You will need to create a new submission to make changes.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex flex-col gap-3 mt-4">
+            <AlertDialogAction
+              className="w-full h-12 rounded-2xl text-base bg-black hover:bg-black/90 text-white"
+              onClick={onConfirmSubmit}
+              disabled={mutation.isPending}
+            >
+              {mutation.isPending ? "Submitting..." : "Confirm"}
+            </AlertDialogAction>
+            <AlertDialogCancel className="w-full h-12 rounded-2xl text-base bg-gray-100 hover:bg-gray-200 text-black border-0">
+              Cancel
+            </AlertDialogCancel>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showSubmitted} onOpenChange={setShowSubmitted}>
+        <AlertDialogContent className="max-w-lg text-center p-8">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-2xl font-bold">
+              Your work log has been submitted.
+            </AlertDialogTitle>
+          </AlertDialogHeader>
+          <div className="mt-4">
+            <Button
+              className="w-full h-12 rounded-2xl text-base bg-black hover:bg-black/90 text-white"
+              onClick={() => {
+                setShowSubmitted(false);
+                router.push(`/worklogs/review?week=${weekNumber}`);
+              }}
+            >
+              View Submission
+            </Button>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
