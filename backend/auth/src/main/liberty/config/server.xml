@@ -30,12 +30,14 @@
     <!-- end::featureManager[] -->
 
     <variable name="app.context.root" defaultValue="auth/"/>
+    <variable name="http.port" defaultValue="9084"/>
+    <variable name="https.port" defaultValue="9445"/>
 
     <!-- tag::httpEndpoint[] -->
     <httpEndpoint
-        host="*" 
-        httpPort="${http.port}" 
-        httpsPort="${https.port}" 
+        host="*"
+        httpPort="${http.port}"
+        httpsPort="${https.port}"
         id="defaultHttpEndpoint"
     />
     <!-- end::httpEndpoint[] -->

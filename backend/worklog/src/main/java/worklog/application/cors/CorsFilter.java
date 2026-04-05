@@ -25,6 +25,8 @@ public class CorsFilter implements Filter {
         String[] allowedOrigins = {                                                                                                                                                   
             "http://localhost:3000",                                                                                                                                                  
             "http://localhost:3001",
+            // LOCAL DOCKER COMPOSE URLs,
+            "http://localhost:7000"
             //ADD MOXIE URL AS WELL,                                                                                                                                                // 
         };                                                                                                                                                                            
 
