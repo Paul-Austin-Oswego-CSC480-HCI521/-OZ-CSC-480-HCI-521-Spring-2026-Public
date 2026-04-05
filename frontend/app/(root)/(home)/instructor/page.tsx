@@ -208,6 +208,15 @@ function StudentRow({ student }: { student: { email: string; name: string; log: 
 
 const InstructorDashboard = () => {
   const userInfo = useAtomValue(userAtom);
+
+  if (userInfo && userInfo?.role != "instructor") {
+    return (
+      <>
+        <h1>Sorry you dont have access to this page!</h1>
+      </>
+    );
+  }
+
   const worklogInfo = getWorklogDate(semesterStart);
   const maxWeek = worklogInfo ? parseInt(worklogInfo.weekNumber) : 1;
 
