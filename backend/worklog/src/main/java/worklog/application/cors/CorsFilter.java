@@ -22,12 +22,13 @@ public class CorsFilter implements Filter {
 
         // response.setHeader("Access-Control-Allow-Origin", "*");
          String origin = request.getHeader("Origin");                                                                                                                                  
-        String[] allowedOrigins = {                                                                                                                                                   
-            "http://localhost:3000",                                                                                                                                                  
+        String[] allowedOrigins = {
+            "http://localhost:3000",
             "http://localhost:3001",
-            // LOCAL DOCKER COMPOSE URLs,
-            "http://localhost:7000"
-            //ADD MOXIE URL AS WELL,                                                                                                                                                // 
+            // LOCAL DOCKER COMPOSE URLs
+            "http://localhost:7000",
+            // MOXIE PRODUCTION URL
+            "http://moxie.cs.oswego.edu:7000"
         };                                                                                                                                                                            
 
         for (String allowed : allowedOrigins) {                                                                                                                                       

@@ -1,0 +1,54 @@
+services:
+  frontend:
+    build:
+      context: ./frontend
+    container_name: frontend-csc480-prod-container
+    ports:
+      - "7000:3000"
+    env_file:
+      - ./.secrets/frontend.env
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+  
+  backend-worklog:
+    build:
+      context: ./backend/worklog
+    ports:
+      - "7001:9081"
+    restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_healthy
+  
+  backend-auth:
+    build:
+      context: ./backend/auth
+    ports:
+      - "7002:9084"
+    restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_healthy
+
+  mongodb:
+    image: mongo:7
+    container_name: csc480-mongodb-container
+    security_opt:
+      - seccomp:unconfined
+    restart: unless-stopped
+    ports:
+      - "6999:27017"
+    volumes:
+      - mongo_data:/data/db
+      - ./mongodb/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    env_file:
+      - ./.secrets/mongodb.env
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mongo_data:
