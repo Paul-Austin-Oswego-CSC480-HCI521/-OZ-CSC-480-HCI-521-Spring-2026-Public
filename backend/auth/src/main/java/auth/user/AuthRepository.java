@@ -41,4 +41,16 @@ public class AuthRepository{
         return collection.find().into(new ArrayList<>());
     }
 
+    public List<Document> getUsersByRole(String role){
+        return collection.find(new Document("role", role)).into(new ArrayList<>());
+    }
+
+    public void updateUserRole(String email, String newRole){
+        Document user = findByEmail(email);
+        if(user!=null){
+            user.put("role", newRole);
+            collection.replaceOne(new Document("email", email), user);
+        }
+    }
+
 }

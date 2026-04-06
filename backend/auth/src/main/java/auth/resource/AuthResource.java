@@ -14,11 +14,13 @@ import com.ibm.websphere.security.jwt.Claims;
 import com.ibm.websphere.security.jwt.JwtBuilder;
 
 import auth.service.AuthService;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.Consumes;
@@ -106,4 +108,55 @@ public class AuthResource{
             .build();
         }
     }
+
+    @GET
+    @Path("/instructors")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getInstructors(){
+        try {
+            List<Document> users = authservice.getInstructors();
+            return Response.ok(users).build();
+        } catch(Exception e){
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+            .entity(e.getMessage())
+            .build();
+        }
+    }
+
+    @PUT
+    @Path("/instructor/create")
+    @RolesAllowed("instructor")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response createInstructor(Map<String, String> body){
+        try {
+            String email = body.get("email");
+            Document user = authservice.changeUserRole(email, "instructor");
+            return Response.ok(user).build();
+            
+        } catch(Exception e){
+                return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity(e.getMessage())
+                .build();
+        }
+    }
+
+    @PUT
+    @Path("/instructor/remove")
+    @RolesAllowed("instructor")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response removeInstructor(Map<String, String> body){
+        try {
+            String email = body.get("email");
+            Document user = authservice.changeUserRole(email, "student");
+            return Response.ok(user).build();
+            
+        } catch(Exception e){
+                return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity(e.getMessage())
+                .build();
+        }
+    }
+
 }

@@ -48,7 +48,28 @@ public class AuthService {
             
         }
 
+        public Document getUserByEmail(String email){
+            return repo.findByEmail(email);
+        }
+
         public List<Document> getAllUsers(){
             return repo.getAllUsers();
+        }
+
+        public List<Document> getInstructors(){
+            return repo.getUsersByRole("instructor");
+        }
+
+        public Document changeUserRole(String email, String newRole){
+            Document user = repo.findByEmail(email);
+            if(user==null){
+                throw new IllegalArgumentException("User not found");
+            }
+            if(newRole==null || (!newRole.equals("student") && !newRole.equals("instructor"))){
+                throw new IllegalArgumentException("Valid role is required");
+            }
+            repo.updateUserRole(email, newRole);
+            return user;
+
         }
 }
