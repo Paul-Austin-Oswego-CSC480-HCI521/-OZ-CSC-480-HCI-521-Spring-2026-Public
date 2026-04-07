@@ -111,6 +111,7 @@ public class AuthResource{
 
     @GET
     @Path("/instructors")
+    @RolesAllowed("instructor")// we Might want to add admin role later to manage instructors (this line restructs what users can call this endpoint)
     @Produces(MediaType.APPLICATION_JSON)
     public Response getInstructors(){
         try {
@@ -125,7 +126,7 @@ public class AuthResource{
 
     @PUT
     @Path("/instructor/create")
-    @RolesAllowed("instructor")
+    @RolesAllowed("instructor")// we Might want to add admin role later to manage instructors (this line restructs what users can call this endpoint)
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response createInstructor(Map<String, String> body){
@@ -143,7 +144,7 @@ public class AuthResource{
 
     @PUT
     @Path("/instructor/remove")
-    @RolesAllowed("instructor")
+    @RolesAllowed("instructor")// we Might want to add admin role later to manage instructors (this line restructs what users can call this endpoint)
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response removeInstructor(Map<String, String> body){
