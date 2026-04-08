@@ -74,6 +74,9 @@ public class AuthService {
         }
 
         public Document createInstuctor(String email, String name) {
+            if (repo.findByEmail(email) != null) {
+                return repo.updateUserRole(email, "instructor");
+            }
             return repo.createUser(email, name, "instructor");
         }
 
@@ -102,5 +105,9 @@ public class AuthService {
             repo.updateUserRole(email, newRole);
             return user;
 
+        }
+
+        public Document removeUser(String email) {
+            return repo.removeUser(email);
         }
 }

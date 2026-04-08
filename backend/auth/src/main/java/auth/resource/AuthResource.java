@@ -27,6 +27,7 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.CookieParam;
+import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.NewCookie;
 import jakarta.ws.rs.core.Response;
@@ -213,9 +214,26 @@ public class AuthResource{
         }
     }
 
+    @DELETE
+    @Path("/users/remove/{email}")
+    // @RolesAllowed("instructor")// we Might want to add admin role later to manage instructors (this line restructs what users can call this endpoint)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response deleteUser(@PathParam("email") String email){
+        try {
+            Document user = authservice.removeUser(email);
+            return Response.ok(user).build();
+            
+        } catch(Exception e){
+                return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity(e.getMessage())
+                .build();
+        }
+    }
+    
     @GET
     @Path("/instructors")
-    @RolesAllowed("instructor")// we Might want to add admin role later to manage instructors (this line restructs what users can call this endpoint)
+    // @RolesAllowed("instructor")// we Might want to add admin role later to manage instructors (this line restructs what users can call this endpoint)
     @Produces(MediaType.APPLICATION_JSON)
     public Response getInstructors(){
         try {
@@ -279,5 +297,6 @@ public class AuthResource{
                 .build();
         }
     }
+
 
 }
