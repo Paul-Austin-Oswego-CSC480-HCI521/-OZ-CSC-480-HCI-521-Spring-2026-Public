@@ -17,3 +17,8 @@ Thumbs.db
 *.pfx
 *.key
 *private*.pem
+
+*.tfstate
+*.tfstate.backup
+*.tfvars
+.terraform/

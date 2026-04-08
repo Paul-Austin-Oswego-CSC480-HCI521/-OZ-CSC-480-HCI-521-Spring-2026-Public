@@ -1,0 +1,11 @@
+lakertracks.duckdns.org {
+    reverse_proxy frontend:3000
+}
+
+lakertracks.duckdns.org:7001 {
+    reverse_proxy backend-worklog:9081
+}
+
+lakertracks.duckdns.org:7002 {
+    reverse_proxy backend-auth:9084
+}

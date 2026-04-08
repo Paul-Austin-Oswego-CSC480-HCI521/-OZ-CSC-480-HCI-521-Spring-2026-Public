@@ -1,8 +1,29 @@
 package worklog.application;
 
+import java.io.StringWriter;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
+import org.bson.Document;
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
+import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
+import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.codecs.pojo.PojoCodecProvider;
+import org.bson.conversions.Bson;
+import org.bson.types.ObjectId;
+
+import com.mongodb.MongoClientSettings;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Filters;
+import static com.mongodb.client.model.Filters.eq;
+import com.mongodb.client.model.FindOneAndReplaceOptions;
+
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.json.Json;
 import jakarta.json.JsonArray;
@@ -11,28 +32,6 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import jakarta.ws.rs.core.Response;
 import worklog.application.classes.Task;
-import jakarta.enterprise.context.ApplicationScoped;
-
-import org.bson.Document;
-import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.codecs.pojo.PojoCodecProvider;
-import org.bson.conversions.Bson;
-import org.bson.types.ObjectId;
-
-import com.mongodb.client.model.Filters;
-import com.mongodb.client.model.FindOneAndReplaceOptions;
-
-import static com.mongodb.client.model.Filters.eq;
-import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
-import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
-import com.mongodb.MongoClientSettings;
-
-import java.io.StringWriter;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 
 
 @ApplicationScoped // Add this so CDI can manage this class
@@ -77,6 +76,7 @@ public class WorklogRepository {
         newDoc.put("collaborators", entry.getCollaborators());
         newDoc.put("worklogName", entry.getWorklogName());
         newDoc.put("taskList", formatTask(entry.getTaskList()));
+        newDoc.put("reviewed", false);
 
         collection.insertOne(newDoc);
 
@@ -107,6 +107,7 @@ public class WorklogRepository {
 
 
         newDoc.put("isDraft", true);
+        newDoc.put("reviewed", false);
 
         collection.findOneAndReplace(Filters.and(
             Filters.eq("authorName", entry.getAuthorName()),
@@ -126,6 +127,7 @@ public class WorklogRepository {
 		return responseByQuery(Filters.eq("isDraft", true));
 	}
 
+    //New functionality for findByAuthor: if an instructor is the one seeing it, then update the "reviewed" field.
 	public Response findByAuthor(String authorName) {
         return responseByQuery(Filters.and(Filters.eq("authorName", authorName), excludeDraft));
 	}
@@ -199,7 +201,7 @@ public class WorklogRepository {
     //Need to make other functions to update specific fields like title, duedate, etc.
     //Right now this replaces the entire entry.
     // (Xander): ^May not be needed, worklog aspects dont really have to be updated once they're in the db.... question for requirments?
-    public Response updateWorklog(String id, WorklogEntry updatedEntry) {
+    public Response updateWorklog(String id, WorklogEntry updatedEntry, boolean isInstructor) {
         Document newDoc = new Document();
 
         newDoc.put("authorName", updatedEntry.getAuthorName());
@@ -207,6 +209,14 @@ public class WorklogRepository {
         newDoc.put("dateSubmitted", updatedEntry.getDateSubmitted().format(dateTimeFormatter));
         newDoc.put("collaborators", updatedEntry.getCollaborators());
         newDoc.put("taskList", formatTask(updatedEntry.getTaskList()));
+        newDoc.put("worklogName", updatedEntry.getWorklogName());
+        
+        if (isInstructor) {
+            newDoc.put("reviewed", updatedEntry.isReviewed());
+        }
+        else {
+            newDoc.put("reviewed", false);
+        }
         
 
         ObjectId oid; // ID of mongo collection entry

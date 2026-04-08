@@ -6,6 +6,7 @@ import { AppSidebar } from "@/components/custom/screen/sidebar/Sidebar";
 import Topbar from "@/components/custom/screen/topbar/Topbar";
 import { PublicEnvScript } from 'next-runtime-env';
 import { Providers } from "@/provider";
+import { Toaster } from "sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,13 +35,14 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <SidebarProvider>
-          <div className="flex flex-col w-full h-screen">
+          <div className="flex flex-col w-full min-h-screen h-screen">
             <Topbar />
             <div className="flex flex-1 overflow-hidden">
               <AppSidebar />
-              <main className="w-full">{children}</main>
+              <main className="w-full overflow-y-auto min-h-0">{children}</main>
             </div>
           </div>
+          <Toaster position="top-right" richColors />
         </SidebarProvider>
       </body>
     </html>

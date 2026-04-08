@@ -1,0 +1,86 @@
+services:
+  frontend:
+    build:
+      context: ./frontend
+    container_name: frontend-csc480-aws-container
+    env_file:
+      - ./.secrets/frontend.env
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    depends_on:
+      - backend-worklog
+      - backend-auth
+    networks:
+      - app-net
+
+  backend-worklog:
+    build:
+      context: ./backend/worklog
+    container_name: backend-worklog-csc480-aws-container
+    ports:
+      - "7001:9081"
+    restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - app-net
+
+  backend-auth:
+    build:
+      context: ./backend/auth
+    container_name: backend-auth-csc480-aws-container
+    ports:
+      - "7002:9084"
+    restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - app-net
+
+  mongodb:
+    image: mongo:7
+    container_name: csc480-mongodb-aws-container
+    restart: unless-stopped
+    ports:
+      - "6999:27017"
+    volumes:
+      - mongo_data:/data/db
+      - ./mongodb/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    env_file:
+      - ./.secrets/mongodb.env
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - app-net
+
+  caddy:
+    image: caddy:2
+    container_name: caddy-csc480-aws-container
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+    depends_on:
+      - frontend
+      - backend-worklog
+      - backend-auth
+    networks:
+      - app-net
+
+volumes:
+  mongo_data:
+  caddy_data:
+
+networks:
+  app-net:
+    driver: bridge

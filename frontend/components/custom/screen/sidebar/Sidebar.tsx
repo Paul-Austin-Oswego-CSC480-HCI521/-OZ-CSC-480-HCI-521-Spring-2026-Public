@@ -13,6 +13,7 @@ import {
 import { usePathname, useRouter } from "next/navigation";
 import { useAtomValue, useSetAtom } from "jotai";
 import { tokenAtom, userAtom } from "@/components/custom/utils/context/state";
+import { logout } from "@/components/custom/utils/api_utils/req/req";
 
 export function AppSidebar() {
   const userInfo = useAtomValue(userAtom);
@@ -23,15 +24,17 @@ export function AppSidebar() {
   if (userInfo && userInfo.role == "student") {
     items = [
       { title: "Home", url: "/", icon: Home },
-      { title: "Notifications", url: "/notifications", icon: BellIcon },
-      { title: "WorkLogs", url: "/worklogs", icon: Workflow },
+      { title: "Notification", url: "/notification", icon: Workflow },
+      { title: "Weekly Work Logs", url: "/notifications", icon: BellIcon },
+      // { title: "Tasktracker", url: "/tasktracker", icon: Workflow },
     ];
   }
   const pathname = usePathname();
   const router = useRouter();
   const setToken = useSetAtom(tokenAtom);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await logout();
     setToken(null);
     localStorage.removeItem("csc_480_token");
     document.cookie.split(";").forEach((c) => {

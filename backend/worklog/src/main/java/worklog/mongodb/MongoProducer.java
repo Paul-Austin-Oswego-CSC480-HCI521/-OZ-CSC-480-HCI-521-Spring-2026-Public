@@ -1,4 +1,4 @@
-package worklog.mongo;
+package worklog.mongodb;
 
 import java.util.List;
 import org.eclipse.microprofile.config.inject.ConfigProperty;

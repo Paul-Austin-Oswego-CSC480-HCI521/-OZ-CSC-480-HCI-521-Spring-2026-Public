@@ -2,6 +2,7 @@ package worklog.application;
 
 import java.time.LocalDate;
 import java.util.List;
+
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -19,6 +20,7 @@ public class WorklogEntry {
     private LocalDate dateCreated;
 
     private LocalDate dateSubmitted;
+    private boolean reviewed = false;
 
     @Valid
     private List<@NotEmpty @Size(max = 50) String> collaborators;
@@ -81,6 +83,14 @@ public class WorklogEntry {
 
     public boolean getisDraft() {
         return isDraft;
+    }
+
+    public void setReviewed(boolean reviewed) {
+        this.reviewed = reviewed;
+    }
+
+    public boolean isReviewed() {
+        return reviewed;
     }
 
 
