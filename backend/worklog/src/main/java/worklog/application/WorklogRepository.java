@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.logging.Filter;
 
 import org.bson.Document;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
@@ -69,6 +68,12 @@ public class WorklogRepository {
             return Response.status(Response.Status.BAD_REQUEST).entity(violations.toString()).build();
         }
 
+        collection.deleteMany(Filters.and(
+                Filters.eq("authorName", entry.getAuthorName()),
+                Filters.eq("worklogName", entry.getWorklogName()),
+                Filters.eq("isDraft", true)
+        ));
+
         Document newDoc = new Document();
 
         newDoc.put("authorName", entry.getAuthorName());
@@ -79,12 +84,9 @@ public class WorklogRepository {
         newDoc.put("worklogName", entry.getWorklogName());
         newDoc.put("taskList", formatTask(entry.getTaskList()));
         newDoc.put("reviewed", false);
+        newDoc.put("isDraft", false);
 
-        collection.deleteMany(Filters.and(
-                Filters.eq("worklogName", entry.getWorklogName()),
-                Filters.exists("isDraft", true),
-                Filters.eq("isDraft", true)
-        ));
+        collection.insertOne(newDoc);
 
         return Response.status(Response.Status.OK).entity(newDoc.toJson()).build();
     }
