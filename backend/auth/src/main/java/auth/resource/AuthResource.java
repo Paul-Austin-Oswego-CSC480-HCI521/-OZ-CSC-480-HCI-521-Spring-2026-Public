@@ -70,6 +70,7 @@ public class AuthResource{
             String email = user.getString("email");
             String name = user.getString("name") != null ? user.getString("name") : email;
             String role = user.getString("role");
+            // When classIDs are implemented, add a section here for classID
 
 
             // build JWT (shortlived)
@@ -80,6 +81,7 @@ public class AuthResource{
             .claim("name", name)
             .claim("role", role)
             .claim("groups", new String[]{role})
+            .claim("classID", "TEMPORARY") // Change 'TEMPORARY' for
             .buildJwt()
             .compact();
 
@@ -92,6 +94,7 @@ public class AuthResource{
             response.put("email", email);
             response.put("name", name);
             response.put("role", role);
+            // Include classID here if the frontend needs it in the JWT
             // System.out.println(response);
             
             NewCookie refreshCookie = new NewCookie.Builder(REFRESH_TOKEN_NAME)
@@ -148,6 +151,7 @@ public class AuthResource{
                 .claim("name", name)
                 .claim("role", role)
                 .claim("groups", new String[]{role})
+                .claim("classID", "TEMPORARY")
                 .buildJwt()
                 .compact();
 

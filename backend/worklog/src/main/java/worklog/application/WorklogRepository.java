@@ -32,6 +32,7 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import jakarta.ws.rs.core.Response;
 import worklog.application.classes.Task;
+import worklog.application.classes.UserContext;
 
 
 @ApplicationScoped // Add this so CDI can manage this class
@@ -41,6 +42,9 @@ public class WorklogRepository {
 
     @Inject
     Validator validator;
+
+    @Inject
+    UserContext userContext;
 
     DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     Bson excludeDraft = Filters.or(
@@ -58,7 +62,7 @@ public class WorklogRepository {
         // Apply the registry to the database provided by the producer
         MongoDatabase codecDb = db.withCodecRegistry(pojoCodecRegistry);
 
-        this.collection = codecDb.getCollection("worklogs");
+        this.collection = codecDb.getCollection(userContext.getClassID());
     }
 
     public Response addWorklog(WorklogEntry entry) {
