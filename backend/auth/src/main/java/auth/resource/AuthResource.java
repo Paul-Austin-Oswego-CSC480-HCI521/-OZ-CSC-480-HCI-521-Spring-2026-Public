@@ -216,7 +216,7 @@ public class AuthResource{
 
     @DELETE
     @Path("/users/remove/{email}")
-    // @RolesAllowed("instructor")// we Might want to add admin role later to manage instructors (this line restructs what users can call this endpoint)
+    @RolesAllowed("instructor")// we Might want to add admin role later to manage instructors (this line restructs what users can call this endpoint)
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response deleteUser(@PathParam("email") String email){
@@ -233,7 +233,7 @@ public class AuthResource{
     
     @GET
     @Path("/instructors")
-    // @RolesAllowed("instructor")// we Might want to add admin role later to manage instructors (this line restructs what users can call this endpoint)
+    @RolesAllowed("instructor")// we Might want to add admin role later to manage instructors (this line restructs what users can call this endpoint)
     @Produces(MediaType.APPLICATION_JSON)
     public Response getInstructors(){
         try {

@@ -68,6 +68,12 @@ public class WorklogRepository {
             return Response.status(Response.Status.BAD_REQUEST).entity(violations.toString()).build();
         }
 
+        collection.deleteMany(Filters.and(
+                Filters.eq("authorName", entry.getAuthorName()),
+                Filters.eq("worklogName", entry.getWorklogName()),
+                Filters.eq("isDraft", true)
+        ));
+
         Document newDoc = new Document();
 
         newDoc.put("authorName", entry.getAuthorName());
@@ -78,6 +84,7 @@ public class WorklogRepository {
         newDoc.put("worklogName", entry.getWorklogName());
         newDoc.put("taskList", formatTask(entry.getTaskList()));
         newDoc.put("reviewed", false);
+        newDoc.put("isDraft", false);
 
         collection.insertOne(newDoc);
 
