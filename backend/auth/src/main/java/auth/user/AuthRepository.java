@@ -33,7 +33,7 @@ public class AuthRepository{
             .append("email", email)
             .append("name", name)
             .append("role", role)
-            .append("createdAt", Instant.now().toString());
+            .append("createdAt", Instant.now());
         collection.insertOne(newUser);
         return newUser;
     }

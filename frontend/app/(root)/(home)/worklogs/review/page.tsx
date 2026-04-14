@@ -12,6 +12,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { ArrowLeft, CalendarDays, Clock, ChevronDown, ChevronRight } from "lucide-react";
+import { fmtDate, fmtDateTime } from "@/components/custom/utils/func/formatDate";
 import { Suspense, useEffect, useState } from "react";
 
 const statusLabel: Record<string, string> = {
@@ -40,11 +41,7 @@ function SubmissionCollapsible({
               <h2 className="text-base font-semibold">Submission {subNum}</h2>
               <span className="text-xs text-muted-foreground flex items-center gap-1">
                 <Clock className="h-3 w-3" />
-                {new Date(submission.dateSubmitted + "T00:00:00").toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
-                })}
+                {fmtDateTime(submission.dateSubmitted)}
               </span>
             </div>
             {open ? (
@@ -88,7 +85,7 @@ function SubmissionCollapsible({
                       <p className="text-xs font-medium text-muted-foreground mb-1">Deadline</p>
                       <p className="text-sm flex items-center gap-1.5">
                         <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" />
-                        {task.dueDate}
+                        {fmtDate(task.dueDate)}
                       </p>
                     </div>
                     <div>

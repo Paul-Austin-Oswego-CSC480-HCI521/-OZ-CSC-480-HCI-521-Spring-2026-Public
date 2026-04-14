@@ -1,6 +1,6 @@
 package worklog.application.classes;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 
 public class Task {
@@ -11,9 +11,9 @@ public class Task {
 
     private String assignedUser; //Student or teacher object at some point? 
     
-    private LocalDate dueDate;
+    private LocalDateTime dueDate;
 
-    private LocalDate creationDate;
+    private LocalDateTime creationDate;
     private String status;
 
     private ArrayList<String> collaborators;
@@ -54,25 +54,25 @@ public class Task {
 
 
 
-    public LocalDate getDueDate() {
+    public LocalDateTime getDueDate() {
         return this.dueDate;
     }
 
 
 
-    public void setDueDate(LocalDate dueDate) {
+    public void setDueDate(LocalDateTime dueDate) {
         this.dueDate = dueDate;
     }
 
 
 
-    public LocalDate getCreationDate() {
+    public LocalDateTime getCreationDate() {
         return this.creationDate;
     }
 
 
 
-    public void setCreationDate(LocalDate creationDate) {
+    public void setCreationDate(LocalDateTime creationDate) {
         this.creationDate = creationDate;
     }
 

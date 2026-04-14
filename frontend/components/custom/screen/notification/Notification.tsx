@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { userAtom } from "@/components/custom/utils/context/state";
 import { worklogEditAtom } from "@/components/custom/utils/context/state"; // adjust path
 import getWorklogDate from "../../utils/func/getDate";
+import { fmtDate } from "../../utils/func/formatDate";
 import { useRouter } from "next/navigation";
 import {
   CheckCircle2,
@@ -18,6 +19,7 @@ import {
   Hourglass,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useEffect } from "react";
 
 type WorklogStatus = "submitted" | "late" | "missing" | "current" | "upcoming";
 
@@ -144,11 +146,7 @@ function buildWeekEntries(worklogs: any[]): WeekEntry[] {
         week: w,
         dueDate: dueDateStr,
         submittedDate: log
-          ? new Date(log.dateSubmitted + "T00:00:00").toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-            })
+          ? fmtDate(log.dateSubmitted)
           : undefined,
         status: "upcoming",
         taskList: log?.taskList,
@@ -158,14 +156,7 @@ function buildWeekEntries(worklogs: any[]): WeekEntry[] {
         entries.push({
           week: w,
           dueDate: dueDateStr,
-          submittedDate: new Date(log.dateSubmitted + "T00:00:00").toLocaleDateString(
-            "en-US",
-            {
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-            },
-          ),
+          submittedDate: fmtDate(log.dateSubmitted),
           status: "submitted",
           isCurrent: true,
           taskList: log.taskList,
@@ -174,18 +165,14 @@ function buildWeekEntries(worklogs: any[]): WeekEntry[] {
         entries.push({ week: w, dueDate: dueDateStr, status: "current", isCurrent: true });
       }
     } else if (log) {
-      const submitted = new Date(log.dateSubmitted + "T00:00:00");
+      const submitted = new Date(log.dateSubmitted);
       const diffDays = Math.floor(
         (submitted.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24),
       );
       entries.push({
         week: w,
         dueDate: dueDateStr,
-        submittedDate: new Date(log.dateSubmitted + "T00:00:00").toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-          year: "numeric",
-        }),
+        submittedDate: fmtDate(log.dateSubmitted),
         status: diffDays > 0 ? "late" : "submitted",
         lateByDays: diffDays > 0 ? diffDays : undefined,
         taskList: log.taskList,

@@ -1,6 +1,6 @@
 package worklog.application;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import jakarta.validation.Valid;
@@ -18,9 +18,10 @@ public class WorklogEntry {
     private String worklogName;
 
     @NotNull(message = "Date created required")
-    private LocalDate dateCreated;
+    private LocalDateTime dateCreated;
 
-    private LocalDate dateSubmitted;
+    @NotNull(message = "Date submitted required")
+    private LocalDateTime dateSubmitted;
     private boolean reviewed = false;
 
     @Valid
@@ -46,19 +47,19 @@ public class WorklogEntry {
         return authorName;
     }
 
-    public void setDateCreated(LocalDate dateCreated) {
+    public void setDateCreated(LocalDateTime dateCreated) {
         this.dateCreated = dateCreated;
     }
 
-    public LocalDate getDateCreated() {
+    public LocalDateTime getDateCreated() {
         return dateCreated;
     }
 
-    public void setDateSubmitted(LocalDate dateSubmitted) {
+    public void setDateSubmitted(LocalDateTime dateSubmitted) {
         this.dateSubmitted = dateSubmitted;
     }
 
-    public LocalDate getDateSubmitted() {
+    public LocalDateTime getDateSubmitted() {
         return dateSubmitted;
     }
 

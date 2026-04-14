@@ -1,6 +1,5 @@
 package worklog.application;
 
-import java.time.LocalDate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -30,7 +29,7 @@ import jakarta.ws.rs.core.SecurityContext;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @ApplicationScoped
-// @RolesAllowed({"student", "instructor"})
+@RolesAllowed({"student", "instructor"})
 public class WorklogService {
     @Inject
     Validator validator;
@@ -85,15 +84,8 @@ public class WorklogService {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Uploads new worklog to db")
     public Response createWorklog(@Valid WorklogEntry entry) {
-
-        // Automatically set dateCreated if not provided
-        if (entry.getDateCreated() == null) {
-            entry.setDateCreated(LocalDate.now());
-        }
-
         logger.log(Level.INFO, "POST: createWorklog()");
         return repo.addWorklog(entry);
-
     }
 
 
