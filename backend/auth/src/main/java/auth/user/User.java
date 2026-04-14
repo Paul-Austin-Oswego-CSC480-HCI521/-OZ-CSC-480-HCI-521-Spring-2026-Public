@@ -6,6 +6,7 @@ public class User{
     private String name;
     private String role;
     private String createdAt;
+    private String classID;
 
     public User(){}
 
@@ -15,6 +16,14 @@ public class User{
             this.name = name;
             this.role = role;
             this.createdAt = createdAt;
+        }
+
+    public User(String email, String name, String role, String createdAt, String classID){
+            this.email = email;
+            this.name = name;
+            this.role = role;
+            this.createdAt = createdAt;
+            this.classID = classID;
         }
 
         public String getEmail(){
@@ -42,5 +51,11 @@ public class User{
         }
         public void setCreatedAt(String createdAt){
             this.createdAt = createdAt;
+        }
+        public String getClassID(){
+            return classID;
+        }
+        public void setClassID(String classID){
+            this.classID = classID;
         }
     }

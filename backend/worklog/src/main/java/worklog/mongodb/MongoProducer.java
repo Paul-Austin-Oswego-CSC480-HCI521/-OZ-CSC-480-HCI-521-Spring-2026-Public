@@ -35,7 +35,7 @@ public class MongoProducer {
     @ApplicationScoped
     public MongoClient createMongo() {
         MongoCredential creds = MongoCredential.createCredential(
-            user, dbName, password.toCharArray());
+            user, "admin", password.toCharArray());
 
         MongoClientSettings settings = MongoClientSettings.builder()
             .credential(creds)

@@ -37,6 +37,25 @@ public class AuthRepository{
         collection.insertOne(newUser);
         return newUser;
     }
+
+    public Document addUserToClass(String email, String classID) {
+        Document user = findByEmail(email);
+        if (user != null) {
+            user.put("classID", classID);
+            collection.replaceOne(new Document("email", email), user);
+        }
+        return user;
+    }
+
+    public Document removeUserFromClass(String email) {
+        Document user = findByEmail(email);
+        if (user != null) {
+            user.remove("classID");
+            collection.replaceOne(new Document("email", email), user);
+        }
+        return user;
+    }
+
     public List<Document> getAllUsers(){
         return collection.find().into(new ArrayList<>());
     }

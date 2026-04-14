@@ -191,7 +191,10 @@ public class WorklogRepository {
             }
             sb.append("]");
         } catch (Exception e) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+            e.printStackTrace();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity("{\"error\": \"" + e.getMessage() + "\"}") 
+                .build();
         }
         return Response.status(Response.Status.OK).entity(sb.toString()).build();
     }

@@ -32,7 +32,7 @@ public class MongoProducer{
     @Produces
     @ApplicationScoped
     public MongoClient createMongo(){
-        MongoCredential creds = MongoCredential.createCredential(user, dbname, password.toCharArray());
+        MongoCredential creds = MongoCredential.createCredential(user, "admin", password.toCharArray());
         MongoClientSettings settings = MongoClientSettings.builder()
         .credential(creds)
         .applyToClusterSettings(b->b.hosts(List.of(new ServerAddress(hostname, port)))).build();

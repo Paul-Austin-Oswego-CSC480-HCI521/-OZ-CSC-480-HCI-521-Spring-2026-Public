@@ -90,6 +90,10 @@ public class AuthService {
             return repo.getAllUsers();
         }
 
+        public Document addUserToClass(String email, String classID) {
+            return repo.addUserToClass(email, classID);
+        }
+
         public List<Document> getInstructors(){
             return repo.getUsersByRole("instructor");
         }

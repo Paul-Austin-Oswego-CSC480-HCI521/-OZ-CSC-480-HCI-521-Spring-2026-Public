@@ -70,20 +70,22 @@ public class AuthResource{
             String email = user.getString("email");
             String name = user.getString("name") != null ? user.getString("name") : email;
             String role = user.getString("role");
-            // When classIDs are implemented, add a section here for classID
+            String classID = user.getString("classID");
 
 
             // build JWT (shortlived)
-            String accessToken = JwtBuilder.create("jwtAuthBuilder")
-            .claim(Claims.SUBJECT, email)
-            .claim("id", id)
-            .claim("email", email)
-            .claim("name", name)
-            .claim("role", role)
-            .claim("groups", new String[]{role})
-            .claim("classID", "TEMPORARY") // Change 'TEMPORARY' for
-            .buildJwt()
-            .compact();
+            JwtBuilder builder = JwtBuilder.create("jwtAuthBuilder")
+                .claim(Claims.SUBJECT, email)
+                .claim("id", id)
+                .claim("email", email)
+                .claim("name", name)
+                .claim("role", role)
+                .claim("groups", new String[]{role});
+
+            if (classID != null && !classID.isBlank()) {
+                    builder = builder.claim("classID", classID);
+            }
+            String accessToken = builder.buildJwt().compact();
 
             Document refreshDoc = authservice.createRefreshToken(id, email);
             String refreshToken = refreshDoc.getString("token");
@@ -94,8 +96,9 @@ public class AuthResource{
             response.put("email", email);
             response.put("name", name);
             response.put("role", role);
-            // Include classID here if the frontend needs it in the JWT
-            // System.out.println(response);
+            if (classID != null) {
+                response.put("classID", classID);
+            }
             
             NewCookie refreshCookie = new NewCookie.Builder(REFRESH_TOKEN_NAME)
             .value(refreshToken)
@@ -137,6 +140,7 @@ public class AuthResource{
             String id = user.getObjectId("_id").toHexString();
             String name = user.getString("name") != null ? user.getString("name") : email;
             String role = user.getString("role");
+            String classID = user.getString("classID");
 
             // delete old token, issue new one
             authservice.revokeRefreshToken(refreshToken);
@@ -144,22 +148,26 @@ public class AuthResource{
             String newRefreshToken = newRefreshDoc.getString("token");
 
             // Issue new access token
-            String accessToken = JwtBuilder.create("jwtAuthBuilder")
+            JwtBuilder builder = JwtBuilder.create("jwtAuthBuilder")
                 .claim(Claims.SUBJECT, email)
                 .claim("id", id)
                 .claim("email", email)
                 .claim("name", name)
                 .claim("role", role)
-                .claim("groups", new String[]{role})
-                .claim("classID", "TEMPORARY")
-                .buildJwt()
-                .compact();
+                .claim("groups", new String[]{role});
+                if (classID != null && !classID.isBlank()) {
+                    builder = builder.claim("classID", classID);
+                }
+            String accessToken = builder.buildJwt().compact();
 
             Map<String, String> response = new HashMap<>();
             response.put("token", accessToken);
             response.put("email", email);
             response.put("name", name);
             response.put("role", role);
+            if (classID != null && !classID.isBlank()) {
+                response.put("classID", classID);
+            }
 
             NewCookie newCookie = new NewCookie.Builder(REFRESH_TOKEN_NAME)
                 .value(newRefreshToken)
@@ -218,6 +226,25 @@ public class AuthResource{
         }
     }
 
+    @PUT
+    @Path("/users/class/{email}")
+    // @RolesAllowed("instructor")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response addUserToClass(@PathParam("email") String email, String classID){
+        try {
+            Document user = authservice.addUserToClass(email, classID);
+            return Response.ok(user).build();
+            
+        } catch(Exception e){
+                return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity(e.getMessage())
+                .build();
+        }
+
+    }
+
+
     @DELETE
     @Path("/users/remove/{email}")
     @RolesAllowed("instructor")// we Might want to add admin role later to manage instructors (this line restructs what users can call this endpoint)
@@ -270,7 +297,7 @@ public class AuthResource{
 
     @PUT
     @Path("/instructor/create/{email}")
-    @RolesAllowed("instructor")// we Might want to add admin role later to manage instructors (this line restructs what users can call this endpoint)
+    // @RolesAllowed("instructor")// we Might want to add admin role later to manage instructors (this line restructs what users can call this endpoint)
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response updateInstructor(@PathParam("email") String email){
