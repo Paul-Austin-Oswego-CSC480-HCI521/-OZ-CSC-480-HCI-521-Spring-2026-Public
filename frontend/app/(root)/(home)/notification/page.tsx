@@ -5,6 +5,7 @@ import { getWorkLog } from "@/components/custom/utils/api_utils/worklogs/allReq"
 import { useAtomValue } from "jotai";
 import { userAtom } from "@/components/custom/utils/context/state";
 import getWorklogDate from "@/components/custom/utils/func/getDate";
+import { fmtDateTime } from "@/components/custom/utils/func/formatDate";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -22,7 +23,7 @@ function getLateDays(log: any): number {
   const dueDate = new Date(semesterStart);
   dueDate.setDate(dueDate.getDate() + week * 7);
   dueDate.setHours(23, 59, 0, 0);
-  const submitted = new Date(log.dateSubmitted + "T00:00:00");
+  const submitted = new Date(log.dateSubmitted);
   const diffDays = Math.floor(
     (submitted.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24),
   );
@@ -164,7 +165,7 @@ export default function NotificationPage() {
                             )}
                           </div>
                           <p className="text-xs text-muted-foreground">
-                            Submitted {log.dateSubmitted} — {log.taskList?.length ?? 0} task(s)
+                            Submitted {fmtDateTime(log.dateSubmitted)} — {log.taskList?.length ?? 0} task(s)
                           </p>
                         </div>
                       </div>

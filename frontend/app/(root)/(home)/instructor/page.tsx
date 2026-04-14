@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import getWorklogDate from "@/components/custom/utils/func/getDate";
+import { fmtDate, fmtDateTime } from "@/components/custom/utils/func/formatDate";
 import {
   Collapsible,
   CollapsibleContent,
@@ -43,13 +44,18 @@ function ReviewButton({ log }: { log: any }) {
   const mutation = useMutation({
     mutationFn: () => {
       const id = typeof log._id === "object" ? log._id.$oid : log._id;
+      const stripZ = (v: string) => (v ? v.replace("Z", "") : v);
       const body = {
         authorName: log.authorName,
         worklogName: log.worklogName,
-        dateCreated: log.dateCreated,
-        dateSubmitted: log.dateSubmitted,
+        dateCreated: stripZ(log.dateCreated),
+        dateSubmitted: stripZ(log.dateSubmitted),
         collaborators: log.collaborators ?? [],
-        taskList: log.taskList ?? [],
+        taskList: (log.taskList ?? []).map((t: any) => ({
+          ...t,
+          dueDate: t.dueDate ? stripZ(t.dueDate) : t.dueDate,
+          creationDate: t.creationDate ? stripZ(t.creationDate) : t.creationDate,
+        })),
         reviewed: !log.reviewed,
       };
       return updateWorklog(id, body);
@@ -151,7 +157,7 @@ function StudentRow({ student }: { student: { email: string; name: string; log: 
                 <div key={li} className="space-y-2 border rounded-lg p-3 bg-white">
                   <div className="flex items-center justify-between">
                     <p className="text-xs font-medium text-muted-foreground">
-                      Submission {student.logs.length - li} · Submitted {log.dateSubmitted} · {log.taskList?.length ?? 0} task(s)
+                      Submission {student.logs.length - li} · Submitted {fmtDateTime(log.dateSubmitted)} · {log.taskList?.length ?? 0} task(s)
                     </p>
                     <ReviewButton log={log} />
                   </div>
@@ -178,7 +184,7 @@ function StudentRow({ student }: { student: { email: string; name: string; log: 
                         {task.dueDate && (
                           <span className="flex items-center gap-1">
                             <CalendarDays className="h-3 w-3" />
-                            {task.dueDate}
+                            {fmtDate(task.dueDate)}
                           </span>
                         )}
                         {task.collaborators?.filter((c: string) => c).length > 0 && (
@@ -284,7 +290,7 @@ const InstructorDashboard = () => {
     let lateDays = 0;
 
     if (latestLog) {
-      const submitted = new Date(latestLog.dateSubmitted + "T00:00:00");
+      const submitted = new Date(latestLog.dateSubmitted);
       const diff = Math.floor(
         (submitted.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24),
       );

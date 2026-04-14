@@ -16,6 +16,7 @@ import Link from "next/link";
 
 import { userAtom } from "@/components/custom/utils/context/state";
 import getWorklogDate from "../../utils/func/getDate";
+import { fmtDateTime } from "../../utils/func/formatDate";
 import { CheckCircle2, FileText, ArrowRight, Clock, AlertTriangle } from "lucide-react";
 
 function getLateDays(log: any): number {
@@ -25,7 +26,7 @@ function getLateDays(log: any): number {
   const dueDate = new Date(semesterStart);
   dueDate.setDate(dueDate.getDate() + week * 7);
   dueDate.setHours(23, 59, 0, 0);
-  const submitted = new Date(log.dateSubmitted + "T00:00:00");
+  const submitted = new Date(log.dateSubmitted);
   const diffDays = Math.floor(
     (submitted.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24),
   );
@@ -110,7 +111,7 @@ function RecentLogsSection({ worklogs }: { worklogs: any[] }) {
                         )}
                       </div>
                       <p className="text-xs text-muted-foreground truncate">
-                        Submitted {log.dateSubmitted} —{" "}
+                        Submitted {fmtDateTime(log.dateSubmitted)} —{" "}
                         {log.taskList?.length ?? 0} task(s)
                       </p>
                     </div>

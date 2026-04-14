@@ -61,6 +61,7 @@ import {
   pendingWorklogAtom,
 } from "@/components/custom/utils/context/state";
 import getWorklogDate from "../../utils/func/getDate";
+import { fmtDate, fmtDateTime } from "../../utils/func/formatDate";
 import { ChevronDown, ChevronRight, CalendarDays, Clock } from "lucide-react";
 
 function StatusBadge({ status }: { status: string }) {
@@ -107,7 +108,7 @@ function PreviousSubmission({
             </CardTitle>
             <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
               <Clock className="h-3 w-3" />
-              Submitted {submission.dateSubmitted}
+              Submitted {fmtDateTime(submission.dateSubmitted)}
             </p>
           </div>
           <CollapsibleTrigger asChild>
@@ -154,7 +155,7 @@ function PreviousSubmission({
                           Deadline
                         </p>
                         <p className="flex items-center gap-1">
-                          <CalendarDays className="h-3 w-3" /> {task.dueDate}
+                          <CalendarDays className="h-3 w-3" /> {fmtDate(task.dueDate)}
                         </p>
                       </div>
                     )}
@@ -196,9 +197,7 @@ export function WorkLogForm() {
   const [openTasks, setOpenTasks] = useState<Record<string, boolean>>({});
   const [worklogEdit, setWorklogEdit] = useAtom(worklogEditAtom);
 
-  const dateCreated = new Date().toLocaleDateString("en-CA", {
-    timeZone: "America/New_York",
-  });
+  const dateCreated = new Date().toISOString().replace("Z", "");
 
   const userInfo = useAtomValue(userAtom);
 
@@ -263,7 +262,7 @@ export function WorkLogForm() {
         collaborators: t.collaborators || [],
         assignedUser: t.assignedUser || "",
         status: t.status || ("not-started" as const),
-        dueDate: t.dueDate || "",
+        dueDate: t.dueDate ? t.dueDate.split("T")[0] : "",
         creationDate: t.creationDate || dateCreated,
         reflection: t.reflection || "",
       }));
@@ -282,7 +281,7 @@ export function WorkLogForm() {
           collaborators: t.collaborators || [],
           assignedUser: t.assignedUser || "",
           status: t.status || ("not-started" as const),
-          dueDate: t.dueDate || "",
+          dueDate: t.dueDate ? t.dueDate.split("T")[0] : "",
           creationDate: t.creationDate || dateCreated,
           reflection: t.reflection || "",
         }));
@@ -313,7 +312,7 @@ export function WorkLogForm() {
           collaborators: t.collaborators || [],
           assignedUser: t.assignedUser || "",
           status: t.status || ("not-started" as const),
-          dueDate: t.dueDate || "",
+          dueDate: t.dueDate ? t.dueDate.split("T")[0] : "",
           creationDate: t.creationDate || dateCreated,
           reflection: t.reflection || "",
         }));
@@ -347,6 +346,12 @@ export function WorkLogForm() {
     setOpenTasks((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
+  function toLocalDT(val: string | undefined | null): string {
+    if (!val) return "";
+    const s = /^\d{4}-\d{2}-\d{2}$/.test(val) ? `${val}T00:00:00` : val;
+    return s.replace("Z", "");
+  }
+
   function onSubmit(data: taskType) {
     if (!userInfo) return;
 
@@ -354,6 +359,8 @@ export function WorkLogForm() {
       ...t,
       assignedUser: userInfo.id,
       collaborators: t.collaborators.filter((c) => c !== ""),
+      dueDate: toLocalDT(t.dueDate),
+      creationDate: toLocalDT(t.creationDate),
     }));
 
     const obj: workLogPostType = {
@@ -375,7 +382,6 @@ export function WorkLogForm() {
     mutation.mutate(pendingWorklog);
   }
 
-
   return (
     <div className="p-4 sm:p-6 md:p-10">
       <h1 className="text-2xl sm:text-3xl md:text-4xl mb-1">
@@ -390,7 +396,11 @@ export function WorkLogForm() {
           end.setDate(end.getDate() + 6);
           const fmt = (d: Date) =>
             d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-          return <span className="text-muted-foreground font-normal">({fmt(start)} - {fmt(end)})</span>;
+          return (
+            <span className="text-muted-foreground font-normal">
+              ({fmt(start)} - {fmt(end)})
+            </span>
+          );
         })()}
       </h1>
       <p className="text-sm text-muted-foreground mb-6 md:mb-8">
@@ -472,7 +482,10 @@ export function WorkLogForm() {
                               control={form.control}
                               render={({ field, fieldState }) => (
                                 <Field data-invalid={fieldState.invalid}>
-                                  <FieldLabel>Task Name <span className="text-red-500">*</span></FieldLabel>
+                                  <FieldLabel>
+                                    Task Name{" "}
+                                    <span className="text-red-500">*</span>
+                                  </FieldLabel>
                                   <Input
                                     {...field}
                                     placeholder="Task name"
@@ -490,7 +503,10 @@ export function WorkLogForm() {
                               control={form.control}
                               render={({ field, fieldState }) => (
                                 <Field data-invalid={fieldState.invalid}>
-                                  <FieldLabel>Main Goal <span className="text-red-500">*</span></FieldLabel>
+                                  <FieldLabel>
+                                    Main Goal{" "}
+                                    <span className="text-red-500">*</span>
+                                  </FieldLabel>
                                   <Input
                                     {...field}
                                     placeholder="Main goal"
@@ -539,10 +555,18 @@ export function WorkLogForm() {
                                     <div className="relative">
                                       <Input
                                         value={input}
-                                        onChange={(e) => setInput(e.target.value)}
+                                        onChange={(e) =>
+                                          setInput(e.target.value)
+                                        }
                                         onKeyDown={(e) => {
-                                          if (e.key === "Backspace" && input === "" && field.value.length > 0) {
-                                            field.onChange(field.value.slice(0, -1));
+                                          if (
+                                            e.key === "Backspace" &&
+                                            input === "" &&
+                                            field.value.length > 0
+                                          ) {
+                                            field.onChange(
+                                              field.value.slice(0, -1),
+                                            );
                                           }
                                           if (e.key === "Escape") {
                                             setInput("");
@@ -555,8 +579,16 @@ export function WorkLogForm() {
                                           {studentList
                                             .filter(
                                               (s: any) =>
-                                                (s.name.toLowerCase().includes(input.toLowerCase()) ||
-                                                 s.email.toLowerCase().includes(input.toLowerCase())) &&
+                                                (s.name
+                                                  .toLowerCase()
+                                                  .includes(
+                                                    input.toLowerCase(),
+                                                  ) ||
+                                                  s.email
+                                                    .toLowerCase()
+                                                    .includes(
+                                                      input.toLowerCase(),
+                                                    )) &&
                                                 !field.value.includes(s.name),
                                             )
                                             .map((s: any) => (
@@ -565,21 +597,38 @@ export function WorkLogForm() {
                                                 type="button"
                                                 className="w-full text-left px-3 py-2 hover:bg-gray-100 cursor-pointer"
                                                 onClick={() => {
-                                                  field.onChange([...field.value, s.name]);
+                                                  field.onChange([
+                                                    ...field.value,
+                                                    s.name,
+                                                  ]);
                                                   setInput("");
                                                 }}
                                               >
-                                                <p className="text-sm font-medium">{s.name}</p>
-                                                <p className="text-xs text-muted-foreground">{s.email}</p>
+                                                <p className="text-sm font-medium">
+                                                  {s.name}
+                                                </p>
+                                                <p className="text-xs text-muted-foreground">
+                                                  {s.email}
+                                                </p>
                                               </button>
                                             ))}
                                           {studentList.filter(
                                             (s: any) =>
-                                              (s.name.toLowerCase().includes(input.toLowerCase()) ||
-                                               s.email.toLowerCase().includes(input.toLowerCase())) &&
+                                              (s.name
+                                                .toLowerCase()
+                                                .includes(
+                                                  input.toLowerCase(),
+                                                ) ||
+                                                s.email
+                                                  .toLowerCase()
+                                                  .includes(
+                                                    input.toLowerCase(),
+                                                  )) &&
                                               !field.value.includes(s.name),
                                           ).length === 0 && (
-                                            <p className="px-3 py-2 text-sm text-muted-foreground">No matching students</p>
+                                            <p className="px-3 py-2 text-sm text-muted-foreground">
+                                              No matching students
+                                            </p>
                                           )}
                                         </div>
                                       )}
@@ -595,7 +644,10 @@ export function WorkLogForm() {
                                 control={form.control}
                                 render={({ field, fieldState }) => (
                                   <Field data-invalid={fieldState.invalid}>
-                                    <FieldLabel>Deadline <span className="text-red-500">*</span></FieldLabel>
+                                    <FieldLabel>
+                                      Deadline{" "}
+                                      <span className="text-red-500">*</span>
+                                    </FieldLabel>
                                     <Input
                                       {...field}
                                       type="date"
@@ -613,7 +665,10 @@ export function WorkLogForm() {
                                 control={form.control}
                                 render={({ field, fieldState }) => (
                                   <Field data-invalid={fieldState.invalid}>
-                                    <FieldLabel>Completion <span className="text-red-500">*</span></FieldLabel>
+                                    <FieldLabel>
+                                      Completion{" "}
+                                      <span className="text-red-500">*</span>
+                                    </FieldLabel>
                                     <Select
                                       onValueChange={field.onChange}
                                       value={field.value}
@@ -646,7 +701,10 @@ export function WorkLogForm() {
                               control={form.control}
                               render={({ field, fieldState }) => (
                                 <Field data-invalid={fieldState.invalid}>
-                                  <FieldLabel>Reflection <span className="text-red-500">*</span></FieldLabel>
+                                  <FieldLabel>
+                                    Reflection{" "}
+                                    <span className="text-red-500">*</span>
+                                  </FieldLabel>
                                   <InputGroup>
                                     <InputGroupTextarea
                                       {...field}
@@ -696,7 +754,8 @@ export function WorkLogForm() {
       </Button>
 
       <p className="text-xs text-muted-foreground mt-3 text-center">
-        Once submitted, this log cannot be edited. You will need to create a new submission to make changes.
+        Once submitted, this log cannot be edited. You will need to create a new
+        submission to make changes.
       </p>
 
       <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
@@ -706,7 +765,8 @@ export function WorkLogForm() {
               Are you sure you want to submit your log?
             </AlertDialogTitle>
             <AlertDialogDescription className="text-base text-muted-foreground">
-              Once submitted, this log cannot be edited. You will need to create a new submission to make changes.
+              Once submitted, this log cannot be edited. You will need to create
+              a new submission to make changes.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="flex flex-col gap-3 mt-4">

@@ -1,6 +1,5 @@
 package worklog.application;
 
-import java.time.LocalDate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -76,15 +75,8 @@ public class WorklogService {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Uploads new worklog to db")
     public Response createWorklog(@Valid WorklogEntry entry) {
-
-        // Automatically set dateCreated if not provided
-        if (entry.getDateCreated() == null) {
-            entry.setDateCreated(LocalDate.now());
-        }
-
         logger.log(Level.INFO, "POST: createWorklog()");
         return repo.addWorklog(entry);
-
     }
 
 
