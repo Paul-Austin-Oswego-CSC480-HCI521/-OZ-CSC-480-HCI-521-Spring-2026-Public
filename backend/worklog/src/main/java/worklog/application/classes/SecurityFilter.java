@@ -24,9 +24,9 @@ public class SecurityFilter implements ContainerRequestFilter {
          * THE BELOW IF STATEMENT SHOULD ONLY BE UNCOMMENTED IF TESTING ON LOCAL BRANCH
          * THIS IS A BIG SECURITY RISK IN DEPLOYMENT CODE, ONLY HERE FOR SIMPLIFYING TESTING
          */
-        if (classID == null) {
-            classID = "DEVMODE";
-        }
+        // if (classID == null) {
+        //     classID = "DEVMODE";
+        // }
 
 
         if (classID == null || classID.isBlank()) {

@@ -66,19 +66,7 @@ public class WorklogRepository {
                 .withCodecRegistry(POJO_CODEC_REGISTRY)
                 .getCollection("worklogs");
     }
-    
 
-    // @Inject
-    // public void setCollection(MongoDatabase db) {
-    //     CodecRegistry pojoCodecRegistry = fromRegistries(
-    //             MongoClientSettings.getDefaultCodecRegistry(),
-    //             fromProviders(PojoCodecProvider.builder().automatic(true).build()));
-
-    //     // Apply the registry to the database provided by the producer
-    //     MongoDatabase codecDb = db.withCodecRegistry(pojoCodecRegistry);
-
-    //     this.collection = codecDb.getCollection(userContext.getClassID());
-    // }
 
     public Response addWorklog(WorklogEntry entry) {
         MongoCollection<Document> collection = getClassCollection();

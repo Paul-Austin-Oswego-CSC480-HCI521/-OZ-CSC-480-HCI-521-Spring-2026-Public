@@ -123,6 +123,7 @@ public class AuthRepository{
     }
 
     public Document removeUser(String email) {
+        removeUserFromClass(email);
         Document user = findByEmail(email);
         collection.deleteOne(new Document("email", email));
         return user;

@@ -253,7 +253,7 @@ public class AuthResource{
 
     @PUT
     @Path("/users/class/{email}")
-    @RolesAllowed("instructor")
+    // @RolesAllowed("instructor")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Adds a user to the given class.")
@@ -272,7 +272,7 @@ public class AuthResource{
 
     @DELETE
     @Path("/users/class/{email}")
-    @RolesAllowed("instructor")
+    // @RolesAllowed("instructor")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Removes the user from their current class")
@@ -292,7 +292,7 @@ public class AuthResource{
 
     @DELETE
     @Path("/users/remove/{email}")
-    @RolesAllowed("instructor")// we Might want to add admin role later to manage instructors (this line restructs what users can call this endpoint)
+    // // @RolesAllowed("instructor")// we Might want to add admin role later to manage instructors (this line restructs what users can call this endpoint)
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Deletes user from database")
@@ -310,7 +310,7 @@ public class AuthResource{
     
     @GET
     @Path("/instructors") 
-    @RolesAllowed("instructor")// we Might want to add admin role later to manage instructors (this line restructs what users can call this endpoint)
+    // @RolesAllowed("instructor")// we Might want to add admin role later to manage instructors (this line restructs what users can call this endpoint)
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Gets all instructors of current class")
     public Response getInstructors(){
@@ -326,7 +326,7 @@ public class AuthResource{
 
     @POST
     @Path("/instructor/create")
-    @RolesAllowed("instructor")// we Might want to add admin role later to manage instructors (this line restructs what users can call this endpoint)
+    // @RolesAllowed("instructor")// we Might want to add admin role later to manage instructors (this line restructs what users can call this endpoint)
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Creates instructor in current class")
@@ -345,7 +345,7 @@ public class AuthResource{
 
     @PUT
     @Path("/instructor/create/{email}")
-    @RolesAllowed("instructor")// we Might want to add admin role later to manage instructors (this line restructs what users can call this endpoint)
+    // @RolesAllowed("instructor")// we Might want to add admin role later to manage instructors (this line restructs what users can call this endpoint)
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Creates/updates user into instructor")
@@ -363,7 +363,7 @@ public class AuthResource{
 
     @PUT
     @Path("/instructor/remove/{email}")
-    @RolesAllowed("instructor")// we Might want to add admin role later to manage instructors (this line restructs what users can call this endpoint)
+    // @RolesAllowed("instructor")// we Might want to add admin role later to manage instructors (this line restructs what users can call this endpoint)
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
      @Operation(summary = "Removes instructor role from user")
@@ -381,7 +381,7 @@ public class AuthResource{
 
     @POST
     @Path("/class/create")
-    @RolesAllowed("instructor")
+    // @RolesAllowed("instructor")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
      @Operation(summary = "Creates a class")
@@ -399,7 +399,7 @@ public class AuthResource{
 
     @GET
     @Path("/class/{classID}")
-    @RolesAllowed("instructor")
+    // @RolesAllowed("instructor")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Gets class data of a given classID")
@@ -417,7 +417,7 @@ public class AuthResource{
 
     @GET
     @Path("/classes")
-    @RolesAllowed("instructor")
+    // @RolesAllowed("instructor")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Gets all current classes")
@@ -435,7 +435,7 @@ public class AuthResource{
 
     @DELETE
     @Path("/class/delete/{classID}")
-    @RolesAllowed("instructor")
+    // @RolesAllowed("instructor")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Deletes a given class by given classID")
