@@ -9,6 +9,7 @@ import java.util.Map;
 
 
 import org.bson.Document;
+import org.eclipse.microprofile.openapi.annotations.Operation;
 
 import com.ibm.websphere.security.jwt.Claims;
 import com.ibm.websphere.security.jwt.JwtBuilder;
@@ -54,6 +55,7 @@ public class AuthResource{
     @Path("/login")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Logs user into account")
     // login should be public so anyone can call it
     public Response login(Map<String, String> body){
         try{
@@ -127,6 +129,7 @@ public class AuthResource{
     @POST
     @Path("/refresh")
     @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Refreshes token")
     public Response refresh(@CookieParam(REFRESH_TOKEN_NAME) String refreshToken) {
         try {
             if (refreshToken == null || refreshToken.isEmpty()) {
@@ -196,6 +199,7 @@ public class AuthResource{
 
     @POST
     @Path("/logout")
+    @Operation(summary = "Logs user out of account")
     public Response logout(@CookieParam(REFRESH_TOKEN_NAME) String refreshToken) {
         if (refreshToken != null) {
             authservice.revokeRefreshToken(refreshToken);
@@ -215,8 +219,9 @@ public class AuthResource{
 
 
     @GET
-    @Path("/users")
+    @Path("/users") //TODO Does not actually get all users rn only gets users in current class
     @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Gets all users")
     public Response getAllUsers(){
         try {
             List<Document> users = authservice.getAllUsers();
@@ -232,6 +237,7 @@ public class AuthResource{
     @Path("/users/class/{classID}")   
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Gets all users in a given class.")
     public Response getUsersFromClass(@PathParam("classID") String classID){
         try {
             List<Document> users = authservice.getUsersFromClass(classID);
@@ -250,9 +256,29 @@ public class AuthResource{
     @RolesAllowed("instructor")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Adds a user to the given class.")
     public Response addUserToClass(@PathParam("email") String email, String classID){
         try {
             Document user = authservice.addUserToClass(email, classID);
+            return Response.ok(user).build();
+            
+        } catch(Exception e){
+                return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity(e.getMessage())
+                .build();
+        }
+
+    }
+
+    @DELETE
+    @Path("/users/class/{email}")
+    @RolesAllowed("instructor")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Removes the user from their current class")
+    public Response removeUserFromClass(@PathParam("email") String email){
+        try {
+            Document user = authservice.removeUserFromClass(email);
             return Response.ok(user).build();
             
         } catch(Exception e){
@@ -269,6 +295,7 @@ public class AuthResource{
     @RolesAllowed("instructor")// we Might want to add admin role later to manage instructors (this line restructs what users can call this endpoint)
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Deletes user from database")
     public Response deleteUser(@PathParam("email") String email){
         try {
             Document user = authservice.removeUser(email);
@@ -282,9 +309,10 @@ public class AuthResource{
     }
     
     @GET
-    @Path("/instructors")
+    @Path("/instructors") 
     @RolesAllowed("instructor")// we Might want to add admin role later to manage instructors (this line restructs what users can call this endpoint)
     @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Gets all instructors of current class")
     public Response getInstructors(){
         try {
             List<Document> users = authservice.getInstructors();
@@ -301,6 +329,7 @@ public class AuthResource{
     @RolesAllowed("instructor")// we Might want to add admin role later to manage instructors (this line restructs what users can call this endpoint)
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Creates instructor in current class")
     public Response createInstructor(User user){
         try {
             Document userDoc = authservice.createInstuctor(user.getEmail(), user.getName());
@@ -319,6 +348,7 @@ public class AuthResource{
     @RolesAllowed("instructor")// we Might want to add admin role later to manage instructors (this line restructs what users can call this endpoint)
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Creates/updates user into instructor")
     public Response updateInstructor(@PathParam("email") String email){
         try {
             Document user = authservice.changeUserRole(email, "instructor");
@@ -336,6 +366,7 @@ public class AuthResource{
     @RolesAllowed("instructor")// we Might want to add admin role later to manage instructors (this line restructs what users can call this endpoint)
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+     @Operation(summary = "Removes instructor role from user")
     public Response removeInstructor(@PathParam("email") String email){
         try {
             Document user = authservice.changeUserRole(email, "student");
@@ -350,9 +381,10 @@ public class AuthResource{
 
     @POST
     @Path("/class/create")
-    // @RolesAllowed("instructor")
+    @RolesAllowed("instructor")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+     @Operation(summary = "Creates a class")
     public Response createClass(StudentClass studentClass){
         try {
             Document classDoc = authservice.createClass(studentClass);
@@ -367,9 +399,10 @@ public class AuthResource{
 
     @GET
     @Path("/class/{classID}")
-    // @RolesAllowed("instructor")
+    @RolesAllowed("instructor")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Gets class data of a given classID")
     public Response getStudentClass(@PathParam("classID") String classID){
         try {
             Document classDoc = authservice.getStudentClass(classID);
@@ -384,9 +417,10 @@ public class AuthResource{
 
     @GET
     @Path("/classes")
-    // @RolesAllowed("instructor")
+    @RolesAllowed("instructor")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Gets all current classes")
     public Response getClasses(){
         try {
             List<Document> classDoc = authservice.getClasses();
@@ -401,9 +435,10 @@ public class AuthResource{
 
     @DELETE
     @Path("/class/delete/{classID}")
-    // @RolesAllowed("instructor")
+    @RolesAllowed("instructor")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Deletes a given class by given classID")
     public Response createClass(@PathParam("classID") String classID){
         try {
             Document classDoc = authservice.removeClass(classID);

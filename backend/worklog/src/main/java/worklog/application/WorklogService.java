@@ -29,7 +29,7 @@ import jakarta.ws.rs.core.SecurityContext;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @ApplicationScoped
-// @RolesAllowed({"student", "instructor"})
+@RolesAllowed({"student", "instructor"})
 public class WorklogService {
     @Inject
     Validator validator;

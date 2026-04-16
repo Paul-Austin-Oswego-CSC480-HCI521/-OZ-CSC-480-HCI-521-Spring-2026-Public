@@ -96,6 +96,10 @@ public class AuthService {
             return repo.addUserToClass(email, classID);
         }
 
+        public Document removeUserFromClass(String email) {
+            return repo.removeUserFromClass(email);
+        }
+
         public List<Document> getInstructors(){
             return repo.getUsersByRole("instructor");
         }
