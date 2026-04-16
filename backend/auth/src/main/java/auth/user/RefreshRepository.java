@@ -1,15 +1,15 @@
 package auth.user;
 
+import java.time.Instant;
+import java.util.UUID;
+
+import org.bson.Document;
+
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-
-import java.time.Instant;
-import java.util.UUID;
-
-import org.bson.Document;
 
 @ApplicationScoped
 public class RefreshRepository {
@@ -30,7 +30,7 @@ public class RefreshRepository {
 
         Document doc = new Document()
             .append("token", token)
-            .append("userId", userId)
+            .append("userId", userId) //is use
             .append("email", email)
             .append("expiresAt", java.util.Date.from(expiresAt))
             .append("createdAt", java.util.Date.from(Instant.now()));

@@ -13,6 +13,9 @@ public class WorklogEntry {
 
     @NotEmpty(message = "Worklog must have an author!")
     private String authorName;
+
+    @NotEmpty(message = "Worklog must have a team")
+    private String teamName;
     
     @NotEmpty(message = "Worklog must have week name!")
     private String worklogName;
@@ -22,6 +25,9 @@ public class WorklogEntry {
 
     @NotNull(message = "Date submitted required")
     private LocalDateTime dateSubmitted;
+
+    @NotNull(message = "Deadline required")
+    private LocalDateTime deadline;
     private boolean reviewed = false;
 
     @Valid
@@ -32,19 +38,30 @@ public class WorklogEntry {
 
     private boolean isDraft;
 
+
+
     public void setAuthorName(String name) {
         this.authorName = name;
     }
 
-    public String getWorklogName() {
-        return worklogName;
-    }
-        public void setWorklogName(String worklogName) {
-        this.worklogName = worklogName;
-    }
-
     public String getAuthorName() {
         return authorName;
+    }
+
+    public void setTeamName(String teamName) {
+        this.teamName = teamName;
+    }
+
+    public String getTeamName() {
+        return teamName;
+    }
+
+    public void setWorklogName(String worklogName) {
+        this.worklogName = worklogName;
+    }
+    
+    public String getWorklogName() {
+        return worklogName;
     }
 
     public void setDateCreated(LocalDateTime dateCreated) {
@@ -61,6 +78,14 @@ public class WorklogEntry {
 
     public LocalDateTime getDateSubmitted() {
         return dateSubmitted;
+    }
+
+    public void setDeadline(LocalDateTime deadline) {
+        this.deadline = deadline;
+    }
+
+    public LocalDateTime getDeadline() {
+        return deadline;
     }
 
     public void setCollaborators(List<String> collaborators) {

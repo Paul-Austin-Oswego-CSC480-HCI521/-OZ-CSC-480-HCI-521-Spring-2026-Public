@@ -6,15 +6,17 @@ public class User{
     private String name;
     private String role;
     private String createdAt;
+    private String team;
 
     public User(){}
 
 
-    public User(String email, String name, String role, String createdAt){
+    public User(String email, String name, String role, String createdAt, String team){
             this.email = email;
             this.name = name;
             this.role = role;
             this.createdAt = createdAt;
+            this.team = team;
         }
 
         public String getEmail(){
@@ -42,5 +44,11 @@ public class User{
         }
         public void setCreatedAt(String createdAt){
             this.createdAt = createdAt;
+        }
+        public String getTeam() {
+            return team;
+        }
+        public void setTeam(String newTeam) {
+            team = newTeam;
         }
     }

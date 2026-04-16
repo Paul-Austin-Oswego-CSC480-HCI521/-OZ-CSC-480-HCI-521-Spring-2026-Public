@@ -1,10 +1,10 @@
 package worklog.application;
 
+import java.time.LocalDateTime;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.eclipse.microprofile.openapi.annotations.Operation;
-import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -17,7 +17,6 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
@@ -66,8 +65,36 @@ public class WorklogService {
     @Operation(summary = "Get worklog by author name in the database.")
     public Response getWorklogByAuthorName(@jakarta.ws.rs.PathParam("authorName") String authorName) {
         logger.log(Level.INFO, "GET: getWorklogByAuthorName()");
-        return repo.findByAuthor(authorName);
+        return repo.getByAuthorName(authorName);
     }
+
+    @GET
+    @Path("/team/{teamName}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Get worklog by team name in the database.")
+    public Response getWorklogByTeamName(@jakarta.ws.rs.PathParam("teamName") String teamName) {
+        logger.log(Level.INFO, "GET: getWorklogByTeamName()");
+        return repo.getByTeamName(teamName);
+    }
+
+    @GET
+    @Path("/deadline/{deadline}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Get worklog by deadline in the database.")
+    public Response getWorklogByDeadline(@jakarta.ws.rs.PathParam("deadline") LocalDateTime deadline) {
+        logger.log(Level.INFO, "GET: getWorklogByDeadline()");
+        return repo.getByDeadline(deadline);
+    }
+
+    @GET
+    @Path("/dateSubmitted/{dateSubmitted}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Get worklog by date submitted in the database.")
+    public Response getWorklogByDateSubmitted(@jakarta.ws.rs.PathParam("dateSubmitted") LocalDateTime dateSubmitted) {
+        logger.log(Level.INFO, "GET: getWorklogByDateSubmitted()");
+        return repo.getByDateSubmitted(dateSubmitted);
+    }
+
 
     @POST
     @Path("/")

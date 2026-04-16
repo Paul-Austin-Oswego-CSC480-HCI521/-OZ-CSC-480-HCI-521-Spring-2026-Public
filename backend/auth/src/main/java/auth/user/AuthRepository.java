@@ -26,14 +26,19 @@ public class AuthRepository{
     }
 
     public Document createUser(String email, String name, String role){
+        String team = "unassigned";
         if(role==null || (!role.equals("student") && !role.equals("instructor"))){
             role = "student";
+        }
+        if(role.equals("instructor")) {
+            team = "stakeholders";
         }
         Document newUser = new Document()
             .append("email", email)
             .append("name", name)
             .append("role", role)
-            .append("createdAt", Instant.now());
+            .append("createdAt", Instant.now())
+            .append("team", team);
         collection.insertOne(newUser);
         return newUser;
     }
@@ -45,6 +50,10 @@ public class AuthRepository{
         return collection.find(new Document("role", role)).into(new ArrayList<>());
     }
 
+    public List<Document> getUsersByTeam(String team) {
+        return collection.find(new Document("team", team)).into(new ArrayList<>());
+    }
+
     public Document updateUserRole(String email, String newRole){
         Document user = findByEmail(email);
         if(user!=null){
@@ -54,9 +63,27 @@ public class AuthRepository{
         return user;
     }
 
+    public Document updateUserTeam(String email, String newTeam) {
+        Document user = findByEmail(email);
+        if(user!=null){
+            user.put("team", newTeam);
+            collection.replaceOne(new Document("email", email), user);
+        }
+        return user;
+    }
+
     public Document removeUser(String email) {
         Document user = findByEmail(email);
         collection.deleteOne(new Document("email", email));
+        return user;
+    }
+
+    public Document removeUserTeam(String email) {
+        Document user = findByEmail(email);
+        if (user!=null) {
+            user.put("team", "unassigned");
+            collection.replaceOne(new Document("email", email), user);
+        }
         return user;
     }
 

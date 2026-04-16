@@ -1,6 +1,7 @@
 package worklog.application;
 
 import java.io.StringWriter;
+import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Date;
@@ -9,12 +10,12 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.bson.Document;
-import org.bson.json.JsonWriterSettings;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
 import org.bson.conversions.Bson;
+import org.bson.json.JsonWriterSettings;
 import org.bson.types.ObjectId;
 
 import com.mongodb.MongoClientSettings;
@@ -125,6 +126,22 @@ public class WorklogRepository {
     // TODO ADD FILTER FOR CURRENT USER
     public Response getDraft() {
         return responseByQuery(Filters.eq("isDraft", true));
+    }
+
+    public Response getByDeadline(LocalDateTime deadline) {
+        return responseByQuery(Filters.eq("deadline", deadline));
+    }
+
+    public Response getByDateSubmitted(LocalDateTime dateSubmitted) {
+        return responseByQuery(Filters.eq("dateSubmitted", dateSubmitted));
+    }
+
+    public Response getByAuthorName(String authorName) {
+        return responseByQuery(Filters.eq("authorName", authorName));
+    }
+
+    public Response getByTeamName(String teamName) {
+        return responseByQuery(Filters.eq("teamName", teamName));
     }
 
     // New functionality for findByAuthor: if an instructor is the one seeing it,
