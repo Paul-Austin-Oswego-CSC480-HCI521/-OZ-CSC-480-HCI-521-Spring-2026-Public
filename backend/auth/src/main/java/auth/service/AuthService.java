@@ -1,10 +1,12 @@
 package auth.service;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.mongodb.client.MongoCollection;
 
 import auth.google.GoogleTokenVerifier;
 import auth.user.AuthRepository;
 import auth.user.RefreshRepository;
+import auth.user.StudentClass;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.bson.Document;
@@ -118,4 +120,21 @@ public class AuthService {
         public List<Document> getUsersFromClass(String classID) {
             return repo.getUsersFromClass(classID);
         }
+
+        public Document createClass(StudentClass studentClass) {
+            return repo.createClass(studentClass);
+        }
+
+        public List<Document> getClasses() {
+            return repo.getClasses();
+        }
+
+        public Document removeClass(String classID) {
+            return repo.removeClass(classID);
+        }
+
+        public Document getStudentClass(String classID) {
+            return repo.getStudentClass(classID);
+        }
+
 }

@@ -12,8 +12,10 @@ import org.bson.Document;
 
 import com.ibm.websphere.security.jwt.Claims;
 import com.ibm.websphere.security.jwt.JwtBuilder;
+import com.mongodb.client.MongoCollection;
 
 import auth.service.AuthService;
+import auth.user.StudentClass;
 import auth.user.User;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.RequestScoped;
@@ -344,6 +346,74 @@ public class AuthResource{
                 .entity(e.getMessage())
                 .build();
         }
+    }
+
+    @POST
+    @Path("/class/create")
+    // @RolesAllowed("instructor")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response createClass(StudentClass studentClass){
+        try {
+            Document classDoc = authservice.createClass(studentClass);
+            return Response.ok(classDoc).build();
+            
+        } catch(Exception e){
+                return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity(e.getMessage())
+                .build();
+        } 
+    }
+
+    @GET
+    @Path("/class/{classID}")
+    // @RolesAllowed("instructor")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getStudentClass(@PathParam("classID") String classID){
+        try {
+            Document classDoc = authservice.getStudentClass(classID);
+            return Response.ok(classDoc).build();
+            
+        } catch(Exception e){
+                return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity(e.getMessage())
+                .build();
+        } 
+    }
+
+    @GET
+    @Path("/classes")
+    // @RolesAllowed("instructor")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getClasses(){
+        try {
+            List<Document> classDoc = authservice.getClasses();
+            return Response.ok(classDoc).build();
+            
+        } catch(Exception e){
+                return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity(e.getMessage())
+                .build();
+        } 
+    }
+
+    @DELETE
+    @Path("/class/delete/{classID}")
+    // @RolesAllowed("instructor")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response createClass(@PathParam("classID") String classID){
+        try {
+            Document classDoc = authservice.removeClass(classID);
+            return Response.ok(classDoc).build();
+            
+        } catch(Exception e){
+                return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity(e.getMessage())
+                .build();
+        } 
     }
 
 
