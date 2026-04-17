@@ -91,9 +91,10 @@ public class WorklogRepository {
         newDoc.put("worklogName", entry.getWorklogName());
         newDoc.put("taskList", formatTask(entry.getTaskList()));
         newDoc.put("teamNames", entry.getTeamNames());
-        newDoc.put("deadline", entry.getDeadline());
         newDoc.put("reviewed", false);
         newDoc.put("isDraft", false);
+
+        if (entry.getDeadline() != null) newDoc.put("deadline", entry.getDeadline());
 
         collection.insertOne(newDoc);
 
@@ -261,7 +262,7 @@ public class WorklogRepository {
         newDoc.put("taskList", formatTask(updatedEntry.getTaskList()));
         newDoc.put("worklogName", updatedEntry.getWorklogName());
         newDoc.put("teamNames", updatedEntry.getTeamNames());
-        newDoc.put("deadline", updatedEntry.getDeadline());
+        if (updatedEntry.getDeadline() != null) newDoc.put("deadline", updatedEntry.getDeadline());
 
         if (isInstructor) {
             newDoc.put("reviewed", updatedEntry.isReviewed());

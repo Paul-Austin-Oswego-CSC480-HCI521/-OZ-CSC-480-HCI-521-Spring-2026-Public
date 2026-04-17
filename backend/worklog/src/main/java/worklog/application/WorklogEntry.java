@@ -14,7 +14,7 @@ public class WorklogEntry {
     @NotEmpty(message = "Worklog must have an author!")
     private String authorName;
 
-    @NotEmpty(message = "Worklog must have all the teams associated!")
+    // @NotEmpty(message = "Worklog must have all the teams associated!")
     private List<String> teamNames;
     
     @NotEmpty(message = "Worklog must have week name!")
@@ -26,7 +26,7 @@ public class WorklogEntry {
     @NotNull(message = "Date submitted required")
     private LocalDateTime dateSubmitted;
 
-    @NotNull(message = "Deadline required")
+    // @NotNull(message = "Deadline required")
     private LocalDateTime deadline;
     private boolean reviewed = false;
 
