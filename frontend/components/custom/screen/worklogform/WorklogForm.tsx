@@ -8,7 +8,7 @@ import {
   submitWorkLog,
   getWorkLog,
 } from "../../utils/api_utils/worklogs/allReq";
-import { getAllUsers } from "../../utils/api_utils/req/req";
+import { getUsersFromClass } from "../../utils/api_utils/req/req";
 import { useSearchParams } from "next/navigation";
 
 import {
@@ -209,8 +209,9 @@ export function WorkLogForm() {
     worklogEdit?.weekNumber || weekFromUrl || worklogdayInfo?.weekNumber;
 
   const { data: allUsersData } = useQuery({
-    queryKey: ["all-users"],
-    queryFn: getAllUsers,
+    queryKey: ["users-from-class", userInfo?.classID],
+    queryFn: () => getUsersFromClass(userInfo?.classID ?? ""),
+    enabled: !!userInfo?.classID,
   });
 
   const studentList = (allUsersData ?? [])

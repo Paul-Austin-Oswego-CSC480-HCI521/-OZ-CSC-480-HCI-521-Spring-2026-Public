@@ -17,13 +17,14 @@ export async function googleSignIn(credential: string, role?: string) {
     email: string;
     name: string;
     id: string;
+    classID : string
   };
 }
 
-export async function getAllUsers() {
+export async function getUsersFromClass(classID : string) {
   const AUTH_URL = env("NEXT_PUBLIC_AUTH_API_URL") || "http://localhost:9084/auth/api";
   const client = createClient(AUTH_URL);
-  const res = await client.get("/auth/users");
+  const res = await client.get(`/auth/users/class/${classID}`);
   return res.data;
 }
 

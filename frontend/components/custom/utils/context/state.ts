@@ -14,6 +14,7 @@ export const userAtom = atom((get) => {
       email: payload.email as string,
       role: payload.role as string,
       name: payload.name as string,
+      classID : payload.classID as string
     };
   } catch {
     return null;

@@ -69,6 +69,22 @@ public class WorklogService {
         return repo.findByAuthor(authorName);
     }
 
+
+    @GET
+    @Path("debug/dbCollections")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response listCollections() {
+        return repo.listCollections();
+    }
+
+    @GET
+    @Path("debug/dbs")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response listDBs() {
+        return repo.listDBs();
+    }
+
+
     @POST
     @Path("/")
     @Consumes(MediaType.APPLICATION_JSON)

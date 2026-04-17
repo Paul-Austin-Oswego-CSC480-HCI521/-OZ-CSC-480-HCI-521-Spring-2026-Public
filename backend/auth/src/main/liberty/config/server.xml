@@ -80,6 +80,7 @@
         keyStoreRef="defaultKeyStore" 
         trustDefaultCerts="true"
     />
+    <webAppSecurity allowFailOverToBasicAuth="false" displayAuthenticationRealm="false"/>
 
     <!-- end::sslContext[] -->
 </server>
