@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAtomValue } from "jotai";
 import { userAtom } from "@/components/custom/utils/context/state";
 import { useEffect, useState } from "react";
+
 const Page = () => {
   const userInfo = useAtomValue(userAtom);
   const router = useRouter();
@@ -25,7 +26,7 @@ const Page = () => {
   }
 
   return (
-    <div className="w-full p-4 sm:p-6 md:p-8 space-y-6">
+    <div className="w-full p-6 md:p-8 space-y-6">
       <Welcome />
       <NotifCenter />
     </div>

@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "../globals.css";
-import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/custom/screen/sidebar/Sidebar";
-import Topbar from "@/components/custom/screen/topbar/Topbar";
 import { PublicEnvScript } from 'next-runtime-env';
 import { Providers } from "@/provider";
 import { Toaster } from "sonner";
@@ -30,20 +28,21 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-
+      <head>
+        <PublicEnvScript />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <SidebarProvider>
-          <div className="flex flex-col w-full min-h-screen h-screen">
-            <Topbar />
-            <div className="flex flex-1 overflow-hidden">
-              <AppSidebar />
-              <main className="w-full overflow-y-auto min-h-0">{children}</main>
-            </div>
+        <Providers>
+          <div className="flex min-h-screen">
+            <AppSidebar />
+            <main className="ml-[210px] flex-1 overflow-y-auto">
+              {children}
+            </main>
           </div>
           <Toaster position="top-right" richColors />
-        </SidebarProvider>
+        </Providers>
       </body>
     </html>
   );
