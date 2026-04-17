@@ -6,14 +6,20 @@ import java.util.List;
 
 import org.bson.Document;
 
+import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.core.Response;
 
 @ApplicationScoped
 public class AuthRepository{
+
+    @Inject
+    private MongoClient mongoClient;
+
     private MongoCollection<Document> collection;
 
     @Inject 
@@ -45,6 +51,68 @@ public class AuthRepository{
         collection.insertOne(newUser);
         return newUser;
     }
+
+    public Document addUserToClass(String email, String classID) {
+
+        if (!mongoClient.listDatabaseNames().into(new ArrayList<>()).contains(classID)) return null;
+
+        Document user = findByEmail(email);
+        if (user == null) return null;
+
+        String existingClassID = user.getString("classID");
+        if (existingClassID != null && !existingClassID.equals(classID)) {
+            MongoDatabase oldClassDb = mongoClient.getDatabase(existingClassID);
+            MongoCollection<Document> oldClassData = oldClassDb.getCollection("classData");
+            oldClassData.updateOne(
+                new Document("classID", existingClassID),
+                new Document("$pull", new Document("students", new Document("email", email)))
+            );
+        }
+
+
+        user.put("classID", classID);
+        collection.replaceOne(new Document("email", email), user);
+
+        MongoDatabase classDb = mongoClient.getDatabase(classID);
+        MongoCollection<Document> classData = classDb.getCollection("classData");
+
+        Document studentDoc = new Document()
+            .append("email", email)
+            .append("name", user.getString("name"))
+            .append("role", user.getString("role"))
+            .append("createdAt", user.get("createdAt"));
+
+        classData.updateOne(
+            new Document("classID", classID),
+            new Document("$push", new Document("students", studentDoc))
+        );
+
+        return user;
+    }
+
+    public Document removeUserFromClass(String email) {
+        
+        Document user = findByEmail(email);
+        
+        if (user == null) return null;
+        if (!mongoClient.listDatabaseNames().into(new ArrayList<>()).contains(user.getString("classID"))) return null;
+
+        String existingClassID = user.getString("classID");
+        if (existingClassID != null) {
+            MongoDatabase oldClassDb = mongoClient.getDatabase(existingClassID);
+            MongoCollection<Document> oldClassData = oldClassDb.getCollection("classData");
+            oldClassData.updateOne(
+                new Document("classID", existingClassID),
+                new Document("$pull", new Document("students", new Document("email", email)))
+            );
+        }
+
+        user.remove("classID");
+        collection.replaceOne(new Document("email", email), user);
+        
+        return user;
+    }
+
     public List<Document> getAllUsers(){
         return collection.find().into(new ArrayList<>());
     }
@@ -76,6 +144,7 @@ public class AuthRepository{
     }
 
     public Document removeUser(String email) {
+        removeUserFromClass(email);
         Document user = findByEmail(email);
         collection.deleteOne(new Document("email", email));
         return user;
@@ -90,6 +159,64 @@ public class AuthRepository{
             collection.replaceOne(new Document("email", email), user);
         }
         return user;
+    public List<Document> getUsersFromClass(String classID) {
+        return collection.find(new Document("classID", classID)).into(new ArrayList<>());
+    }
+
+    public Document createClass(StudentClass studentClass) {
+        MongoDatabase classDb = mongoClient.getDatabase(studentClass.getClassID());
+        MongoCollection<Document> classData = classDb.getCollection("classData");
+
+        if (classData.find().first() != null) {
+            return null;
+        }
+
+        Document classDoc = new Document()
+            .append("classID", studentClass.getClassID())
+            .append("semesterStartDate", studentClass.getSemesterStartDate())
+            .append("semsesterEndDate", studentClass.getSemsesterEndDate())
+            .append("studendAccessEndDate", studentClass.getStudendAccessEndDate())
+            .append("isArchived", studentClass.getIsArchived())
+            .append("students", studentClass.getStudents());
+
+        classData.insertOne(classDoc);
+        return classDoc;
+
+    }
+
+    public List<Document> getClasses() {
+        Iterable<String> classNames = mongoClient.listDatabaseNames();
+        ArrayList<Document> classDocs = new ArrayList<>();
+        List<String> systemDBs = List.of("admin", "local", "config");
+
+        for (String name : classNames) {
+            if (systemDBs.contains(name)) continue;
+
+            MongoCollection<Document> currCollection = mongoClient.getDatabase(name).getCollection("classData");
+            Document classDataDoc = currCollection.find().first();
+            if (classDataDoc != null) {
+                classDocs.add(classDataDoc);
+            }
+        }
+
+        return classDocs;
+
+    }
+
+    public Document removeClass(String classID) {
+        MongoDatabase classDb = mongoClient.getDatabase(classID);
+        MongoCollection<Document> classData = classDb.getCollection("classData");
+        Document classDoc = classData.find().first();
+        classDb.drop();
+        return classDoc;
+    }
+
+    public Document getStudentClass(String classID) {
+        MongoDatabase classDb = mongoClient.getDatabase(classID);
+        MongoCollection<Document> classData = classDb.getCollection("classData");
+
+        return classData.find().first();
+
     }
 
 }

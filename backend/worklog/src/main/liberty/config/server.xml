@@ -56,5 +56,6 @@
         mapToUserRegistry="false"
         clockSkew="0s"
     />
+    <webAppSecurity allowFailOverToBasicAuth="false" displayAuthenticationRealm="false"/>
 
 </server>

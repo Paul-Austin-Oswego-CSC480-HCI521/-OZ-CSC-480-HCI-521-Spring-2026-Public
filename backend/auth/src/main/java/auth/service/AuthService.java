@@ -6,10 +6,12 @@ import java.util.List;
 import org.bson.Document;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.mongodb.client.MongoCollection;
 
 import auth.google.GoogleTokenVerifier;
 import auth.user.AuthRepository;
 import auth.user.RefreshRepository;
+import auth.user.StudentClass;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -90,6 +92,14 @@ public class AuthService {
             return repo.getAllUsers();
         }
 
+        public Document addUserToClass(String email, String classID) {
+            return repo.addUserToClass(email, classID);
+        }
+
+        public Document removeUserFromClass(String email) {
+            return repo.removeUserFromClass(email);
+        }
+
         public List<Document> getInstructors(){
             return repo.getUsersByRole("instructor");
         }
@@ -122,4 +132,25 @@ public class AuthService {
         public Document removeUser(String email) {
             return repo.removeUser(email);
         }
+
+        public List<Document> getUsersFromClass(String classID) {
+            return repo.getUsersFromClass(classID);
+        }
+
+        public Document createClass(StudentClass studentClass) {
+            return repo.createClass(studentClass);
+        }
+
+        public List<Document> getClasses() {
+            return repo.getClasses();
+        }
+
+        public Document removeClass(String classID) {
+            return repo.removeClass(classID);
+        }
+
+        public Document getStudentClass(String classID) {
+            return repo.getStudentClass(classID);
+        }
+
 }

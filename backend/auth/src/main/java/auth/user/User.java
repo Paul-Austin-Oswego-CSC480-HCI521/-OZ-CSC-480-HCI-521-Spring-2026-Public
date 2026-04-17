@@ -8,6 +8,7 @@ public class User{
     private String role;
     private String createdAt;
     private List<String> teams;
+    private String classID;
 
     public User(){}
 
@@ -18,6 +19,14 @@ public class User{
             this.role = role;
             this.createdAt = createdAt;
             this.teams = teams;
+        }
+
+    public User(String email, String name, String role, String createdAt, String classID){
+            this.email = email;
+            this.name = name;
+            this.role = role;
+            this.createdAt = createdAt;
+            this.classID = classID;
         }
 
         public String getEmail(){
@@ -51,5 +60,10 @@ public class User{
         }
         public void setTeam(List<String> newTeams) {
             teams = newTeams;
+        public String getClassID(){
+            return classID;
+        }
+        public void setClassID(String classID){
+            this.classID = classID;
         }
     }

@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getAllWorkLogs, updateWorklog } from "@/components/custom/utils/api_utils/worklogs/allReq";
-import { getAllUsers } from "@/components/custom/utils/api_utils/req/req";
+import { getUsersFromClass } from "@/components/custom/utils/api_utils/req/req";
 import { useAtomValue } from "jotai";
 import { userAtom } from "@/components/custom/utils/context/state";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -232,8 +232,9 @@ const InstructorDashboard = () => {
   });
 
   const { data: usersData, isLoading: usersLoading, error: usersError } = useQuery({
-    queryKey: ["all-users"],
-    queryFn: getAllUsers,
+    queryKey: ["all-users", userInfo?.classID],
+    queryFn: () => getUsersFromClass(userInfo?.classID ?? ""),
+    enabled: !! userInfo?.classID,
   });
 
   if (!mounted || !userInfo) {
