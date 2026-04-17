@@ -14,8 +14,8 @@ public class WorklogEntry {
     @NotEmpty(message = "Worklog must have an author!")
     private String authorName;
 
-    @NotEmpty(message = "Worklog must have a team")
-    private String teamName;
+    @NotEmpty(message = "Worklog must have all the teams associated!")
+    private List<String> teamNames;
     
     @NotEmpty(message = "Worklog must have week name!")
     private String worklogName;
@@ -48,12 +48,12 @@ public class WorklogEntry {
         return authorName;
     }
 
-    public void setTeamName(String teamName) {
-        this.teamName = teamName;
+    public void setTeamNames(List<String> teamNames) {
+        this.teamNames = teamNames;
     }
 
-    public String getTeamName() {
-        return teamName;
+    public List<String> getTeamNames() {
+        return teamNames;
     }
 
     public void setWorklogName(String worklogName) {

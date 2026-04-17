@@ -80,6 +80,8 @@ public class WorklogRepository {
         newDoc.put("collaborators", entry.getCollaborators());
         newDoc.put("worklogName", entry.getWorklogName());
         newDoc.put("taskList", formatTask(entry.getTaskList()));
+        newDoc.put("teamNames", entry.getTeamNames());
+        newDoc.put("deadline", entry.getDeadline());
         newDoc.put("reviewed", false);
         newDoc.put("isDraft", false);
 
@@ -106,6 +108,7 @@ public class WorklogRepository {
 
         newDoc.put("authorName", entry.getAuthorName());
         newDoc.put("worklogName", entry.getWorklogName());
+        newDoc.put("teamNames", entry.getTeamNames());
         newDoc.put("isDraft", true);
         newDoc.put("reviewed", false);
 
@@ -140,8 +143,8 @@ public class WorklogRepository {
         return responseByQuery(Filters.eq("authorName", authorName));
     }
 
-    public Response getByTeamName(String teamName) {
-        return responseByQuery(Filters.eq("teamName", teamName));
+    public Response getByTeamNames(List<String> teamNames) {
+        return responseByQuery(Filters.eq("teamNames", teamNames));
     }
 
     // New functionality for findByAuthor: if an instructor is the one seeing it,
@@ -239,6 +242,8 @@ public class WorklogRepository {
         newDoc.put("collaborators", updatedEntry.getCollaborators());
         newDoc.put("taskList", formatTask(updatedEntry.getTaskList()));
         newDoc.put("worklogName", updatedEntry.getWorklogName());
+        newDoc.put("teamNames", updatedEntry.getTeamNames());
+        newDoc.put("deadline", updatedEntry.getDeadline());
 
         if (isInstructor) {
             newDoc.put("reviewed", updatedEntry.isReviewed());

@@ -1,22 +1,23 @@
 package auth.user;
 
+import java.util.List;
 
 public class User{
     private String email;
     private String name;
     private String role;
     private String createdAt;
-    private String team;
+    private List<String> teams;
 
     public User(){}
 
 
-    public User(String email, String name, String role, String createdAt, String team){
+    public User(String email, String name, String role, String createdAt, List<String> teams){
             this.email = email;
             this.name = name;
             this.role = role;
             this.createdAt = createdAt;
-            this.team = team;
+            this.teams = teams;
         }
 
         public String getEmail(){
@@ -45,10 +46,10 @@ public class User{
         public void setCreatedAt(String createdAt){
             this.createdAt = createdAt;
         }
-        public String getTeam() {
-            return team;
+        public List<String> getTeam() {
+            return teams;
         }
-        public void setTeam(String newTeam) {
-            team = newTeam;
+        public void setTeam(List<String> newTeams) {
+            teams = newTeams;
         }
     }

@@ -1,6 +1,7 @@
 package worklog.application;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -69,12 +70,12 @@ public class WorklogService {
     }
 
     @GET
-    @Path("/team/{teamName}")
+    @Path("/teams/{teamNames}")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get worklog by team name in the database.")
-    public Response getWorklogByTeamName(@jakarta.ws.rs.PathParam("teamName") String teamName) {
-        logger.log(Level.INFO, "GET: getWorklogByTeamName()");
-        return repo.getByTeamName(teamName);
+    @Operation(summary = "Get worklog by team names in the database.")
+    public Response getWorklogByTeamNames(@jakarta.ws.rs.PathParam("teamNames") List<String> teamNames) {
+        logger.log(Level.INFO, "GET: getWorklogByTeamNames()");
+        return repo.getByTeamNames(teamNames);
     }
 
     @GET

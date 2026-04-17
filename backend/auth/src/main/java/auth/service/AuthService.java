@@ -106,16 +106,16 @@ public class AuthService {
             return user;
         }
 
-        public Document changeUserTeam(String email, String newTeam) {
+        public Document changeUserTeams(String email, List<String> newTeams) {
             Document user = repo.findByEmail(email);
             if(user==null){
                 throw new IllegalArgumentException("User not found");
             }
-            if(newTeam==null || newTeam.isBlank()){
-                repo.removeUserTeam(email);
+            if(newTeams==null || newTeams.isEmpty()){
+                repo.removeUserTeams(email);
                 return user;
             }
-            repo.updateUserTeam(email, newTeam);
+            repo.updateUserTeams(email, newTeams);
             return user;
         }
 

@@ -26,19 +26,22 @@ public class AuthRepository{
     }
 
     public Document createUser(String email, String name, String role){
-        String team = "unassigned";
+        List<String> teams = new ArrayList<>();
         if(role==null || (!role.equals("student") && !role.equals("instructor"))){
             role = "student";
         }
         if(role.equals("instructor")) {
-            team = "stakeholders";
+            teams.add("stakeholders");
+        }
+        else {
+            teams.add("unassigned");
         }
         Document newUser = new Document()
             .append("email", email)
             .append("name", name)
             .append("role", role)
             .append("createdAt", Instant.now())
-            .append("team", team);
+            .append("teams", teams);
         collection.insertOne(newUser);
         return newUser;
     }
@@ -50,8 +53,8 @@ public class AuthRepository{
         return collection.find(new Document("role", role)).into(new ArrayList<>());
     }
 
-    public List<Document> getUsersByTeam(String team) {
-        return collection.find(new Document("team", team)).into(new ArrayList<>());
+    public List<Document> getUsersByTeam(String teams) {
+        return collection.find(new Document("teams", teams)).into(new ArrayList<>());
     }
 
     public Document updateUserRole(String email, String newRole){
@@ -63,10 +66,10 @@ public class AuthRepository{
         return user;
     }
 
-    public Document updateUserTeam(String email, String newTeam) {
+    public Document updateUserTeams(String email, List<String> newTeams) {
         Document user = findByEmail(email);
         if(user!=null){
-            user.put("team", newTeam);
+            user.put("teams", newTeams);
             collection.replaceOne(new Document("email", email), user);
         }
         return user;
@@ -78,10 +81,12 @@ public class AuthRepository{
         return user;
     }
 
-    public Document removeUserTeam(String email) {
+    public Document removeUserTeams(String email) {
         Document user = findByEmail(email);
         if (user!=null) {
-            user.put("team", "unassigned");
+            List<String> newTeams = new ArrayList<>();
+            newTeams.add("unassigned");
+            user.put("teams", newTeams);
             collection.replaceOne(new Document("email", email), user);
         }
         return user;
