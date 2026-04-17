@@ -159,6 +159,9 @@ public class AuthRepository{
             collection.replaceOne(new Document("email", email), user);
         }
         return user;
+    }
+
+    
     public List<Document> getUsersFromClass(String classID) {
         return collection.find(new Document("classID", classID)).into(new ArrayList<>());
     }
