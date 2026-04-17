@@ -60,6 +60,7 @@ public class User{
         }
         public void setTeam(List<String> newTeams) {
             teams = newTeams;
+        }
         public String getClassID(){
             return classID;
         }
