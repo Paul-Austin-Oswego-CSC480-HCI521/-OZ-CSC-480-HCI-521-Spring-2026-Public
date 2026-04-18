@@ -33,10 +33,11 @@ export default function SignUp() {
   const { mutate, isError } = useMutation({
     mutationFn: (credential: string) => googleSignIn(credential, "student"),
     onSuccess: (data) => {
+      localStorage.setItem("csc_480_token", JSON.stringify(data.token));
       setToken(data.token);
       document.cookie = `token=${data.token}; path=/;`;
       if (userInfo?.role == "instructor") router.push("/instructor");
-      router.push("/");
+      else router.push("/");
     },
   });
 
