@@ -74,6 +74,8 @@ public class AuthResource {
             String email = user.getString("email");
             String name = user.getString("name") != null ? user.getString("name") : email;
             String role = user.getString("role");
+            String preferredName = user.getString("preferredName");
+            List<String> team = user.getList("team", String.class);
             String classID = user.getString("classID");
 
 
@@ -84,7 +86,9 @@ public class AuthResource {
                 .claim("email", email)
                 .claim("name", name)
                 .claim("role", role)
-                .claim("groups", new String[]{role});
+                .claim("groups", new String[]{role})
+                .claim("preferredName", preferredName)
+                .claim("team", team);
 
             if (classID != null && !classID.isBlank()) {
                     builder = builder.claim("classID", classID);
@@ -95,11 +99,14 @@ public class AuthResource {
             String refreshToken = refreshDoc.getString("token");
 
             // return JWT TO FRONTEND
-            Map<String, String> response = new HashMap<>();
+            Map<String, Object> response = new HashMap<>();
             response.put("token", accessToken);
             response.put("email", email);
             response.put("name", name);
             response.put("role", role);
+            response.put("preferredName", preferredName);
+            response.put("team", team);
+            // System.out.println(response);
             if (classID != null) {
                 response.put("classID", classID);
             }
@@ -145,6 +152,8 @@ public class AuthResource {
             String id = user.getObjectId("_id").toHexString();
             String name = user.getString("name") != null ? user.getString("name") : email;
             String role = user.getString("role");
+            String preferredName = user.getString("preferredName");
+            List<String> team = user.getList("team", String.class);
             String classID = user.getString("classID");
 
             // delete old token, issue new one
@@ -159,17 +168,21 @@ public class AuthResource {
                 .claim("email", email)
                 .claim("name", name)
                 .claim("role", role)
+                .claim("preferredName", preferredName)
+                .claim("team", team)
                 .claim("groups", new String[]{role});
-                if (classID != null && !classID.isBlank()) {
+            if (classID != null && !classID.isBlank()) {
                     builder = builder.claim("classID", classID);
-                }
+            }
             String accessToken = builder.buildJwt().compact();
 
-            Map<String, String> response = new HashMap<>();
+            Map<String, Object> response = new HashMap<>();
             response.put("token", accessToken);
             response.put("email", email);
             response.put("name", name);
             response.put("role", role);
+            response.put("preferredName", preferredName);
+            response.put("team", team);
             if (classID != null && !classID.isBlank()) {
                 response.put("classID", classID);
             }
@@ -379,6 +392,22 @@ public class AuthResource {
         }
     }
 
+    @PUT
+    @Path("/user/addTeam/{email}/{team}")
+    @RolesAllowed("instructor")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response addUserTeam(@PathParam("email") String email, @PathParam("team") String team){
+        try {
+            Document user = authservice.addUserTeam(email, team);
+            return Response.ok(user).build();
+        } catch(Exception e){
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity(e.getMessage())
+                .build();
+        }
+    }
+            
     @POST
     @Path("/class/create")
     @RolesAllowed("instructor")
@@ -391,11 +420,111 @@ public class AuthResource {
             return Response.ok(classDoc).build();
             
         } catch(Exception e){
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+            .entity(e.getMessage())
+            .build();
+        }
+    }
+
+    @PUT
+    @Path("/user/removeTeam/{email}/{team}")
+    @RolesAllowed("instructor")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response removeUserTeam(@PathParam("email") String email, @PathParam("team") String team){
+        try {
+            Document user = authservice.removeUserTeam(email, team);
+            return Response.ok(user).build();
+            
+        } catch(Exception e){
                 return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                 .entity(e.getMessage())
                 .build();
-        } 
+        }
     }
+
+    @PUT
+    @Path("/user/updatePreferredName/{email}/{preferredName}")
+    @RolesAllowed("instructor")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response updateUserPreferredName(@PathParam("email") String email, @PathParam("preferredName") String preferredName){
+        try {
+            Document user = authservice.updateUserPreferredName(email, preferredName);
+            return Response.ok(user).build();
+            
+        } catch(Exception e){
+                return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity(e.getMessage())
+                .build();
+        }
+    }
+
+    @PUT
+    @Path("/user/updateStanding/{email}/{classStanding}")
+    @RolesAllowed("instructor")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response updateUserClassStanding(@PathParam("email") String email, @PathParam("classStanding") String classStanding){
+        try {
+            Document user = authservice.updateUserClassStanding(email, classStanding);
+            return Response.ok(user).build();
+            
+        } catch(Exception e){
+                return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity(e.getMessage())
+                .build();
+        }
+    }
+
+    @PUT
+    @Path("/user/archive/{email}")
+    @RolesAllowed("instructor")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response archiveUser(@PathParam("email") String email){
+        try {
+            Document user = authservice.archiveUser(email);
+            return Response.ok(user).build();
+            
+        } catch(Exception e){
+                return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity(e.getMessage())
+                .build();
+        }
+    }
+
+    @PUT
+    @Path("/user/unarchive/{email}")
+    @RolesAllowed("instructor")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response unarchiveUser(@PathParam("email") String email){
+        try {
+            Document user = authservice.unarchiveUser(email);
+            return Response.ok(user).build();
+            
+        } catch(Exception e){
+                return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                .entity(e.getMessage())
+                .build();
+        }
+    }
+
+    @GET
+    @Path("/user/archived")
+    @RolesAllowed("instructor")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getArchivedUsers(){
+        try {
+            List<Document> users = authservice.getArchivedUsers();
+            return Response.ok(users).build();
+        } catch(Exception e){
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(e.getMessage())
+                    .build();
+        }
+    }  
 
     @GET
     @Path("/class/{classID}")
