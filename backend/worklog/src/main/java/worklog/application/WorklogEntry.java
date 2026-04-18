@@ -13,6 +13,9 @@ public class WorklogEntry {
 
     @NotEmpty(message = "Worklog must have an author!")
     private String authorName;
+
+    @NotEmpty(message = "Worklog must have an author email!")
+    private String authorEmail;
     
     @NotEmpty(message = "Worklog must have week name!")
     private String worklogName;
@@ -95,5 +98,8 @@ public class WorklogEntry {
         return reviewed;
     }
 
+    public void setAuthorEmail(String authorEmail) { this.authorEmail = authorEmail; }
+
+    public String getAuthorEmail() { return authorEmail; }
 
 }
