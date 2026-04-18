@@ -335,6 +335,7 @@ const InstructorDashboard = () => {
       {/* Week Navigator */}
       <div className="flex items-center gap-4 mb-6">
         <Button
+            style="background-color:#C6C7C3"
           variant="ghost"
           size="icon"
           disabled={selectedWeek <= 1}
@@ -356,6 +357,7 @@ const InstructorDashboard = () => {
           </p>
         </div>
         <Button
+            style="background-color:#C6C7C3"
           variant="ghost"
           size="icon"
           disabled={selectedWeek >= maxWeek}
@@ -419,7 +421,7 @@ const InstructorDashboard = () => {
             )}
             <Card>
               <CardContent className="p-4 text-center">
-                <p className="text-xs text-muted-foreground flex items-center justify-center gap-1 mb-1">
+                <p style="background-color:#6D9B81;" className="text-xs text-muted-foreground flex items-center justify-center gap-1 mb-1">
                   <CheckCircle2 className="h-3.5 w-3.5 text-purple-600" />
                   Reviewed
                 </p>
@@ -442,7 +444,7 @@ const InstructorDashboard = () => {
             <CardTitle className="text-lg sm:text-xl">
               Review Work Logs
             </CardTitle>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div style="background-color:#D9E6DB" className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <Button variant="outline" size="sm" className="gap-1.5 text-sm cursor-default">
                   All Teams <ChevronDown className="h-3.5 w-3.5" />
