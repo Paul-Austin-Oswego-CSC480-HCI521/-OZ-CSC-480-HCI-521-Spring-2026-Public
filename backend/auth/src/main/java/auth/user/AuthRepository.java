@@ -12,7 +12,6 @@ import com.mongodb.client.MongoDatabase;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.core.Response;
 
 @ApplicationScoped
 public class AuthRepository{
@@ -31,23 +30,25 @@ public class AuthRepository{
         return collection.find(new Document("email", email)).first();
     }
 
-    public Document createUser(String email, String name, String role){
-        List<String> teams = new ArrayList<>();
+    public Document createUser(String email, String name, String role, String preferredName, List<String> team){
         if(role==null || (!role.equals("student") && !role.equals("instructor"))){
             role = "student";
         }
         if(role.equals("instructor")) {
-            teams.add("stakeholders");
+            team.add("stakeholders");
         }
         else {
-            teams.add("unassigned");
+            team.add("unassigned");
         }
         Document newUser = new Document()
             .append("email", email)
             .append("name", name)
             .append("role", role)
-            .append("createdAt", Instant.now())
-            .append("teams", teams);
+            .append("preferredName", preferredName)
+            .append("team", team)
+            .append("classStanding", "")
+            .append("isArchived", false)
+            .append("createdAt", Instant.now());
         collection.insertOne(newUser);
         return newUser;
     }
@@ -150,6 +151,15 @@ public class AuthRepository{
         return user;
     }
 
+    public Document updateUserTeam(String email, List<String> teams){
+        Document user = findByEmail(email);
+        if(user!=null){
+            user.put("team", teams);
+        }
+        return user;
+    }
+
+    
     public Document removeUserTeams(String email) {
         Document user = findByEmail(email);
         if (user!=null) {
@@ -161,6 +171,45 @@ public class AuthRepository{
         return user;
     }
 
+    public Document updateUserPreferredName(String email, String preferredName){
+        Document user = findByEmail(email);
+        if(user!=null){
+            user.put("preferredName", preferredName);
+            collection.replaceOne(new Document("email", email), user);
+        }
+        return user;
+     }
+
+    public Document updateUserClassStanding(String email, String classStanding){
+        Document user = findByEmail(email);
+        if(user!=null){
+            user.put("classStanding", classStanding);
+            collection.replaceOne(new Document("email", email), user);
+        }
+        return user;
+    }
+
+    public Document archiveUser(String email) {
+        Document user = findByEmail(email);
+        if(user!=null){
+            user.put("isArchived", true);
+            collection.replaceOne(new Document("email", email), user);
+        }
+        return user;
+    }
+
+    public Document unarchiveUser(String email) {
+        Document user = findByEmail(email);
+        if(user!=null){
+            user.put("isArchived", false);
+            collection.replaceOne(new Document("email", email), user);
+        }
+        return user;
+    }
+
+    public List<Document> getArchivedUsers() {
+        return collection.find(new Document("isArchived", true)).into(new ArrayList<>());
+    }
     
     public List<Document> getUsersFromClass(String classID) {
         return collection.find(new Document("classID", classID)).into(new ArrayList<>());
