@@ -32,14 +32,22 @@ public class AuthRepository{
     }
 
     public Document createUser(String email, String name, String role){
+        List<String> teams = new ArrayList<>();
         if(role==null || (!role.equals("student") && !role.equals("instructor"))){
             role = "student";
+        }
+        if(role.equals("instructor")) {
+            teams.add("stakeholders");
+        }
+        else {
+            teams.add("unassigned");
         }
         Document newUser = new Document()
             .append("email", email)
             .append("name", name)
             .append("role", role)
-            .append("createdAt", Instant.now());
+            .append("createdAt", Instant.now())
+            .append("teams", teams);
         collection.insertOne(newUser);
         return newUser;
     }
@@ -113,10 +121,23 @@ public class AuthRepository{
         return collection.find(new Document("role", role)).into(new ArrayList<>());
     }
 
+    public List<Document> getUsersByTeam(String teams) {
+        return collection.find(new Document("teams", teams)).into(new ArrayList<>());
+    }
+
     public Document updateUserRole(String email, String newRole){
         Document user = findByEmail(email);
         if(user!=null){
             user.put("role", newRole);
+            collection.replaceOne(new Document("email", email), user);
+        }
+        return user;
+    }
+
+    public Document updateUserTeams(String email, List<String> newTeams) {
+        Document user = findByEmail(email);
+        if(user!=null){
+            user.put("teams", newTeams);
             collection.replaceOne(new Document("email", email), user);
         }
         return user;
@@ -129,6 +150,18 @@ public class AuthRepository{
         return user;
     }
 
+    public Document removeUserTeams(String email) {
+        Document user = findByEmail(email);
+        if (user!=null) {
+            List<String> newTeams = new ArrayList<>();
+            newTeams.add("unassigned");
+            user.put("teams", newTeams);
+            collection.replaceOne(new Document("email", email), user);
+        }
+        return user;
+    }
+
+    
     public List<Document> getUsersFromClass(String classID) {
         return collection.find(new Document("classID", classID)).into(new ArrayList<>());
     }

@@ -16,7 +16,10 @@ public class WorklogEntry {
 
     @NotEmpty(message = "Worklog must have an author email!")
     private String authorEmail;
-    
+
+    // @NotEmpty(message = "Worklog must have all the teams associated!")
+    private List<String> teamNames;
+
     @NotEmpty(message = "Worklog must have week name!")
     private String worklogName;
 
@@ -25,6 +28,9 @@ public class WorklogEntry {
 
     @NotNull(message = "Date submitted required")
     private LocalDateTime dateSubmitted;
+
+    // @NotNull(message = "Deadline required")
+    private LocalDateTime deadline;
     private boolean reviewed = false;
 
     @Valid
@@ -39,15 +45,24 @@ public class WorklogEntry {
         this.authorName = name;
     }
 
-    public String getWorklogName() {
-        return worklogName;
+    public String getAuthorName() {
+        return authorName;
     }
-        public void setWorklogName(String worklogName) {
+
+    public void setTeamNames(List<String> teamNames) {
+        this.teamNames = teamNames;
+    }
+
+    public List<String> getTeamNames() {
+        return teamNames;
+    }
+
+    public void setWorklogName(String worklogName) {
         this.worklogName = worklogName;
     }
 
-    public String getAuthorName() {
-        return authorName;
+    public String getWorklogName() {
+        return worklogName;
     }
 
     public void setDateCreated(LocalDateTime dateCreated) {
@@ -64,6 +79,14 @@ public class WorklogEntry {
 
     public LocalDateTime getDateSubmitted() {
         return dateSubmitted;
+    }
+
+    public void setDeadline(LocalDateTime deadline) {
+        this.deadline = deadline;
+    }
+
+    public LocalDateTime getDeadline() {
+        return deadline;
     }
 
     public void setCollaborators(List<String> collaborators) {

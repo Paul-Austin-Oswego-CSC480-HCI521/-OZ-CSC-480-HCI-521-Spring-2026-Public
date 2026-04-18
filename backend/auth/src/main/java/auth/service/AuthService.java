@@ -1,5 +1,10 @@
 package auth.service;
 
+import java.time.Instant;
+import java.util.List;
+
+import org.bson.Document;
+
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.mongodb.client.MongoCollection;
 
@@ -9,10 +14,6 @@ import auth.user.RefreshRepository;
 import auth.user.StudentClass;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import org.bson.Document;
-
-import java.time.Instant;
-import java.util.List;
 
 @ApplicationScoped
 public class AuthService {
@@ -48,7 +49,6 @@ public class AuthService {
             if(email.equals("shusank8basyal@gmail.com") ||  email.equals("paul.austin@oswego.edu") || email.equals("vanessa.maike@oswego.edu")){
                 role="instructor";
             }
-
             return repo.createUser(email, name, role);
 
             
@@ -114,7 +114,19 @@ public class AuthService {
             }
             repo.updateUserRole(email, newRole);
             return user;
+        }
 
+        public Document changeUserTeams(String email, List<String> newTeams) {
+            Document user = repo.findByEmail(email);
+            if(user==null){
+                throw new IllegalArgumentException("User not found");
+            }
+            if(newTeams==null || newTeams.isEmpty()){
+                repo.removeUserTeams(email);
+                return user;
+            }
+            repo.updateUserTeams(email, newTeams);
+            return user;
         }
 
         public Document removeUser(String email) {

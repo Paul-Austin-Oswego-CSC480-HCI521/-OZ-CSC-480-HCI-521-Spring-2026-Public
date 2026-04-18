@@ -1,6 +1,7 @@
 package worklog.application;
 
 import java.io.StringWriter;
+import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Date;
@@ -10,12 +11,12 @@ import java.util.Set;
 
 import jakarta.ws.rs.GET;
 import org.bson.Document;
-import org.bson.json.JsonWriterSettings;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
 import org.bson.conversions.Bson;
+import org.bson.json.JsonWriterSettings;
 import org.bson.types.ObjectId;
 
 import com.mongodb.MongoClientSettings;
@@ -90,8 +91,11 @@ public class WorklogRepository {
         newDoc.put("collaborators", entry.getCollaborators());
         newDoc.put("worklogName", entry.getWorklogName());
         newDoc.put("taskList", formatTask(entry.getTaskList()));
+        newDoc.put("teamNames", entry.getTeamNames());
         newDoc.put("reviewed", false);
         newDoc.put("isDraft", false);
+
+        if (entry.getDeadline() != null) newDoc.put("deadline", entry.getDeadline());
 
         collection.insertOne(newDoc);
 
@@ -118,6 +122,7 @@ public class WorklogRepository {
         newDoc.put("authorName", entry.getAuthorName());
         newDoc.put("authorEmail", entry.getAuthorEmail());
         newDoc.put("worklogName", entry.getWorklogName());
+        newDoc.put("teamNames", entry.getTeamNames());
         newDoc.put("isDraft", true);
         newDoc.put("reviewed", false);
 
@@ -139,6 +144,22 @@ public class WorklogRepository {
     // TODO ADD FILTER FOR CURRENT USER
     public Response getDraft() {
         return responseByQuery(Filters.eq("isDraft", true));
+    }
+
+    public Response getByDeadline(LocalDateTime deadline) {
+        return responseByQuery(Filters.eq("deadline", deadline));
+    }
+
+    public Response getByDateSubmitted(LocalDateTime dateSubmitted) {
+        return responseByQuery(Filters.eq("dateSubmitted", dateSubmitted));
+    }
+
+    public Response getByAuthorName(String authorName) {
+        return responseByQuery(Filters.eq("authorName", authorName));
+    }
+
+    public Response getByTeamNames(List<String> teamNames) {
+        return responseByQuery(Filters.eq("teamNames", teamNames));
     }
 
     // New functionality for findByAuthor: if an instructor is the one seeing it,
@@ -219,6 +240,8 @@ public class WorklogRepository {
 
             Optional.ofNullable(task.getReflection())
                     .ifPresent(v -> newDoc.put("reflection", v));
+            Optional.ofNullable(task.getCollabDescription())
+                    .ifPresent(v -> newDoc.put("collabDescription", v));
 
             taskDocs.add(newDoc);
         }
@@ -242,6 +265,8 @@ public class WorklogRepository {
         newDoc.put("collaborators", updatedEntry.getCollaborators());
         newDoc.put("taskList", formatTask(updatedEntry.getTaskList()));
         newDoc.put("worklogName", updatedEntry.getWorklogName());
+        newDoc.put("teamNames", updatedEntry.getTeamNames());
+        if (updatedEntry.getDeadline() != null) newDoc.put("deadline", updatedEntry.getDeadline());
 
         if (isInstructor) {
             newDoc.put("reviewed", updatedEntry.isReviewed());
