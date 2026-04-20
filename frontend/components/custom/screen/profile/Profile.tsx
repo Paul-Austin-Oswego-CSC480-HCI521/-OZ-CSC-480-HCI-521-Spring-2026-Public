@@ -131,20 +131,10 @@ export function Profile() {
     if (!userInfo?.email || !initial) return;
     setStatus({ kind: "saving" });
     try {
-      // Independent updates can run in parallel.
-      const parallelOps: Promise<any>[] = [];
-      if (preferredName.trim() !== initial.preferredName) {
-        parallelOps.push(
-          updatePreferredName(userInfo.email, preferredName.trim() || " "),
-        );
-      }
-      if (classStanding && classStanding !== initial.classStanding) {
-        parallelOps.push(updateUserStanding(userInfo.email, classStanding));
-      }
-
-      // Team mutations MUST be serialized — backend addTeam/removeTeam does
-      // read-modify-write without locking, so parallel calls overwrite each
-      // other and only the last one wins.
+      // ALL user-document mutations must be serialized — every backend
+      // endpoint (updatePreferredName / updateStanding / addTeam / removeTeam)
+      // does read-modify-write on the same document, so any parallel pair
+      // races and the loser's field is overwritten.
       const initialLower = initial.team.map((t) => t.toLowerCase());
       const currentLower = team.map((t) => t.toLowerCase());
       const toAdd = team.filter(
@@ -154,19 +144,32 @@ export function Profile() {
         (t) => !currentLower.includes(t.toLowerCase()),
       );
 
-      const teamOps = async () => {
-        for (const t of toAdd) {
-          await addUserTeam(userInfo.email, t);
-        }
-        for (const t of toRemove) {
-          await removeUserTeam(userInfo.email, t);
-        }
-        if (sentinelValue && team.length > 0) {
-          await removeUserTeam(userInfo.email, sentinelValue);
-        }
-      };
+      const ops: Array<() => Promise<any>> = [];
+      if (preferredName.trim() !== initial.preferredName) {
+        ops.push(() =>
+          updatePreferredName(userInfo.email, preferredName.trim() || " "),
+        );
+      }
+      if (classStanding && classStanding !== initial.classStanding) {
+        ops.push(() => updateUserStanding(userInfo.email, classStanding));
+      }
+      for (const t of toAdd) {
+        ops.push(() => addUserTeam(userInfo.email, t));
+      }
+      for (const t of toRemove) {
+        ops.push(() => removeUserTeam(userInfo.email, t));
+      }
+      if (sentinelValue && team.length > 0) {
+        ops.push(() => removeUserTeam(userInfo.email, sentinelValue));
+      }
 
-      await Promise.all([...parallelOps, teamOps()]);
+      for (const op of ops) {
+        await op();
+      }
+
+      // Refetch (not just invalidate) so RouteGuard on the next page sees
+      // the new classStanding instead of the stale cached entry.
+      await queryClient.refetchQueries({ queryKey: ["users-from-class"] });
 
       try {
         await refreshToken();
@@ -174,8 +177,6 @@ export function Profile() {
         // refresh failure is non-fatal — local form state is already updated.
         // The JWT will refresh on the next 401/403 or on next login.
       }
-
-      await queryClient.invalidateQueries({ queryKey: ["users-from-class"] });
 
       setInitial({
         preferredName: preferredName.trim(),
