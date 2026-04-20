@@ -70,7 +70,7 @@ const Welcome = () => {
   const weekStart = new Date(SEMESTER_START);
   weekStart.setDate(weekStart.getDate() + (weekNum - 1) * 7);
   const weekEnd = new Date(weekStart);
-  weekEnd.setDate(weekEnd.getDate() + 7);
+  weekEnd.setDate(weekEnd.getDate() + 6);
   const fmtShort = (d: Date) =>
     d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   const weekRange =

@@ -511,8 +511,10 @@ export function WorkLogForm() {
         const start = new Date(semStart);
         if (wk) start.setDate(start.getDate() + (wk - 1) * 7);
         const end = new Date(start);
-        end.setDate(end.getDate() + 7);
-        end.setHours(23, 59, 0, 0);
+        end.setDate(end.getDate() + 6);
+        const due = new Date(start);
+        due.setDate(due.getDate() + 7);
+        due.setHours(23, 59, 0, 0);
         const fmt = (d: Date) =>
           d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
         const fmtDue = (d: Date) =>
@@ -544,7 +546,7 @@ export function WorkLogForm() {
               {wk > 0 && (
                 <p className="text-sm text-muted-foreground mt-2 flex items-center gap-1.5">
                   <CalendarDays className="h-4 w-4" />
-                  Due: {fmtDue(end)}
+                  Due: {fmtDue(due)}
                 </p>
               )}
             </div>
