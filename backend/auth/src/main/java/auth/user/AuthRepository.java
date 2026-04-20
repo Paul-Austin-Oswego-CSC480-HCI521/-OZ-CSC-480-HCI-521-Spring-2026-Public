@@ -31,6 +31,7 @@ public class AuthRepository{
     }
 
     public Document createUser(String email, String name, String role, String preferredName, List<String> team){
+        if (team == null) team = new ArrayList<>();     
         if(role==null || (!role.equals("student") && !role.equals("instructor"))){
             role = "student";
         }
@@ -155,6 +156,7 @@ public class AuthRepository{
         Document user = findByEmail(email);
         if(user!=null){
             user.put("team", teams);
+            collection.replaceOne(new Document("email", email), user);
         }
         return user;
     }
@@ -270,5 +272,15 @@ public class AuthRepository{
         return classData.find().first();
 
     }
+
+     public Document archiveClass(String classID) {                                                                                  
+      MongoDatabase classDb = mongoClient.getDatabase(classID);                                                                                                                      
+      MongoCollection<Document> classData = classDb.getCollection("classData");                                                                                                      
+      classData.updateOne(                                                                                                                                                           
+          new Document("classID", classID),                                                                                                                                          
+          new Document("$set", new Document("isArchived", true))                                                                                                                     
+      );                                                                                                                                                                             
+      return classData.find(new Document("classID", classID)).first();
+  }    
 
 }

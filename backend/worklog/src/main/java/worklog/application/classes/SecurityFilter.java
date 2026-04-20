@@ -18,6 +18,26 @@ public class SecurityFilter implements ContainerRequestFilter {
 
     @Override
     public void filter(ContainerRequestContext requestContext) {
+          String path = requestContext.getUriInfo().getPath();   
+                                                                                                                             
+                                                                                                                                                                                     
+        // Instructor endpoints take classID from the URL, not the JWT                                                                                                                     
+        if (path.startsWith("/class/")) {                                                                                                                                                   
+            return;                                                                                                                                                                        
+        }     
+        // Instructors don't have a classID claim; they manage multiple classes.
+        // Authorization is still enforced per-endpoint via @RolesAllowed.
+        if (token.getGroups() != null && token.getGroups().contains("instructor")) {                                                                                                       
+        // Instructors can scope a request to a class via ?classID=                                                                                                                    
+            String paramClassID = requestContext.getUriInfo()                                                                                                                              
+                .getQueryParameters()                                                                                                                                                      
+                .getFirst("classID");                                                                                                                                                      
+            if (paramClassID != null && !paramClassID.isBlank()) {                                                                                                                         
+                userContext.setClassID(paramClassID);
+            }                                                                                                                                                                              
+            return;                                               
+        }
+
         String classID = token.getClaim("classID");
         
         /*

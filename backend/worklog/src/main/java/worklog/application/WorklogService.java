@@ -51,6 +51,17 @@ public class WorklogService {
         return repo.getAll();
     }
 
+    // for instructor
+    @GET                                                                                                                                                                           
+    @Path("/class/{classID}")                             
+    @RolesAllowed("instructor")
+    @Produces(MediaType.APPLICATION_JSON)                                                                                                                                          
+    @Operation(summary = "Instructor: gets all worklogs for a given class")
+    public Response getAllWorklogsForClass(@PathParam("classID") String classID) {                                                                                                 
+        logger.log(Level.INFO, "GET: getAllWorklogsForClass()");                                                                                                                   
+        return repo.getAllForClass(classID);                                                                                                                                       
+    }  
+
     @GET
     @Path("/draft")
     @Produces(MediaType.APPLICATION_JSON)

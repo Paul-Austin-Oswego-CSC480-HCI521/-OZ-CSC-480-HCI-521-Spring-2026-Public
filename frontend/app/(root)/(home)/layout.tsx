@@ -3,9 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "../globals.css";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/custom/screen/sidebar/Sidebar";
-import Topbar from "@/components/custom/screen/topbar/Topbar";
-import { PublicEnvScript } from 'next-runtime-env';
-import { Providers } from "@/provider";
+import RouteGuard from "@/components/custom/utils/RouteGuard";
 import { Toaster } from "sonner";
 
 const geistSans = Geist({
@@ -35,12 +33,13 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <SidebarProvider>
-          <div className="flex flex-col w-full min-h-screen h-screen">
-            <Topbar />
-            <div className="flex flex-1 overflow-hidden">
-              <AppSidebar />
-              <main className="w-full overflow-y-auto min-h-0">{children}</main>
-            </div>
+          <div className="flex w-full min-h-screen h-screen">
+            <AppSidebar />
+            <main className="w-full overflow-y-auto min-h-0">
+              <div className="max-w-7xl mx-auto pt-10 sm:pt-12 px-4 sm:px-6">
+                <RouteGuard>{children}</RouteGuard>
+              </div>
+            </main>
           </div>
           <Toaster position="top-right" richColors />
         </SidebarProvider>

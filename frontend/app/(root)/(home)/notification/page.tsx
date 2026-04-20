@@ -14,6 +14,7 @@ import {
   FileText,
   AlertTriangle,
   Clock,
+  Bell,
 } from "lucide-react";
 
 function getLateDays(log: any): number {
@@ -91,11 +92,28 @@ export default function NotificationPage() {
   );
 
   return (
-    <div className="p-4 sm:p-6 md:p-10">
-      <h1 className="text-2xl sm:text-3xl md:text-4xl mb-1">Notifications</h1>
-      <p className="text-sm text-muted-foreground mb-6">
-        Your work log alerts and submission history
-      </p>
+    <div className="p-3 sm:p-4 md:p-6 w-full">
+      <div className="mb-4 sm:mb-5">
+        <h1
+          className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight mb-1 flex items-center gap-2.5"
+          style={{ color: "#1E4B35" }}
+        >
+          <span
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border-2 bg-white shadow-sm"
+            style={{ borderColor: "#1E4B35" }}
+          >
+            <Bell
+              className="h-5 w-5"
+              style={{ color: "#1E4B35" }}
+              aria-hidden
+            />
+          </span>
+          Notifications
+        </h1>
+        <p className="text-xs sm:text-sm text-muted-foreground pl-0 sm:pl-[46px]">
+          Your work log alerts and submission history.
+        </p>
+      </div>
 
       {/* Important */}
       {missingWeeks.length > 0 && (

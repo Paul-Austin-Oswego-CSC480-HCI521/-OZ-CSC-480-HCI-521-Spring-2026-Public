@@ -39,8 +39,8 @@ public class StudentClass {
         this.classID = classID;
     }
 
-    public String getSemesterStartDate() {
-        return classID;
+    public Date getSemesterStartDate() {
+        return semesterStartDate;
     }
 
     public void setSemesterStartDate(Date semesterStartDate) {

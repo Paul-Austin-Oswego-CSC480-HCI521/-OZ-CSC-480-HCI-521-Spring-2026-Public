@@ -50,7 +50,7 @@ public class AuthService {
                 role="instructor";
             }
 
-            return repo.createUser(email, name, role, null, null);
+            return repo.createUser(email, name, role, name, null);
 
             
         }
@@ -236,5 +236,11 @@ public class AuthService {
         public Document getStudentClass(String classID) {
             return repo.getStudentClass(classID);
         }
+
+
+        public Document archiveClass(String classID) {                                                                                                                                     
+      return repo.archiveClass(classID);        
+  }   
+        
 
 }

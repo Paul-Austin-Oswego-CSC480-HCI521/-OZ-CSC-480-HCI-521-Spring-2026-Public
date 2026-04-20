@@ -138,6 +138,33 @@ public class WorklogRepository {
         return responseByQuery(excludeDraft);
     }
 
+    // for instructor
+    public Response getAllForClass(String classID) {                                                                                                                                   
+      MongoCollection<Document> collection = mongoCl        
+              .getDatabase(classID)                                                                                                                                                  
+              .withCodecRegistry(POJO_CODEC_REGISTRY)                                                                                                                                
+              .getCollection("worklogs");                                                                                                                                            
+                                                                                                                                                                                     
+      StringWriter sb = new StringWriter();                                                                                                                                          
+      try {                                                 
+          sb.append("[");                                                                                                                                                            
+          FindIterable<Document> docs = collection.find(excludeDraft);
+          boolean first = true;                                                                                                                                                      
+          for (Document d : docs) {
+              if (!first) sb.append(",");                                                                                                                                            
+              else first = false;                           
+              sb.append(d.toJson(JSON_SETTINGS));                                                                                                                                    
+          }                                                                                                                                                                          
+          sb.append("]");
+      } catch (Exception e) {                                                                                                                                                        
+          e.printStackTrace();                              
+          return Response.status(Response.Status.INTERNAL_SERVER_ERROR)                                                                                                              
+              .entity("{\"error\": \"" + e.getMessage() + "\"}")
+              .build();                                                                                                                                                              
+      }                                                     
+      return Response.status(Response.Status.OK).entity(sb.toString()).build();                                                                                                      
+  } 
+
     // TODO ADD FILTER FOR CURRENT USER
     public Response getDraft() {
         return responseByQuery(Filters.eq("isDraft", true));

@@ -3,7 +3,10 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useAtomValue, useSetAtom } from "jotai";
 import { userAtom, worklogEditAtom } from "@/components/custom/utils/context/state";
-import { getWorkLog } from "@/components/custom/utils/api_utils/worklogs/allReq";
+import {
+  getWorkLog,
+  getDraftForWeek,
+} from "@/components/custom/utils/api_utils/worklogs/allReq";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,7 +14,14 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { ArrowLeft, CalendarDays, Clock, ChevronDown, ChevronRight } from "lucide-react";
+import {
+  ArrowLeft,
+  CalendarDays,
+  Clock,
+  ChevronDown,
+  ChevronRight,
+  Pencil,
+} from "lucide-react";
 import { fmtDate, fmtDateTime } from "@/components/custom/utils/func/formatDate";
 import { Suspense, useEffect, useState } from "react";
 
@@ -120,6 +130,12 @@ function ReviewContent() {
     queryFn: () => getWorkLog(userInfo?.email),
   });
 
+  const { data: draft } = useQuery({
+    queryKey: ["worklog-draft", userInfo?.email, weekNum],
+    enabled: !!userInfo?.email && !!weekNum,
+    queryFn: () => getDraftForWeek(userInfo?.email, weekNum ?? undefined),
+  });
+
   if (isLoading) return <p className="p-6">Loading...</p>;
   if (error) return (
     <div className="p-6">
@@ -131,13 +147,16 @@ function ReviewContent() {
 
   const worklogs = data ?? [];
   const weekSubmissions = worklogs
-    .filter((log: any) => String(log.worklogName) === weekNum)
+    .filter(
+      (log: any) =>
+        String(log.worklogName) === weekNum && !log.isDraft,
+    )
     .sort(
       (a: any, b: any) =>
         new Date(b.dateSubmitted).getTime() - new Date(a.dateSubmitted).getTime(),
     );
 
-  if (weekSubmissions.length === 0) {
+  if (weekSubmissions.length === 0 && !draft) {
     return (
       <div className="p-4 sm:p-6 md:p-8">
         <p className="text-muted-foreground">No submissions found for Week {weekNum}.</p>
@@ -155,6 +174,7 @@ function ReviewContent() {
   const latest = weekSubmissions[0];
 
   const handleResubmit = () => {
+    if (!latest) return;
     setWorklogEdit({
       mode: "resubmit",
       weekNumber: weekNum,
@@ -162,6 +182,10 @@ function ReviewContent() {
       previousSubmissions: weekSubmissions,
     });
     router.push(`/worklogs?week=${weekNum}&mode=resubmit`);
+  };
+
+  const handleOpenDraft = () => {
+    router.push(`/worklogs?week=${weekNum}&mode=new`);
   };
 
   return (
@@ -183,19 +207,60 @@ function ReviewContent() {
             Week {weekNum}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {weekSubmissions.length} submission{weekSubmissions.length > 1 ? "s" : ""}
+            {weekSubmissions.length} submission
+            {weekSubmissions.length === 1 ? "" : "s"}
+            {draft ? " · 1 draft in progress" : ""}
           </p>
         </div>
-        <Button
-          className="shrink-0 rounded-lg font-semibold text-white border-0"
-          style={{ backgroundColor: "#1E4B35" }}
-          onClick={handleResubmit}
-        >
-          Create Resubmission
-        </Button>
+        {weekSubmissions.length > 0 && (
+          <Button
+            className="shrink-0 rounded-lg font-semibold text-white border-0"
+            style={{ backgroundColor: "#1E4B35" }}
+            onClick={handleResubmit}
+          >
+            Create Resubmission
+          </Button>
+        )}
       </div>
 
       <div className="space-y-4">
+        {draft && (
+          <div
+            onClick={handleOpenDraft}
+            className="border-2 border-amber-300 bg-amber-50 rounded-xl p-4 sm:p-5 cursor-pointer hover:bg-amber-100 transition-colors"
+          >
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="h-10 w-10 rounded-lg bg-amber-200 flex items-center justify-center shrink-0">
+                  <Pencil className="h-5 w-5 text-amber-800" />
+                </div>
+                <div className="min-w-0">
+                  <h2 className="text-base font-semibold text-amber-900">
+                    Draft in progress
+                  </h2>
+                  <p className="text-xs text-amber-800 mt-0.5 flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    Last saved{" "}
+                    {fmtDateTime(
+                      draft.dateSubmitted ||
+                        draft.dateCreated ||
+                        new Date().toISOString(),
+                    )}
+                    {" · "}
+                    {(draft.taskList ?? []).length} task
+                    {(draft.taskList ?? []).length === 1 ? "" : "s"}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 text-amber-800 shrink-0">
+                <span className="text-sm font-medium hidden sm:inline">
+                  Continue editing
+                </span>
+                <ChevronRight className="h-4 w-4" />
+              </div>
+            </div>
+          </div>
+        )}
         {weekSubmissions.map((submission: any, si: number) => {
           const subNum = weekSubmissions.length - si;
           const isLatest = si === 0;
@@ -204,7 +269,7 @@ function ReviewContent() {
               key={si}
               submission={submission}
               subNum={subNum}
-              defaultOpen={isLatest}
+              defaultOpen={isLatest && !draft}
             />
           );
         })}

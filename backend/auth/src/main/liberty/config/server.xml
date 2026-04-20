@@ -46,11 +46,17 @@
     <webApplication 
         location="auth.war"
         contextRoot="${app.context.root}">
-        <application-bnd>
-        <security-role name='users'>
-        <special-subject type="ALL_AUTHENTICATED_USERS"/>
-        </security-role>
-        </application-bnd>
+            <application-bnd>
+                <security-role name="users">
+                    <special-subject type="ALL_AUTHENTICATED_USERS"/>
+                </security-role>
+                <security-role name="instructor">
+                    <special-subject type="ALL_AUTHENTICATED_USERS"/>
+                </security-role>
+                <security-role name="student">
+                    <special-subject type="ALL_AUTHENTICATED_USERS"/>
+                </security-role>
+            </application-bnd>
     </webApplication>
     <!-- end::webApplication[] -->
     <!-- tag::sslContext[] -->
@@ -80,6 +86,10 @@
         keyStoreRef="defaultKeyStore" 
         trustDefaultCerts="true"
     />
+      <mpJwt id="defaultMpJwt"
+        userNameAttribute="email"
+        mapToUserRegistry="false"
+        clockSkew="0s"/>
     <webAppSecurity allowFailOverToBasicAuth="false" displayAuthenticationRealm="false"/>
 
     <!-- end::sslContext[] -->

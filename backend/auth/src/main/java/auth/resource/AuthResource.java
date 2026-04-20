@@ -70,11 +70,18 @@ public class AuthResource{
             }
             // verify google tokem
             Document user = authservice.verifyAndGetUser(tokenIdFrontend, rolerequested);
+           
+    
             String id = user.getObjectId("_id").toHexString();
             String email = user.getString("email");
             String name = user.getString("name") != null ? user.getString("name") : email;
             String role = user.getString("role");
             String preferredName = user.getString("preferredName");
+            // add fallback if preferredName is not defined
+            if (preferredName == null || preferredName.isBlank()) {                                                                                                              
+                  int spaceIdx = name.indexOf(' ');
+                  preferredName = spaceIdx > 0 ? name.substring(0, spaceIdx) : name;                                                                                               
+              } 
             List<String> team = user.getList("team", String.class);
             String classID = user.getString("classID");
 
@@ -153,6 +160,11 @@ public class AuthResource{
             String name = user.getString("name") != null ? user.getString("name") : email;
             String role = user.getString("role");
             String preferredName = user.getString("preferredName");
+            // add fallback if preferredName is not defined
+            if (preferredName == null || preferredName.isBlank()) {                                                                                                              
+                  int spaceIdx = name.indexOf(' ');
+                  preferredName = spaceIdx > 0 ? name.substring(0, spaceIdx) : name;                                                                                               
+              } 
             List<String> team = user.getList("team", String.class);
             String classID = user.getString("classID");
 
@@ -394,7 +406,7 @@ public class AuthResource{
 
     @PUT
     @Path("/user/addTeam/{email}/{team}")
-    @RolesAllowed("instructor")
+    @RolesAllowed({"instructor", "student"})
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response addUserTeam(@PathParam("email") String email, @PathParam("team") String team){
@@ -428,7 +440,7 @@ public class AuthResource{
 
     @PUT
     @Path("/user/removeTeam/{email}/{team}")
-    @RolesAllowed("instructor")
+    @RolesAllowed({"instructor", "student"})
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response removeUserTeam(@PathParam("email") String email, @PathParam("team") String team){
@@ -445,7 +457,7 @@ public class AuthResource{
 
     @PUT
     @Path("/user/updatePreferredName/{email}/{preferredName}")
-    @RolesAllowed("instructor")
+    @RolesAllowed({"instructor", "student"})
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response updateUserPreferredName(@PathParam("email") String email, @PathParam("preferredName") String preferredName){
@@ -462,7 +474,7 @@ public class AuthResource{
 
     @PUT
     @Path("/user/updateStanding/{email}/{classStanding}")
-    @RolesAllowed("instructor")
+    @RolesAllowed({"instructor", "student"})
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response updateUserClassStanding(@PathParam("email") String email, @PathParam("classStanding") String classStanding){
@@ -479,7 +491,7 @@ public class AuthResource{
 
     @PUT
     @Path("/user/archive/{email}")
-    @RolesAllowed("instructor")
+    @RolesAllowed({"instructor", "student"})
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response archiveUser(@PathParam("email") String email){
@@ -525,6 +537,20 @@ public class AuthResource{
                     .build();
         }
     }  
+
+    @PUT                                                                                                                                                                               
+    @Path("/class/archive/{classID}")
+    @RolesAllowed("instructor")                                                                                                                                                        
+    @Produces(MediaType.APPLICATION_JSON)                                                                                                                                            
+    public Response archiveClass(@PathParam("classID") String classID) {                                                                                                               
+        try {                                                           
+            Document classDoc = authservice.archiveClass(classID);                                                                                                                     
+            return Response.ok(classDoc).build();                                                                                                                                    
+        } catch (Exception e) {                                                                                                                                                        
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)                                                                                                              
+                .entity(e.getMessage()).build();                         
+        }                                                                                                                                                                              
+    }   
 
     @GET
     @Path("/class/{classID}")
