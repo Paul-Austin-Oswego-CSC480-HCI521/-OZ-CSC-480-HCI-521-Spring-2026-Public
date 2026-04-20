@@ -1,5 +1,5 @@
 "use client";
-import { Home, BellIcon, Workflow, LogOutIcon } from "lucide-react";
+import { Home, BellIcon, FileText, LogOutIcon } from "lucide-react";
 
 import {
   Sidebar,
@@ -24,8 +24,8 @@ export function AppSidebar() {
   if (userInfo && userInfo.role == "student") {
     items = [
       { title: "Home", url: "/", icon: Home },
-      { title: "Notification", url: "/notification", icon: Workflow },
-      { title: "Weekly Work Logs", url: "/notifications", icon: BellIcon },
+      { title: "Notifications", url: "/notification", icon: BellIcon },
+      { title: "Weekly Work Logs", url: "/notifications", icon: FileText },
       // { title: "Tasktracker", url: "/tasktracker", icon: Workflow },
     ];
   }
@@ -48,8 +48,12 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarContent className="m-5 mt-15">
-        <SidebarGroup className="m-3 mt-10 text-xl">
-          HCI 521/CSC480
+        <SidebarGroup className="m-3 mt-10 space-y-1">
+          <p className="text-lg font-semibold tracking-tight text-[#e8c97a]">
+            LakerTracks
+          </p>
+          <p className="text-sm text-sidebar-foreground/90">Student Hub</p>
+          <p className="text-xs text-sidebar-foreground/60">HCI 521 · Spring 2026</p>
         </SidebarGroup>
 
         <SidebarGroup>
@@ -60,11 +64,12 @@ export function AppSidebar() {
                 <SidebarMenuItem key={item.title} className="mt-2">
                   <SidebarMenuButton
                     asChild
-                    className={`hover:bg-gray-300 ${pathname === item.url ? "bg-gray-300" : ""}`}
+                    isActive={pathname === item.url}
+                    className="h-auto rounded-lg py-2.5 text-base text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[active=true]:!bg-[#fed59a] data-[active=true]:!text-[#1e4b35] data-[active=true]:hover:!bg-[#fed59a] data-[active=true]:hover:!text-[#1e4b35] [&>svg]:!size-5"
                   >
                     <a href={item.url}>
                       <item.icon />
-                      <span className="text-lg">{item.title}</span>
+                      <span>{item.title}</span>
                     </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -72,11 +77,11 @@ export function AppSidebar() {
 
               <SidebarMenuItem className="mt-2">
                 <SidebarMenuButton
-                  className="hover:bg-gray-300 cursor-pointer"
+                  className="h-auto cursor-pointer rounded-lg py-2.5 text-base text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground [&>svg]:!size-5"
                   onClick={handleLogout}
                 >
                   <LogOutIcon />
-                  <span className="text-lg">Logout</span>
+                  <span>Logout</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>

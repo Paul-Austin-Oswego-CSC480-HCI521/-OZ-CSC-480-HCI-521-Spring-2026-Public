@@ -17,6 +17,7 @@ import {
   Circle,
   FileText,
   Hourglass,
+  AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect } from "react";
@@ -34,67 +35,88 @@ interface WeekEntry {
   isCurrent?: boolean;
 }
 
-const accentGreen = "#1E4B35";
+/** LakerTracks palette (Figma): forest #1E4B35, peach #FED59A, accent orange #B45309 */
+const forest = "#1E4B35";
+const accentOrange = "#B45309";
+const submittedGreen = "#166534";
+const rowOrangeIcon = "#ea580c";
 
 function getStatusIcon(status: WorklogStatus) {
   switch (status) {
     case "submitted":
-      return (
-        <CheckCircle2
-          className="h-5 w-5 sm:h-6 sm:w-6 shrink-0"
-          style={{ color: accentGreen }}
-        />
-      );
     case "late":
       return (
         <CheckCircle2
           className="h-5 w-5 sm:h-6 sm:w-6 shrink-0"
-          style={{ color: accentGreen }}
+          style={{ color: submittedGreen }}
         />
       );
     case "missing":
       return (
-        <XCircle className="h-5 w-5 sm:h-6 sm:w-6 text-red-600 shrink-0" />
+        <XCircle className="h-5 w-5 sm:h-6 sm:w-6 shrink-0 text-red-600" />
       );
     case "current":
       return (
         <Circle
-          className="h-5 w-5 sm:h-6 sm:w-6 shrink-0"
-          style={{ color: accentGreen, fill: accentGreen }}
+          className="h-5 w-5 sm:h-6 sm:w-6 shrink-0 text-white"
+          style={{ color: rowOrangeIcon, fill: rowOrangeIcon }}
         />
       );
     case "upcoming":
       return (
-        <FileText
-          className="h-5 w-5 sm:h-6 sm:w-6 shrink-0"
-          style={{ color: accentGreen }}
-        />
+        <FileText className="h-5 w-5 sm:h-6 sm:w-6 shrink-0 text-zinc-400" />
       );
   }
 }
 
 function getStatusBadge(entry: WeekEntry) {
   const base =
-    "text-xs font-medium px-2.5 py-1 rounded-md border inline-flex items-center";
+    "text-xs font-medium px-2.5 py-1 rounded-full border inline-flex items-center gap-1";
   switch (entry.status) {
     case "submitted":
-      return null;
+      return (
+        <span
+          className={cn(
+            base,
+            "border-emerald-200 bg-emerald-50 text-emerald-900",
+          )}
+        >
+          <CheckCircle2 className="h-3.5 w-3.5" aria-hidden />
+          Submitted on time
+        </span>
+      );
     case "late":
       return (
-        <span className={cn(base, "border-red-200 bg-red-50 text-red-800")}>
-          Submitted Late ({entry.lateByDays} days)
+        <span
+          className={cn(
+            base,
+            "border-[#B45309] bg-transparent font-semibold text-[#B45309]",
+          )}
+        >
+          <Clock className="h-3.5 w-3.5" aria-hidden />
+          Submitted late ({entry.lateByDays} days)
         </span>
       );
     case "missing":
       return (
-        <span className={cn(base, "border-red-200 bg-red-50 text-red-800")}>
+        <span
+          className={cn(
+            base,
+            "border-red-500 bg-transparent font-semibold uppercase tracking-wide text-red-600",
+          )}
+        >
+          <AlertTriangle className="h-3.5 w-3.5" aria-hidden />
           Overdue ({entry.overdueDays} days)
         </span>
       );
     case "current":
       return (
         <span
-          className={cn(base, "border-[#1E4B35]/35 bg-[#1E4B35] text-white")}
+          className={cn(
+            base,
+            "border-transparent font-semibold uppercase tracking-wide text-white",
+          )}
+          style={{ backgroundColor: accentOrange }}
         >
           Current Week
         </span>
@@ -104,7 +126,7 @@ function getStatusBadge(entry: WeekEntry) {
         <span
           className={cn(
             base,
-            "border-[#1E4B35]/30 bg-[#1E4B35]/10 text-[#1E4B35]",
+            "border-zinc-200 bg-zinc-200/90 font-medium text-zinc-700",
           )}
         >
           Upcoming
@@ -266,91 +288,76 @@ export const Notification = () => {
     <div className="p-3 sm:p-4 md:p-6 w-full">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4 mb-4 sm:mb-5">
         <div>
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight mb-1 flex items-center gap-2.5">
+          <h1
+            className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight mb-1 flex items-center gap-2.5"
+            style={{ color: forest }}
+          >
             <span
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border-2 bg-white shadow-sm"
-              style={{ borderColor: accentGreen }}
+              style={{ borderColor: forest }}
             >
               <FileText
                 className="h-5 w-5"
-                style={{ color: accentGreen }}
+                style={{ color: forest }}
                 aria-hidden
               />
             </span>
-            Weekly Work Logs
+            Weekly Work Log
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground pl-0 sm:pl-[46px]">
-            Track and submit your weekly progress
+            Manage and review your work log progress records.
           </p>
         </div>
       </div>
 
-      {/* Summary cards */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-4 sm:mb-5 w-3/4">
-        <Card
-          className="border-2 py-0 shadow-none rounded-xl overflow-hidden"
-          style={{ borderColor: `${accentGreen}33` }}
-        >
-          <CardContent className="p-2.5 sm:py-2.5 sm:px-3 text-center bg-[rgba(109,155,129,0.08)]">
-            <p className="text-xs sm:text-sm text-muted-foreground flex items-center justify-center gap-1.5 mb-1">
-              <CheckCircle2
-                className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0"
-                style={{ color: accentGreen }}
-              />
+      {/* Summary cards — green / orange / red (Figma) */}
+      <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-4 sm:mb-5 w-full max-w-3xl">
+        <Card className="overflow-hidden rounded-xl border border-zinc-200/80 py-0 shadow-sm">
+          <CardContent className="border-l-4 border-l-[#166534] bg-emerald-50/60 p-2.5 text-center sm:px-3 sm:py-2.5">
+            <p className="mb-1 flex items-center justify-center gap-1.5 text-xs text-muted-foreground sm:text-sm">
+              <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-[#166534] sm:h-4 sm:w-4" />
               Submitted
             </p>
-            <p
-              className="text-lg sm:text-2xl font-bold tabular-nums"
-              style={{ color: accentGreen }}
-            >
+            <p className="text-lg font-bold tabular-nums text-[#166534] sm:text-2xl">
               {submitted}
-              <span className="text-muted-foreground text-sm sm:text-lg font-normal">
+              <span className="text-sm font-normal text-muted-foreground sm:text-lg">
                 /{total}
               </span>
             </p>
           </CardContent>
         </Card>
-        <Card
-          className="border-2 py-0 shadow-none rounded-xl overflow-hidden"
-          style={{ borderColor: `${accentGreen}33` }}
-        >
-          <CardContent className="p-2.5 sm:py-2.5 sm:px-3 text-center bg-[rgba(109,155,129,0.08)]">
-            <p className="text-xs sm:text-sm text-muted-foreground flex items-center justify-center gap-1.5 mb-1">
-              <Clock
-                className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0"
-                style={{ color: accentGreen }}
-              />
+        <Card className="overflow-hidden rounded-xl border border-zinc-200/80 py-0 shadow-sm">
+          <CardContent
+            className="border-l-4 p-2.5 text-center sm:px-3 sm:py-2.5"
+            style={{
+              borderLeftColor: accentOrange,
+              backgroundColor: "rgba(254, 213, 154, 0.35)",
+            }}
+          >
+            <p className="mb-1 flex items-center justify-center gap-1.5 text-xs text-muted-foreground sm:text-sm">
+              <Clock className="h-3.5 w-3.5 shrink-0 text-[#B45309] sm:h-4 sm:w-4" />
               Late
             </p>
             <p
-              className="text-lg sm:text-2xl font-bold tabular-nums"
-              style={{ color: accentGreen }}
+              className="text-lg font-bold tabular-nums sm:text-2xl"
+              style={{ color: accentOrange }}
             >
               {late}
-              <span className="text-muted-foreground text-sm sm:text-lg font-normal">
+              <span className="text-sm font-normal text-muted-foreground sm:text-lg">
                 /{total}
               </span>
             </p>
           </CardContent>
         </Card>
-        <Card
-          className="border-2 py-0 shadow-none rounded-xl overflow-hidden"
-          style={{ borderColor: `${accentGreen}33` }}
-        >
-          <CardContent className="p-2.5 sm:py-2.5 sm:px-3 text-center bg-[rgba(109,155,129,0.08)]">
-            <p className="text-xs sm:text-sm text-muted-foreground flex items-center justify-center gap-1.5 mb-1">
-              <Hourglass
-                className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0"
-                style={{ color: accentGreen }}
-              />
+        <Card className="overflow-hidden rounded-xl border border-zinc-200/80 py-0 shadow-sm">
+          <CardContent className="border-l-4 border-l-red-600 bg-red-50/50 p-2.5 text-center sm:px-3 sm:py-2.5">
+            <p className="mb-1 flex items-center justify-center gap-1.5 text-xs text-muted-foreground sm:text-sm">
+              <Hourglass className="h-3.5 w-3.5 shrink-0 text-red-600 sm:h-4 sm:w-4" />
               Missing
             </p>
-            <p
-              className="text-lg sm:text-2xl font-bold tabular-nums"
-              style={{ color: accentGreen }}
-            >
+            <p className="text-lg font-bold tabular-nums text-red-700 sm:text-2xl">
               {missing}
-              <span className="text-muted-foreground text-sm sm:text-lg font-normal">
+              <span className="text-sm font-normal text-muted-foreground sm:text-lg">
                 /{total}
               </span>
             </p>
@@ -362,8 +369,8 @@ export const Notification = () => {
         <div className="mb-4 sm:mb-5 flex justify-end">
           <Button
             type="button"
-            className="rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:opacity-95 border-0"
-            style={{ backgroundColor: accentGreen }}
+            className="rounded-xl border-0 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:opacity-95"
+            style={{ backgroundColor: forest }}
             onClick={handlePrimaryCurrentWeek}
           >
             {currentWeekPrimaryLabel}
@@ -372,53 +379,46 @@ export const Notification = () => {
       )}
 
       {/* Work log list */}
-      <div
-        className="rounded-[20px] border-2 p-3 sm:p-4 md:p-5 shadow-sm"
-        style={{
-          borderColor: accentGreen,
-          backgroundColor: "rgba(109, 155, 129, 0.2)",
-        }}
-      >
+      <div className="rounded-2xl border border-zinc-200/90 bg-zinc-100/80 p-3 shadow-sm sm:p-4 md:p-5">
         <div className="mb-3 sm:mb-4">
-          <h2 className="text-lg sm:text-xl font-bold text-[#1E4B35]">
+          <h2 className="text-lg font-bold sm:text-xl" style={{ color: forest }}>
             Work Log Status
           </h2>
-          <p className="text-xs sm:text-sm text-[#1E4B35]/80 mt-1">
+          <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
             Track your submission progress for each week.
           </p>
         </div>
 
         <div className="flex flex-col gap-3">
-          {entries.map((entry) => (
+          {entries.map((entry) => {
+            const isDraftCurrent = entry.status === "current";
+            const rowSubmitted =
+              entry.status === "submitted" || entry.status === "late";
+
+            return (
             <div
               key={entry.week}
               onClick={() => handleWeekClick(entry)}
               className={cn(
-                "flex gap-3 rounded-xl border bg-white p-3 sm:p-4 shadow-sm transition-colors cursor-pointer hover:bg-white/80",
-                (entry.status === "current" || entry.isCurrent) &&
-                  "border-[#1E4B35] border-2 bg-[rgba(109,155,129,0.28)] hover:bg-[rgba(109,155,129,0.35)]",
+                "flex cursor-pointer gap-3 rounded-lg border border-zinc-200/90 bg-white p-3 shadow-sm transition-shadow hover:shadow-md sm:gap-4 sm:p-6",
+                isDraftCurrent &&
+                  "border-l-4 border-l-[#B45309] bg-[rgba(254,213,154,0.9)] shadow-md",
+                rowSubmitted &&
+                  !isDraftCurrent &&
+                  "border-l-4 border-l-[#166534]",
                 entry.status === "missing" &&
-                  "border-2 border-red-400 bg-red-50/70 hover:bg-red-50",
-                entry.status === "upcoming" && "border-zinc-200",
-                !entry.isCurrent && entry.status !== "current" &&
-                  entry.status !== "missing" &&
-                  entry.status !== "upcoming" &&
-                  "border-zinc-200/90",
+                  "border-l-4 border-l-red-600 bg-red-50/40 hover:bg-red-50/60",
+                entry.status === "upcoming" && "border-l-4 border-l-zinc-300",
               )}
             >
-              <div className="pt-0.5 shrink-0">
+              <div className="shrink-0 pt-0.5">
                 {getStatusIcon(entry.status)}
               </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 mb-1">
-                  <h3 className="text-base sm:text-lg font-bold text-zinc-900">
+              <div className="min-w-0 flex-1">
+                <div className="mb-1 flex flex-wrap items-center gap-2 sm:gap-2.5">
+                  <h3 className="text-base font-bold text-zinc-900 sm:text-lg">
                     Week {entry.week}
                   </h3>
-                  {entry.isCurrent && entry.status !== "current" && (
-                    <span className="inline-flex items-center text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-md border border-[#1E4B35]/30 bg-[#1E4B35]/10 text-[#1E4B35]">
-                      Current Week
-                    </span>
-                  )}
                   {getStatusBadge(entry)}
                 </div>
                 <div className="flex flex-col sm:flex-row sm:gap-6 gap-1 text-xs sm:text-sm text-zinc-600">
@@ -435,7 +435,8 @@ export const Notification = () => {
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>

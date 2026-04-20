@@ -39,7 +39,9 @@ export default function RootLayout({
             <Topbar />
             <div className="flex flex-1 overflow-hidden">
               <AppSidebar />
-              <main className="w-full overflow-y-auto min-h-0">{children}</main>
+              <main className="min-h-0 w-full overflow-y-auto bg-zinc-50/90">
+              {children}
+            </main>
             </div>
           </div>
           <Toaster position="top-right" richColors />
