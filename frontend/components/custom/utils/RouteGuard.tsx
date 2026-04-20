@@ -1,10 +1,13 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
 import { userAtom } from "@/components/custom/utils/context/state";
-import { getUsersFromClass } from "@/components/custom/utils/api_utils/req/req";
+import {
+  getUsersFromClass,
+  refreshToken,
+} from "@/components/custom/utils/api_utils/req/req";
 
 const hasRealTeam = (team: string[] | undefined) =>
   (team ?? []).some((t) => t && t.toLowerCase() !== "unassigned");
@@ -34,15 +37,25 @@ export default function RouteGuard({
   );
   const standing: string | undefined = me?.classStanding;
 
-  const noClass = isStudent && !userInfo?.classID;
+  // Student's JWT may still hold an old classID after the instructor archived
+  // their class and unenrolled them. Detect that via an empty lookup in the
+  // roster and treat it as unenrolled rather than bouncing through profile.
+  const unenrolledFromStaleClass =
+    isStudent && !!userInfo?.classID && !!classUsers && !me;
+
+  const noClass = (isStudent && !userInfo?.classID) || unenrolledFromStaleClass;
   const noTeam =
-    isStudent && !!userInfo?.classID && !hasRealTeam(userInfo?.team);
+    isStudent &&
+    !!userInfo?.classID &&
+    !unenrolledFromStaleClass &&
+    !hasRealTeam(userInfo?.team);
   // Standing check waits for the fetch — if classUsers hasn't loaded yet,
   // skip this check so we don't bounce while we wait.
   const noStanding =
     isStudent &&
     !!userInfo?.classID &&
     !!classUsers &&
+    !!me &&
     !standing;
 
   const redirectTo: string | null = noClass
@@ -54,6 +67,19 @@ export default function RouteGuard({
         ? "/profile"
         : null
       : null;
+
+  const refreshedForClassID = useRef<string | null>(null);
+  useEffect(() => {
+    if (
+      mounted &&
+      unenrolledFromStaleClass &&
+      userInfo?.classID &&
+      refreshedForClassID.current !== userInfo.classID
+    ) {
+      refreshedForClassID.current = userInfo.classID;
+      refreshToken().catch(() => {});
+    }
+  }, [mounted, unenrolledFromStaleClass, userInfo?.classID]);
 
   useEffect(() => {
     if (mounted && redirectTo) {

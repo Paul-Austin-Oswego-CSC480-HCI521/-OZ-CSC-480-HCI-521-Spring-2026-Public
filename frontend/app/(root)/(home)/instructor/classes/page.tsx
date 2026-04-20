@@ -8,6 +8,7 @@ import {
   archiveClass,
   createClass,
   getClasses,
+  unenrollUser,
   StudentClass,
   ClassUser,
 } from "@/components/custom/utils/api_utils/req/class";
@@ -170,6 +171,20 @@ export default function ClassesPage() {
         (c) => !c.isArchived && c.classID !== trimmed,
       );
       if (toArchive.length > 0) {
+        const rosters = await Promise.all(
+          toArchive.map((c) =>
+            getUsersFromClass(c.classID).catch(() => []) as Promise<ClassUser[]>,
+          ),
+        );
+        const emailsToUnenroll = Array.from(
+          new Set(
+            rosters
+              .flat()
+              .filter((u) => u?.role === "student" && u?.email)
+              .map((u) => u.email),
+          ),
+        );
+        await Promise.all(emailsToUnenroll.map((email) => unenrollUser(email)));
         await Promise.all(toArchive.map((c) => archiveClass(c.classID)));
       }
       return created;
@@ -180,6 +195,7 @@ export default function ClassesPage() {
         return;
       }
       qc.invalidateQueries({ queryKey: ["classes"] });
+      qc.invalidateQueries({ queryKey: ["users-from-class"] });
       setSelectedClassID(classID.trim());
       toast.success(`Created class ${classID}`);
       setCreateOpen(false);
