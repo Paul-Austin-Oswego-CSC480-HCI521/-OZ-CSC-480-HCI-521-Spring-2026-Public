@@ -51,11 +51,13 @@
         </application-bnd>
     </webApplication>
     <!-- end::webApplication[] -->
+    <basicRegistry id="basic" realm="BasicRealm"/>
+    <ltpa keysFileName="ltpa.keys" keysPassword="LibertyPassw0rd!" expiration="120"/>
     <mpJwt id="defaultMpJwt"
         userNameAttribute="email"
         mapToUserRegistry="false"
         clockSkew="0s"
     />
-    <webAppSecurity allowFailOverToBasicAuth="false" displayAuthenticationRealm="false"/>
+    <webAppSecurity allowFailOverToBasicAuth="false" displayAuthenticationRealm="false" ssoEnabled="false" trackLoggedOutSSOCookies="false"/>
 
 </server>
