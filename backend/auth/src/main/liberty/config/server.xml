@@ -91,7 +91,8 @@
         userNameAttribute="email"
         mapToUserRegistry="false"
         clockSkew="0s"/>
-    <webAppSecurity allowFailOverToBasicAuth="false" displayAuthenticationRealm="false"/>
+    <ltpa keysFileName="ltpa.keys" keysPassword="LibertyPassw0rd!" expiration="120"/>
+    <webAppSecurity allowFailOverToBasicAuth="false" displayAuthenticationRealm="false" ssoEnabled="false" trackLoggedOutSSOCookies="false"/>
 
     <!-- end::sslContext[] -->
 </server>
