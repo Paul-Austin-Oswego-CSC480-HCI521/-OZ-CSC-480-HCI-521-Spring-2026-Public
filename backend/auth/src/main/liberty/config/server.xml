@@ -1,4 +1,5 @@
 <server description="auth">
+    <basicRegistry id="basic" realm="BasicRealm"/>
     <!-- tag::featureManager[] -->
     <featureManager>
         <platform>jakartaee-10.0</platform>
@@ -46,11 +47,17 @@
     <webApplication 
         location="auth.war"
         contextRoot="${app.context.root}">
-        <application-bnd>
-        <security-role name='users'>
-        <special-subject type="ALL_AUTHENTICATED_USERS"/>
-        </security-role>
-        </application-bnd>
+            <application-bnd>
+                <security-role name="users">
+                    <special-subject type="ALL_AUTHENTICATED_USERS"/>
+                </security-role>
+                <security-role name="instructor">
+                    <special-subject type="ALL_AUTHENTICATED_USERS"/>
+                </security-role>
+                <security-role name="student">
+                    <special-subject type="ALL_AUTHENTICATED_USERS"/>
+                </security-role>
+            </application-bnd>
     </webApplication>
     <!-- end::webApplication[] -->
     <!-- tag::sslContext[] -->
@@ -80,7 +87,12 @@
         keyStoreRef="defaultKeyStore" 
         trustDefaultCerts="true"
     />
-    <webAppSecurity allowFailOverToBasicAuth="false" displayAuthenticationRealm="false"/>
+      <mpJwt id="defaultMpJwt"
+        userNameAttribute="email"
+        mapToUserRegistry="false"
+        clockSkew="0s"/>
+    <ltpa keysFileName="ltpa.keys" keysPassword="LibertyPassw0rd!" expiration="120"/>
+    <webAppSecurity allowFailOverToBasicAuth="false" displayAuthenticationRealm="false" ssoEnabled="false" trackLoggedOutSSOCookies="false"/>
 
     <!-- end::sslContext[] -->
 </server>

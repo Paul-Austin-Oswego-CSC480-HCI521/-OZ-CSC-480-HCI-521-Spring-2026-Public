@@ -1,5 +1,14 @@
 "use client";
-import { Home, BellIcon, Workflow, LogOutIcon } from "lucide-react";
+import {
+  Home,
+  BellIcon,
+  Workflow,
+  LogOutIcon,
+  UserIcon,
+  LayoutDashboard,
+  Users,
+  Archive,
+} from "lucide-react";
 
 import {
   Sidebar,
@@ -18,15 +27,28 @@ import { logout } from "@/components/custom/utils/api_utils/req/req";
 export function AppSidebar() {
   const userInfo = useAtomValue(userAtom);
   var items = [{ title: "Home", url: "/", icon: Home }];
-  // if (userInfo && userInfo.role == "instructor") {
-  //   const items = [{ title: "Home", url: "/", icon: Home }];
-  // }
-  if (userInfo && userInfo.role == "student") {
+  if (userInfo && userInfo.role == "student" && userInfo.classID) {
+    const hasRealTeam = (userInfo.team ?? []).some(
+      (t) => t && t.toLowerCase() !== "unassigned",
+    );
+    items = hasRealTeam
+      ? [
+          { title: "Home", url: "/", icon: Home },
+          { title: "Notification", url: "/notification", icon: Workflow },
+          { title: "Weekly Work Logs", url: "/notifications", icon: BellIcon },
+          { title: "Profile", url: "/profile", icon: UserIcon },
+        ]
+      : [
+          { title: "Home", url: "/", icon: Home },
+          { title: "Profile", url: "/profile", icon: UserIcon },
+        ];
+  }
+  if (userInfo && userInfo.role == "instructor") {
     items = [
-      { title: "Home", url: "/", icon: Home },
-      { title: "Notification", url: "/notification", icon: Workflow },
-      { title: "Weekly Work Logs", url: "/notifications", icon: BellIcon },
-      // { title: "Tasktracker", url: "/tasktracker", icon: Workflow },
+      { title: "Dashboard", url: "/instructor", icon: LayoutDashboard },
+      { title: "Manage Class", url: "/instructor/classes", icon: Users },
+      { title: "Archived Class", url: "/instructor/archived", icon: Archive },
+      { title: "Profile Settings", url: "/profile", icon: UserIcon },
     ];
   }
   const pathname = usePathname();
@@ -46,10 +68,32 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar>
-      <SidebarContent className="m-5 mt-15">
-        <SidebarGroup className="m-3 mt-10 text-xl">
-          HCI 521/CSC480
+    <Sidebar
+      className="[&_[data-sidebar=sidebar]]:!bg-[#1E4B35] [&_[data-sidebar=sidebar]]:!text-white"
+      style={
+        {
+          "--sidebar": "#1E4B35",
+          "--sidebar-foreground": "#ffffff",
+          "--sidebar-accent": "rgba(255,255,255,0.12)",
+          "--sidebar-accent-foreground": "#ffffff",
+          "--sidebar-border": "rgba(255,255,255,0.1)",
+          "--sidebar-ring": "#f59e0b",
+        } as React.CSSProperties
+      }
+    >
+      <SidebarContent className="m-5 mt-10 text-white overflow-x-hidden">
+        <SidebarGroup className="mx-3 mt-4 mb-6 space-y-0.5">
+          <p className="text-2xl font-bold text-amber-400 leading-tight">
+            LakerLogs
+          </p>
+          <p className="text-lg font-semibold text-white leading-tight">
+            {userInfo?.role === "instructor"
+              ? "Instructor Portal"
+              : "Student Hub"}
+          </p>
+          <p className="text-xs text-white/70 leading-tight pt-0.5">
+            CSC 480 | HCI 521
+          </p>
         </SidebarGroup>
 
         <SidebarGroup>
@@ -60,7 +104,7 @@ export function AppSidebar() {
                 <SidebarMenuItem key={item.title} className="mt-2">
                   <SidebarMenuButton
                     asChild
-                    className={`hover:bg-gray-300 ${pathname === item.url ? "bg-gray-300" : ""}`}
+                    className={`hover:bg-white/10 ${pathname === item.url ? "bg-amber-400 text-[#1E4B35] hover:bg-amber-400" : ""}`}
                   >
                     <a href={item.url}>
                       <item.icon />
@@ -72,7 +116,7 @@ export function AppSidebar() {
 
               <SidebarMenuItem className="mt-2">
                 <SidebarMenuButton
-                  className="hover:bg-gray-300 cursor-pointer"
+                  className="hover:bg-white/10 cursor-pointer"
                   onClick={handleLogout}
                 >
                   <LogOutIcon />

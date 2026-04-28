@@ -14,7 +14,14 @@ import {
   FileText,
   AlertTriangle,
   Clock,
+  Bell,
 } from "lucide-react";
+
+function calendarDaysBetween(from: Date, to: Date): number {
+  const a = new Date(from.getFullYear(), from.getMonth(), from.getDate());
+  const b = new Date(to.getFullYear(), to.getMonth(), to.getDate());
+  return Math.round((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24));
+}
 
 function getLateDays(log: any): number {
   const semesterStart = new Date("2026-01-26T00:00:00");
@@ -24,9 +31,7 @@ function getLateDays(log: any): number {
   dueDate.setDate(dueDate.getDate() + week * 7);
   dueDate.setHours(23, 59, 0, 0);
   const submitted = new Date(log.dateSubmitted);
-  const diffDays = Math.floor(
-    (submitted.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24),
-  );
+  const diffDays = calendarDaysBetween(dueDate, submitted);
   return diffDays > 0 ? diffDays : 0;
 }
 
@@ -61,7 +66,7 @@ export default function NotificationPage() {
       </div>
     );
 
-  const worklogs = data ?? [];
+  const worklogs = (data ?? []).filter((log: any) => !log.isDraft);
 
   const semesterStart = new Date("2026-01-26T00:00:00");
   const worklogInfo = getWorklogDate(semesterStart);
@@ -78,24 +83,40 @@ export default function NotificationPage() {
       const dueDate = new Date(semesterStart);
       dueDate.setDate(dueDate.getDate() + w * 7);
       dueDate.setHours(23, 59, 0, 0);
-      const diffDays = Math.floor(
-        (now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24),
-      );
+      const diffDays = calendarDaysBetween(dueDate, now);
       missingWeeks.push({ week: w, overdueDays: diffDays > 0 ? diffDays : 0 });
     }
   }
 
-  const sortedWorklogs = [...worklogs].sort(
-    (a: any, b: any) =>
-      (parseInt(b.worklogName) || 0) - (parseInt(a.worklogName) || 0),
-  );
+  const sortedWorklogs = [...worklogs].sort((a: any, b: any) => {
+    const at = a.dateSubmitted ? new Date(a.dateSubmitted).getTime() : 0;
+    const bt = b.dateSubmitted ? new Date(b.dateSubmitted).getTime() : 0;
+    return bt - at;
+  });
 
   return (
-    <div className="p-4 sm:p-6 md:p-10">
-      <h1 className="text-2xl sm:text-3xl md:text-4xl mb-1">Notifications</h1>
-      <p className="text-sm text-muted-foreground mb-6">
-        Your work log alerts and submission history
-      </p>
+    <div className="p-3 sm:p-4 md:p-6 w-full">
+      <div className="mb-4 sm:mb-5">
+        <h1
+          className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight mb-1 flex items-center gap-2.5"
+          style={{ color: "#1E4B35" }}
+        >
+          <span
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border-2 bg-white shadow-sm"
+            style={{ borderColor: "#1E4B35" }}
+          >
+            <Bell
+              className="h-5 w-5"
+              style={{ color: "#1E4B35" }}
+              aria-hidden
+            />
+          </span>
+          Notifications
+        </h1>
+        <p className="text-xs sm:text-sm text-muted-foreground pl-0 sm:pl-[46px]">
+          Your work log alerts and submission history.
+        </p>
+      </div>
 
       {/* Important */}
       {missingWeeks.length > 0 && (

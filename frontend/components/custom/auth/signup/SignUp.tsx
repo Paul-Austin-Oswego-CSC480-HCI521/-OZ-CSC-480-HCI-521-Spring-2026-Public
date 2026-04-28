@@ -70,7 +70,7 @@ export default function SignUp() {
               <GraduationCap className="h-7 w-7 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-white">LakerTracks</h1>
+              <h1 className="text-3xl font-bold text-white">LakerLogs</h1>
               <p className="text-sm text-white/60">HCI 521 / CSC 480</p>
             </div>
           </div>

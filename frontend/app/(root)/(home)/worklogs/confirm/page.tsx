@@ -9,6 +9,7 @@ import { submitWorkLog } from "../../../../../components/custom/utils/api_utils/
 import { Button } from "../../../../../components/ui/button";
 import { AlertCircle, ArrowLeft, Send } from "lucide-react";
 import { Card, CardContent } from "../../../../../components/ui/card";
+import { Breadcrumbs } from "@/components/custom/ui/Breadcrumbs";
 
 export default function ConfirmPage() {
   const router = useRouter();
@@ -31,8 +32,16 @@ export default function ConfirmPage() {
   }
 
   return (
-    <div className="flex items-center justify-center p-6 sm:p-10">
-      <Card className="w-full max-w-md text-center">
+    <div className="p-6 sm:p-10">
+      <Breadcrumbs
+        items={[
+          { label: "Weekly Logs", href: "/" },
+          { label: `Week ${pendingWorklog.worklogName} Log`, href: `/worklogs?week=${pendingWorklog.worklogName}` },
+          { label: "Confirm Submission" },
+        ]}
+      />
+      <div className="flex items-center justify-center">
+        <Card className="w-full max-w-md text-center">
         <CardContent className="p-6 sm:p-8 space-y-6">
           <div className="flex justify-center">
             <div className="h-12 w-12 rounded-full bg-amber-100 flex items-center justify-center">
@@ -75,6 +84,7 @@ export default function ConfirmPage() {
           )}
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

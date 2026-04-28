@@ -1,11 +1,13 @@
-lakertracks.duckdns.org {
-    reverse_proxy frontend:3000
-}
-
-lakertracks.duckdns.org:7001 {
-    reverse_proxy backend-worklog:9081
-}
-
-lakertracks.duckdns.org:7002 {
-    reverse_proxy backend-auth:9084
+lakerlogs.duckdns.org {
+    handle /wl/* {
+        uri strip_prefix /wl
+        reverse_proxy backend-worklog:9081
+    }
+    handle /a/* {
+        uri strip_prefix /a
+        reverse_proxy backend-auth:9084
+    }
+    handle {
+        reverse_proxy frontend:3000
+    }
 }

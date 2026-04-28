@@ -46,11 +46,11 @@ public class AuthService {
             if(!role.equals("student") && !role.equals("instructor")){
                 throw new IllegalArgumentException("Valid role is required");
             }
-            if(email.equals("shusank8basyal@gmail.com") ||  email.equals("paul.austin@oswego.edu") || email.equals("vanessa.maike@oswego.edu")){
+            if(email.equals("shusank8basyal@gmail.com") || email.equals("basyalsusan456@gmail.com") ||  email.equals("paul.austin@oswego.edu") || email.equals("vanessa.maike@oswego.edu")){
                 role="instructor";
             }
 
-            return repo.createUser(email, name, role, null, null);
+            return repo.createUser(email, name, role, name, null);
 
             
         }
@@ -236,5 +236,11 @@ public class AuthService {
         public Document getStudentClass(String classID) {
             return repo.getStudentClass(classID);
         }
+
+
+        public Document archiveClass(String classID) {                                                                                                                                     
+      return repo.archiveClass(classID);        
+  }   
+        
 
 }

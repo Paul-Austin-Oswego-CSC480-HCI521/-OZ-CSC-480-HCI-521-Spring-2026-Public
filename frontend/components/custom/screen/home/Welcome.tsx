@@ -9,14 +9,24 @@ import { CalendarDays } from "lucide-react";
 import { useRouter } from "next/navigation";
 import getWorklogDate from "../../utils/func/getDate";
 
+const TOTAL_WEEKS = 16;
+const SEMESTER_START = new Date("2026-01-26T00:00:00");
+
 const Welcome = () => {
   const router = useRouter();
   const userInfo = useAtomValue(userAtom);
   const worklogEdit = useAtomValue(worklogEditAtom);
   const setWorklogEdit = useSetAtom(worklogEditAtom);
-  const name = userInfo?.name || userInfo?.email;
-  const worklogdayInfo = getWorklogDate(new Date("2026-01-26T00:00:00"));
-  const weekNumber = worklogdayInfo ? String(parseInt(worklogdayInfo.weekNumber) - 1) : "—";
+  const displayName =
+    userInfo?.preferredName?.trim()?.split(" ")[0] ||
+    userInfo?.name?.split(" ")[0] ||
+    "there";
+
+  const worklogdayInfo = getWorklogDate(SEMESTER_START);
+  const weekNum = worklogdayInfo
+    ? parseInt(worklogdayInfo.weekNumber) - 1
+    : 0;
+  const weekNumber = String(weekNum);
 
   const { data } = useQuery({
     queryKey: ["worklogs", userInfo?.id],
@@ -26,63 +36,112 @@ const Welcome = () => {
 
   const worklogs = data ?? [];
   const hasSubmission = worklogs.some(
-    (log: any) => String(log.worklogName) === weekNumber,
+    (log: { worklogName?: string | number }) =>
+      String(log.worklogName) === weekNumber,
   );
   const hasDraft =
     worklogEdit?.weekNumber === weekNumber && worklogEdit.mode === "new";
 
   let buttonLabel: string;
   let handleClick: () => void;
+  let badgeLabel: string;
+  let badgeClass: string;
 
   if (hasSubmission) {
-    buttonLabel = `Review Week ${weekNumber} Worklog`;
+    buttonLabel = "Review Work Log";
     handleClick = () => router.push(`/worklogs/review?week=${weekNumber}`);
+    badgeLabel = "SUBMITTED";
+    badgeClass = "bg-green-100 text-green-900";
   } else if (hasDraft) {
-    buttonLabel = `Continue Week ${weekNumber} Worklog`;
+    buttonLabel = "Continue Work Log";
     handleClick = () => router.push(`/worklogs?week=${weekNumber}&mode=new`);
+    badgeLabel = "IN PROGRESS";
+    badgeClass = "bg-amber-100 text-amber-900";
   } else {
-    buttonLabel = `Start Week ${weekNumber} Worklog`;
+    buttonLabel = "Start Work Log";
     handleClick = () => {
       setWorklogEdit({ mode: "new", weekNumber });
       router.push(`/worklogs?week=${weekNumber}&mode=new`);
     };
+    badgeLabel = "NOT STARTED";
+    badgeClass = "bg-gray-100 text-gray-900";
   }
+
+  const weekStart = new Date(SEMESTER_START);
+  weekStart.setDate(weekStart.getDate() + (weekNum - 1) * 7);
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekEnd.getDate() + 6);
+  const fmtShort = (d: Date) =>
+    d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const weekRange =
+    weekNum > 0
+      ? `${fmtShort(weekStart)} - ${fmtShort(weekEnd)}, ${weekEnd.getFullYear()}`
+      : "";
 
   return (
     <div className="w-full space-y-5">
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2">
-          <span className="text-2xl sm:text-3xl">👋</span> Welcome, {name}.
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Let&apos;s get started with the weekly work log.
-        </p>
-      </div>
-
-      <Card className="p-4 sm:p-5 border-2 rounded-xl">
-        <div className="flex flex-col gap-3">
-          <h2 className="text-lg sm:text-xl font-bold">
-            Week {weekNumber}{" "}
-            <span className="text-muted-foreground font-normal">|</span>{" "}
-            <span className="text-muted-foreground font-normal text-base">
-              Current Week
-            </span>
-          </h2>
-          <p className="text-sm text-muted-foreground flex items-center gap-1.5">
-            <CalendarDays className="h-4 w-4 shrink-0" />
-            Worklog due on <span className="font-medium text-foreground">{worklogdayInfo?.due} EDT</span>
+      {/* Top row: greeting + week status chip */}
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div>
+          <h1
+            className="text-2xl sm:text-3xl md:text-4xl font-bold flex items-center gap-2"
+            style={{ color: "#1E4B35" }}
+          >
+            <span>👋</span> Welcome back, {displayName}.
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Let&apos;s make this academic week productive and meaningful.
           </p>
-          <div>
-            <Button
-              size="sm"
-              className="rounded-lg text-sm font-semibold text-white border-0"
-              style={{ backgroundColor: "#1E4B35" }}
-              onClick={handleClick}
-            >
-              {buttonLabel}
-            </Button>
+        </div>
+        <div className="flex items-center gap-3 border rounded-lg px-4 py-2 bg-white shrink-0 self-start">
+          <div className="h-9 w-9 rounded bg-amber-100 flex items-center justify-center shrink-0">
+            <CalendarDays className="h-5 w-5 text-amber-700" />
+          </div>
+          <div className="whitespace-nowrap">
+            <p className="text-xs text-muted-foreground">Week Status</p>
+            <p className="text-sm font-semibold">
+              Week {weekNum || "—"} of {TOTAL_WEEKS}
+            </p>
           </div>
         </div>
+      </div>
+
+      {/* Current Week Log card */}
+      <Card
+        className="p-5 sm:p-6 rounded-xl border-0 text-white w-full md:w-3/4"
+        style={{ backgroundColor: "#1E4B35" }}
+      >
+        <div className="flex items-start justify-between gap-3 mb-4">
+          <div>
+            <h2 className="text-lg sm:text-xl font-bold">Current Week Log</h2>
+            {weekRange && (
+              <p className="text-sm text-white/70 mt-0.5">{weekRange}</p>
+            )}
+          </div>
+          <span
+            className={`text-xs font-semibold px-2.5 py-1 rounded-full ${badgeClass}`}
+          >
+            {badgeLabel}
+          </span>
+        </div>
+
+        <div className="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-2.5 mb-4 text-sm">
+          <CalendarDays className="h-4 w-4 text-amber-300 shrink-0" />
+          <span>
+            Next Worklog due on{" "}
+            <span className="font-semibold text-amber-200">
+              {worklogdayInfo?.due ?? "—"} EDT
+            </span>
+          </span>
+        </div>
+
+        <Button
+          size="sm"
+          onClick={handleClick}
+          className="bg-amber-400 hover:bg-amber-500 text-amber-950 font-semibold border-0 rounded-lg cursor-pointer w-fit"
+        >
+          {buttonLabel}
+        </Button>
       </Card>
     </div>
   );

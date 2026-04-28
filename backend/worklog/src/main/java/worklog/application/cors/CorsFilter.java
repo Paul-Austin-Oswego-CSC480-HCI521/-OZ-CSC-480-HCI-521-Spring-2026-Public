@@ -32,7 +32,8 @@ public class CorsFilter implements Filter {
                 // AWS SERVER
                 "http://54.144.14.13:7000",
                 // DUCKDNS
-                "https://lakertracks.duckdns.org"
+                "https://lakertracks.duckdns.org",
+                "https://lakerlogs.duckdns.org",
         };
 
         for (String allowed : allowedOrigins) {

@@ -6,7 +6,7 @@
 # OS
 .DS_Store
 Thumbs.db
-
+.metals
 # Environment files
 *.env
 .env.local

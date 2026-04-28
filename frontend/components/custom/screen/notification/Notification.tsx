@@ -5,7 +5,7 @@ import { useAtomValue, useSetAtom } from "jotai";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { userAtom } from "@/components/custom/utils/context/state";
-import { worklogEditAtom } from "@/components/custom/utils/context/state"; // adjust path
+import { worklogEditAtom } from "@/components/custom/utils/context/state";
 import getWorklogDate from "../../utils/func/getDate";
 import { fmtDate } from "../../utils/func/formatDate";
 import { useRouter } from "next/navigation";
@@ -14,122 +14,68 @@ import {
   XCircle,
   Clock,
   CalendarDays,
-  Circle,
   FileText,
   Hourglass,
+  ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useEffect } from "react";
 
-type WorklogStatus = "submitted" | "late" | "missing" | "current" | "upcoming";
+type WorklogStatus =
+  | "submitted"
+  | "late"
+  | "missing"
+  | "current"
+  | "upcoming";
 
 interface WeekEntry {
   week: number;
-  dueDate: string;
+  dueDate: Date;
+  dueDateStr: string;
   submittedDate?: string;
   status: WorklogStatus;
   lateByDays?: number;
   overdueDays?: number;
-  taskList?: any[];
-  isCurrent?: boolean;
+  daysUntilDue?: number;
+  hasDraft?: boolean;
 }
 
 const accentGreen = "#1E4B35";
+const SEMESTER_START = new Date("2026-01-26T00:00:00");
 
-function getStatusIcon(status: WorklogStatus) {
-  switch (status) {
-    case "submitted":
-      return (
-        <CheckCircle2
-          className="h-5 w-5 sm:h-6 sm:w-6 shrink-0"
-          style={{ color: accentGreen }}
-        />
-      );
-    case "late":
-      return (
-        <CheckCircle2
-          className="h-5 w-5 sm:h-6 sm:w-6 shrink-0"
-          style={{ color: accentGreen }}
-        />
-      );
-    case "missing":
-      return (
-        <XCircle className="h-5 w-5 sm:h-6 sm:w-6 text-red-600 shrink-0" />
-      );
-    case "current":
-      return (
-        <Circle
-          className="h-5 w-5 sm:h-6 sm:w-6 shrink-0"
-          style={{ color: accentGreen, fill: accentGreen }}
-        />
-      );
-    case "upcoming":
-      return (
-        <FileText
-          className="h-5 w-5 sm:h-6 sm:w-6 shrink-0"
-          style={{ color: accentGreen }}
-        />
-      );
-  }
+function calendarDaysBetween(from: Date, to: Date): number {
+  const a = new Date(from.getFullYear(), from.getMonth(), from.getDate());
+  const b = new Date(to.getFullYear(), to.getMonth(), to.getDate());
+  return Math.round((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-function getStatusBadge(entry: WeekEntry) {
-  const base =
-    "text-xs font-medium px-2.5 py-1 rounded-md border inline-flex items-center";
-  switch (entry.status) {
-    case "submitted":
-      return null;
-    case "late":
-      return (
-        <span className={cn(base, "border-red-200 bg-red-50 text-red-800")}>
-          Submitted Late ({entry.lateByDays} days)
-        </span>
-      );
-    case "missing":
-      return (
-        <span className={cn(base, "border-red-200 bg-red-50 text-red-800")}>
-          Overdue ({entry.overdueDays} days)
-        </span>
-      );
-    case "current":
-      return (
-        <span
-          className={cn(base, "border-[#1E4B35]/35 bg-[#1E4B35] text-white")}
-        >
-          Current Week
-        </span>
-      );
-    case "upcoming":
-      return (
-        <span
-          className={cn(
-            base,
-            "border-[#1E4B35]/30 bg-[#1E4B35]/10 text-[#1E4B35]",
-          )}
-        >
-          Upcoming
-        </span>
-      );
-  }
-}
-
-function buildWeekEntries(worklogs: any[]): WeekEntry[] {
-  const semesterStart = new Date("2026-01-26T00:00:00");
+function buildWeekEntries(
+  worklogs: {
+    worklogName?: string | number;
+    dateSubmitted?: string;
+    isDraft?: boolean;
+  }[],
+): WeekEntry[] {
   const now = new Date();
-  const worklogInfo = getWorklogDate(semesterStart);
+  const worklogInfo = getWorklogDate(SEMESTER_START);
   const currentWeek = worklogInfo ? parseInt(worklogInfo.weekNumber) - 1 : 0;
 
-  const submittedMap = new Map<number, any>();
-  worklogs.forEach((log: any) => {
-    const week = parseInt(log.worklogName);
-    if (!isNaN(week)) submittedMap.set(week, log);
+  const submittedMap = new Map<number, { dateSubmitted?: string }>();
+  const draftWeeks = new Set<number>();
+  worklogs.forEach((log) => {
+    const week = parseInt(String(log.worklogName));
+    if (isNaN(week)) return;
+    if (log.isDraft) {
+      draftWeeks.add(week);
+    } else {
+      submittedMap.set(week, log);
+    }
   });
 
   const totalWeeks = currentWeek + 1;
   const entries: WeekEntry[] = [];
 
   for (let w = totalWeeks; w >= 1; w--) {
-    const dueDate = new Date(semesterStart);
+    const dueDate = new Date(SEMESTER_START);
     dueDate.setDate(dueDate.getDate() + w * 7);
     dueDate.setHours(23, 59, 0, 0);
     const dueDateStr = dueDate.toLocaleDateString("en-US", {
@@ -140,62 +86,138 @@ function buildWeekEntries(worklogs: any[]): WeekEntry[] {
     });
 
     const log = submittedMap.get(w);
+    const daysUntilDue = calendarDaysBetween(now, dueDate);
+
+    const hasDraft = draftWeeks.has(w);
 
     if (w > currentWeek) {
       entries.push({
         week: w,
-        dueDate: dueDateStr,
-        submittedDate: log
-          ? fmtDate(log.dateSubmitted)
-          : undefined,
+        dueDate,
+        dueDateStr,
         status: "upcoming",
-        taskList: log?.taskList,
+        daysUntilDue,
+        hasDraft,
       });
     } else if (w === currentWeek) {
-      if (log) {
+      if (log && log.dateSubmitted) {
+        const submitted = new Date(log.dateSubmitted);
+        const diffDays = calendarDaysBetween(dueDate, submitted);
         entries.push({
           week: w,
-          dueDate: dueDateStr,
+          dueDate,
+          dueDateStr,
           submittedDate: fmtDate(log.dateSubmitted),
-          status: "submitted",
-          isCurrent: true,
-          taskList: log.taskList,
+          status: diffDays > 0 ? "late" : "submitted",
+          lateByDays: diffDays > 0 ? diffDays : undefined,
+          hasDraft,
         });
       } else {
-        entries.push({ week: w, dueDate: dueDateStr, status: "current", isCurrent: true });
+        entries.push({
+          week: w,
+          dueDate,
+          dueDateStr,
+          status: "current",
+          daysUntilDue,
+          hasDraft,
+        });
       }
-    } else if (log) {
+    } else if (log && log.dateSubmitted) {
       const submitted = new Date(log.dateSubmitted);
-      const diffDays = Math.floor(
-        (submitted.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24),
-      );
+      const diffDays = calendarDaysBetween(dueDate, submitted);
       entries.push({
         week: w,
-        dueDate: dueDateStr,
+        dueDate,
+        dueDateStr,
         submittedDate: fmtDate(log.dateSubmitted),
         status: diffDays > 0 ? "late" : "submitted",
         lateByDays: diffDays > 0 ? diffDays : undefined,
-        taskList: log.taskList,
+        hasDraft,
       });
     } else {
-      const overdueDays = Math.floor(
-        (now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24),
-      );
-      if (overdueDays < 0) {
-        // Due date hasn't passed yet — treat as current
-        entries.push({ week: w, dueDate: dueDateStr, status: "current" });
-      } else {
-        entries.push({
-          week: w,
-          dueDate: dueDateStr,
-          status: "missing",
-          overdueDays,
-        });
-      }
+      const overdueDays = calendarDaysBetween(dueDate, now);
+      entries.push({
+        week: w,
+        dueDate,
+        dueDateStr,
+        status: "missing",
+        overdueDays: overdueDays > 0 ? overdueDays : 0,
+        hasDraft,
+      });
     }
   }
 
   return entries;
+}
+
+function WeekIcon({ entry }: { entry: WeekEntry }) {
+  const common = "h-10 w-10 rounded-lg flex items-center justify-center shrink-0";
+  switch (entry.status) {
+    case "submitted":
+    case "late":
+      return (
+        <div className={cn(common, "bg-green-100")}>
+          <CheckCircle2 className="h-5 w-5 text-green-700" />
+        </div>
+      );
+    case "missing":
+      return (
+        <div className={cn(common, "bg-red-100")}>
+          <XCircle className="h-5 w-5 text-red-600" />
+        </div>
+      );
+    case "current":
+      return (
+        <div className={cn(common, "bg-amber-200")}>
+          <div className="h-4 w-4 rounded-full bg-amber-600" />
+        </div>
+      );
+    case "upcoming":
+      return (
+        <div className={cn(common, "bg-gray-100")}>
+          <FileText className="h-5 w-5 text-gray-500" />
+        </div>
+      );
+  }
+}
+
+function StatusBadge({ entry }: { entry: WeekEntry }) {
+  const base =
+    "text-xs font-semibold px-2.5 py-1 rounded-md inline-flex items-center tracking-wide";
+  switch (entry.status) {
+    case "submitted":
+      return (
+        <span className={cn(base, "bg-green-100 text-green-800")}>
+          SUBMITTED ON TIME
+        </span>
+      );
+    case "late":
+      return (
+        <span className={cn(base, "bg-orange-100 text-orange-800")}>
+          SUBMITTED LATE ({entry.lateByDays} DAYS)
+        </span>
+      );
+    case "missing":
+      return (
+        <span
+          className={cn(base, "bg-red-50 text-red-700 border border-red-200")}
+        >
+          Overdue ({entry.overdueDays} days)
+        </span>
+      );
+    case "current":
+      return (
+        <span className={cn(base, "bg-amber-500 text-white")}>
+          CURRENT WEEK
+        </span>
+      );
+    case "upcoming":
+      return (
+        <span className={cn(base, "bg-gray-100 text-gray-700")}>
+          UPCOMING
+        </span>
+      );
+  }
 }
 
 export const Notification = () => {
@@ -210,19 +232,23 @@ export const Notification = () => {
   });
 
   if (isLoading) return <p className="p-4 sm:p-10">Loading...</p>;
-  if (error) return (
-    <div className="p-4 sm:p-10">
-      <p className="text-red-600 font-medium">Failed to load worklogs</p>
-      <p className="text-sm text-muted-foreground mt-1">{(error as any)?.message}</p>
-    </div>
-  );
+  if (error)
+    return (
+      <div className="p-4 sm:p-10">
+        <p className="text-red-600 font-medium">Failed to load worklogs</p>
+        <p className="text-sm text-muted-foreground mt-1">
+          {(error as Error)?.message}
+        </p>
+      </div>
+    );
 
   const worklogs = data ?? [];
   const entries = buildWeekEntries(worklogs);
 
-  const semesterStart = new Date("2026-01-26T00:00:00");
-  const worklogInfo = getWorklogDate(semesterStart);
-  const currentWeekNum = worklogInfo ? parseInt(worklogInfo.weekNumber) - 1 : 0;
+  const worklogInfo = getWorklogDate(SEMESTER_START);
+  const currentWeekNum = worklogInfo
+    ? parseInt(worklogInfo.weekNumber) - 1
+    : 0;
   const currentWeekEntry = entries.find((e) => e.week === currentWeekNum);
 
   const pastEntries = entries.filter((e) => e.status !== "upcoming");
@@ -237,16 +263,19 @@ export const Notification = () => {
     currentWeekNum > 0 && currentWeekEntry
       ? currentWeekEntry.status === "submitted" ||
         currentWeekEntry.status === "late"
-        ? "Review Current Week Work Log"
+        ? "Review Current Week's Work Log"
         : worklogEdit?.weekNumber === String(currentWeekNum) &&
             worklogEdit.mode === "new"
-          ? "Continue Current Week Work Log"
-          : "Create Current Week Work Log"
+          ? "Continue Current Week's Work Log"
+          : "Continue Current Week's Work Log"
       : null;
 
   const handleWeekClick = (entry: WeekEntry) => {
-    const hasSubmission = entry.status === "submitted" || entry.status === "late" || entry.submittedDate;
-    if (hasSubmission) {
+    const hasSubmission =
+      entry.status === "submitted" ||
+      entry.status === "late" ||
+      entry.submittedDate;
+    if (hasSubmission || entry.hasDraft) {
       router.push(`/worklogs/review?week=${entry.week}`);
     } else {
       setWorklogEdit({
@@ -264,93 +293,68 @@ export const Notification = () => {
 
   return (
     <div className="p-3 sm:p-4 md:p-6 w-full">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4 mb-4 sm:mb-5">
-        <div>
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight mb-1 flex items-center gap-2.5">
-            <span
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border-2 bg-white shadow-sm"
-              style={{ borderColor: accentGreen }}
-            >
-              <FileText
-                className="h-5 w-5"
-                style={{ color: accentGreen }}
-                aria-hidden
-              />
-            </span>
-            Weekly Work Logs
-          </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground pl-0 sm:pl-[46px]">
-            Track and submit your weekly progress
-          </p>
-        </div>
+      {/* Header */}
+      <div className="mb-4 sm:mb-5">
+        <h1
+          className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight mb-1 flex items-center gap-2.5"
+          style={{ color: accentGreen }}
+        >
+          <span
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border-2 bg-white shadow-sm"
+            style={{ borderColor: accentGreen }}
+          >
+            <FileText
+              className="h-5 w-5"
+              style={{ color: accentGreen }}
+              aria-hidden
+            />
+          </span>
+          Weekly Work Log
+        </h1>
+        <p className="text-xs sm:text-sm text-muted-foreground pl-0 sm:pl-[46px]">
+          Manage and review your work log progress records.
+        </p>
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-4 sm:mb-5 w-3/4">
-        <Card
-          className="border-2 py-0 shadow-none rounded-xl overflow-hidden"
-          style={{ borderColor: `${accentGreen}33` }}
-        >
-          <CardContent className="p-2.5 sm:py-2.5 sm:px-3 text-center bg-[rgba(109,155,129,0.08)]">
-            <p className="text-xs sm:text-sm text-muted-foreground flex items-center justify-center gap-1.5 mb-1">
-              <CheckCircle2
-                className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0"
-                style={{ color: accentGreen }}
-              />
+      <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-4 sm:mb-5 w-full md:w-3/4">
+        <Card className="border border-l-4 border-l-green-500 py-0 shadow-none rounded-xl overflow-hidden">
+          <CardContent className="p-2.5 sm:py-3 sm:px-4 text-center bg-green-50">
+            <p className="text-xs sm:text-sm text-green-900 flex items-center justify-center gap-1.5 mb-1 font-medium">
+              <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-green-700 shrink-0" />
               Submitted
             </p>
-            <p
-              className="text-lg sm:text-2xl font-bold tabular-nums"
-              style={{ color: accentGreen }}
-            >
+            <p className="text-lg sm:text-2xl font-bold text-green-900 tabular-nums">
               {submitted}
-              <span className="text-muted-foreground text-sm sm:text-lg font-normal">
+              <span className="text-green-700/60 text-sm sm:text-lg font-normal">
                 /{total}
               </span>
             </p>
           </CardContent>
         </Card>
-        <Card
-          className="border-2 py-0 shadow-none rounded-xl overflow-hidden"
-          style={{ borderColor: `${accentGreen}33` }}
-        >
-          <CardContent className="p-2.5 sm:py-2.5 sm:px-3 text-center bg-[rgba(109,155,129,0.08)]">
-            <p className="text-xs sm:text-sm text-muted-foreground flex items-center justify-center gap-1.5 mb-1">
-              <Clock
-                className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0"
-                style={{ color: accentGreen }}
-              />
+        <Card className="border border-l-4 border-l-orange-400 py-0 shadow-none rounded-xl overflow-hidden">
+          <CardContent className="p-2.5 sm:py-3 sm:px-4 text-center bg-orange-50">
+            <p className="text-xs sm:text-sm text-orange-900 flex items-center justify-center gap-1.5 mb-1 font-medium">
+              <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-orange-600 shrink-0" />
               Late
             </p>
-            <p
-              className="text-lg sm:text-2xl font-bold tabular-nums"
-              style={{ color: accentGreen }}
-            >
+            <p className="text-lg sm:text-2xl font-bold text-orange-900 tabular-nums">
               {late}
-              <span className="text-muted-foreground text-sm sm:text-lg font-normal">
+              <span className="text-orange-700/60 text-sm sm:text-lg font-normal">
                 /{total}
               </span>
             </p>
           </CardContent>
         </Card>
-        <Card
-          className="border-2 py-0 shadow-none rounded-xl overflow-hidden"
-          style={{ borderColor: `${accentGreen}33` }}
-        >
-          <CardContent className="p-2.5 sm:py-2.5 sm:px-3 text-center bg-[rgba(109,155,129,0.08)]">
-            <p className="text-xs sm:text-sm text-muted-foreground flex items-center justify-center gap-1.5 mb-1">
-              <Hourglass
-                className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0"
-                style={{ color: accentGreen }}
-              />
+        <Card className="border border-l-4 border-l-red-500 py-0 shadow-none rounded-xl overflow-hidden">
+          <CardContent className="p-2.5 sm:py-3 sm:px-4 text-center bg-red-50">
+            <p className="text-xs sm:text-sm text-red-900 flex items-center justify-center gap-1.5 mb-1 font-medium">
+              <Hourglass className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-red-600 shrink-0" />
               Missing
             </p>
-            <p
-              className="text-lg sm:text-2xl font-bold tabular-nums"
-              style={{ color: accentGreen }}
-            >
+            <p className="text-lg sm:text-2xl font-bold text-red-900 tabular-nums">
               {missing}
-              <span className="text-muted-foreground text-sm sm:text-lg font-normal">
+              <span className="text-red-700/60 text-sm sm:text-lg font-normal">
                 /{total}
               </span>
             </p>
@@ -362,8 +366,9 @@ export const Notification = () => {
         <div className="mb-4 sm:mb-5 flex justify-end">
           <Button
             type="button"
-            className="rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:opacity-95 border-0"
-            style={{ backgroundColor: accentGreen }}
+            variant="outline"
+            className="rounded-lg px-4 py-2 text-sm font-semibold cursor-pointer"
+            style={{ borderColor: accentGreen, color: accentGreen }}
             onClick={handlePrimaryCurrentWeek}
           >
             {currentWeekPrimaryLabel}
@@ -372,70 +377,94 @@ export const Notification = () => {
       )}
 
       {/* Work log list */}
-      <div
-        className="rounded-[20px] border-2 p-3 sm:p-4 md:p-5 shadow-sm"
-        style={{
-          borderColor: accentGreen,
-          backgroundColor: "rgba(109, 155, 129, 0.2)",
-        }}
-      >
+      <div>
         <div className="mb-3 sm:mb-4">
-          <h2 className="text-lg sm:text-xl font-bold text-[#1E4B35]">
+          <h2 className="text-lg sm:text-xl font-bold text-zinc-900">
             Work Log Status
           </h2>
-          <p className="text-xs sm:text-sm text-[#1E4B35]/80 mt-1">
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
             Track your submission progress for each week.
           </p>
         </div>
 
-        <div className="flex flex-col gap-3">
-          {entries.map((entry) => (
-            <div
-              key={entry.week}
-              onClick={() => handleWeekClick(entry)}
-              className={cn(
-                "flex gap-3 rounded-xl border bg-white p-3 sm:p-4 shadow-sm transition-colors cursor-pointer hover:bg-white/80",
-                (entry.status === "current" || entry.isCurrent) &&
-                  "border-[#1E4B35] border-2 bg-[rgba(109,155,129,0.28)] hover:bg-[rgba(109,155,129,0.35)]",
-                entry.status === "missing" &&
-                  "border-2 border-red-400 bg-red-50/70 hover:bg-red-50",
-                entry.status === "upcoming" && "border-zinc-200",
-                !entry.isCurrent && entry.status !== "current" &&
-                  entry.status !== "missing" &&
-                  entry.status !== "upcoming" &&
-                  "border-zinc-200/90",
-              )}
-            >
-              <div className="pt-0.5 shrink-0">
-                {getStatusIcon(entry.status)}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 mb-1">
-                  <h3 className="text-base sm:text-lg font-bold text-zinc-900">
-                    Week {entry.week}
-                  </h3>
-                  {entry.isCurrent && entry.status !== "current" && (
-                    <span className="inline-flex items-center text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-md border border-[#1E4B35]/30 bg-[#1E4B35]/10 text-[#1E4B35]">
-                      Current Week
-                    </span>
-                  )}
-                  {getStatusBadge(entry)}
-                </div>
-                <div className="flex flex-col sm:flex-row sm:gap-6 gap-1 text-xs sm:text-sm text-zinc-600">
-                  <span className="flex items-center gap-1.5">
-                    <CalendarDays className="h-3.5 w-3.5 shrink-0 opacity-70" />
-                    Due: {entry.dueDate}
-                  </span>
-                  {entry.submittedDate && (
+        <div className="flex flex-col gap-2.5">
+          {entries.map((entry) => {
+            const isCurrent = entry.status === "current";
+            const isMissing = entry.status === "missing";
+            const isSubmittedStatus =
+              entry.status === "submitted" || entry.status === "late";
+            const showDraftLabel = !isSubmittedStatus;
+            const deadlineText =
+              isCurrent && entry.daysUntilDue !== undefined && entry.daysUntilDue >= 0
+                ? entry.daysUntilDue === 0
+                  ? "Due today."
+                  : entry.daysUntilDue === 1
+                    ? "Deadline in 1 day."
+                    : `Deadline in ${entry.daysUntilDue} days.`
+                : null;
+
+            const borderLeftColor =
+              entry.status === "submitted"
+                ? "border-l-green-500"
+                : entry.status === "late"
+                  ? "border-l-orange-400"
+                  : entry.status === "missing"
+                    ? "border-l-red-500"
+                    : entry.status === "current"
+                      ? "border-l-amber-400"
+                      : "border-l-gray-300";
+
+            return (
+              <div
+                key={entry.week}
+                onClick={() => handleWeekClick(entry)}
+                className={cn(
+                  "flex gap-3 items-center rounded-xl border border-l-4 bg-white p-4 sm:p-5 min-h-[88px] sm:min-h-[100px] transition-colors cursor-pointer hover:bg-gray-50",
+                  borderLeftColor,
+                  isCurrent && "bg-amber-50 border-amber-300 hover:bg-amber-100",
+                  isMissing && "bg-red-50/50 border-red-200 hover:bg-red-50",
+                )}
+              >
+                <WeekIcon entry={entry} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 mb-1">
+                    <h3 className="text-base sm:text-lg font-bold text-zinc-900">
+                      Week {entry.week}
+                    </h3>
+                    <StatusBadge entry={entry} />
+                  </div>
+                  <div className="flex flex-col sm:flex-row sm:gap-6 gap-1 text-xs sm:text-sm text-zinc-600">
                     <span className="flex items-center gap-1.5">
-                      <Clock className="h-3.5 w-3.5 shrink-0 opacity-70" />
-                      Submitted: {entry.submittedDate}
+                      <CalendarDays className="h-3.5 w-3.5 shrink-0 opacity-70" />
+                      Due: {entry.dueDateStr}
+                      {deadlineText && (
+                        <span className="ml-2 text-red-600 font-medium">
+                          {deadlineText}
+                        </span>
+                      )}
+                    </span>
+                    {entry.submittedDate && (
+                      <span className="flex items-center gap-1.5">
+                        <Clock className="h-3.5 w-3.5 shrink-0 opacity-70" />
+                        Submitted: {entry.submittedDate}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0 text-gray-500">
+                  {showDraftLabel && entry.hasDraft && (
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 border border-amber-200">
+                      Draft saved
                     </span>
                   )}
+                  {showDraftLabel && !entry.hasDraft && (
+                    <span className="text-sm text-gray-600">Draft</span>
+                  )}
+                  <ChevronRight className="h-4 w-4" />
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>

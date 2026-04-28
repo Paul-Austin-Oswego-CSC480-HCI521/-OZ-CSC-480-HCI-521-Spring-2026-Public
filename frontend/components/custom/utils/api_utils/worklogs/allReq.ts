@@ -32,13 +32,26 @@ export async function getAllWorkLogs() {
   }
 }
 
-export async function updateWorklog(id: string, data: any) {
-  const res = await client.put(`${WORKLOG_API_URL}/id/${id}`, data);
+export async function getWorklogsForClass(classID: string) {
+  try {
+    const res = await client.get(`${WORKLOG_API_URL}/class/${encodeURIComponent(classID)}`);
+    return res.data;
+  } catch (err: any) {
+    if (err.response?.status === 404) return [];
+    throw err;
+  }
+}
+
+export async function updateWorklog(id: string, data: any, classID?: string) {
+  const url = classID
+    ? `${WORKLOG_API_URL}/id/${id}?classID=${encodeURIComponent(classID)}`
+    : `${WORKLOG_API_URL}/id/${id}`;
+  const res = await client.put(url, data);
   return res.data;
 }
 
-export async function saveDraft(userId: string, data: any) {
-  const res = await client.put(`${WORKLOG_API_URL}/draft/${userId}`, data);
+export async function saveDraft(data: workLogPostType) {
+  const res = await client.put(`${WORKLOG_API_URL}/draft`, data);
   return res.data;
 }
 
@@ -49,5 +62,24 @@ export async function getDrafts() {
   } catch (err: any) {
     if (err.response?.status === 404) return [];
     throw err;
+  }
+}
+
+export async function getDraftForWeek(
+  authorName: string | undefined,
+  worklogName: string | undefined,
+) {
+  if (!authorName || !worklogName) return null;
+  try {
+    const all = await getDrafts();
+    return (
+      (all ?? []).find(
+        (d: any) =>
+          d.authorName === authorName &&
+          String(d.worklogName) === String(worklogName),
+      ) ?? null
+    );
+  } catch {
+    return null;
   }
 }

@@ -1,7 +1,10 @@
-db = db.getSiblingDB('appdb');
+db = db.getSiblingDB('admin');
 
 db.createUser({
   user: 'appuser',
   pwd: 'secret123',
-  roles: [{ role: 'readWrite', db: 'appdb' }]
+  roles: [
+    { role: 'readWriteAnyDatabase', db: 'admin' },
+    { role: 'dbAdminAnyDatabase', db: 'admin' }
+  ]
 });

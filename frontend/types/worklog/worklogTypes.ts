@@ -1,20 +1,33 @@
 import * as z from "zod";
 
-export const taskSchema = z.object({
-  taskName: z.string().min(1, "Task name is required"),
-  goal: z.string().min(1, "Main goal is required"),
-  collaborators: z.array(z.string()),
-  assignedUser: z.string(),
-  creationDate: z.string(),
-  dueDate: z.string().min(1, "Deadline is required"),
-  status: z.enum(["not-started", "in-progress", "complete"], {
-    message: "Select completion status",
-  }),
-  reflection: z
-    .string()
-    .min(1, "Reflection is required")
-    .max(500, "Reflection must be at most 500 characters."),
-});
+export const taskSchema = z
+  .object({
+    taskName: z.string().min(1, "Task name is required"),
+    goal: z.string().min(1, "Main goal is required"),
+    collaborators: z.array(z.string()),
+    assignedUser: z.string(),
+    creationDate: z.string(),
+    dueDate: z.string().min(1, "Deadline is required"),
+    status: z.enum(["not-started", "in-progress", "complete"], {
+      message: "Select completion status",
+    }),
+    reflection: z
+      .string()
+      .min(1, "Reflection is required")
+      .max(1000, "Reflection must be at most 1000 characters."),
+    collabDescription: z
+      .string()
+      .max(1000, "Collaboration description must be at most 1000 characters."),
+  })
+  .refine(
+    (data) =>
+      data.collaborators.filter((c) => c !== "").length === 0 ||
+      data.collabDescription.trim().length > 0,
+    {
+      message: "Describe how you worked with your collaborator(s)",
+      path: ["collabDescription"],
+    },
+  );
 
 export const workLogPostSchema = z.object({
   worklogName: z.string().optional(),

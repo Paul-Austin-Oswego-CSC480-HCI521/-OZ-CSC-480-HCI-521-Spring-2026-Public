@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "LakerTracks",
+  title: "LakerLogs",
   description: "SPRING 2026",
 };
 
