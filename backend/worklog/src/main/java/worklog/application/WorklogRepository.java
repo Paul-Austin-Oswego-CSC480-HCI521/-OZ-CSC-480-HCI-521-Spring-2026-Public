@@ -78,7 +78,7 @@ public class WorklogRepository {
         }
 
         collection.deleteMany(Filters.and(
-                Filters.eq("authorEmail", entry.getAuthorEmail()),  // DO I NEED TO DELETE authorEmail HERE AS WELL?
+                Filters.eq("authorEmail", entry.getAuthorEmail()),
                 Filters.eq("worklogName", entry.getWorklogName()),
                 Filters.eq("isDraft", true)));
 
