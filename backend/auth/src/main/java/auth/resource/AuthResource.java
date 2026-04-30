@@ -41,7 +41,7 @@ import jakarta.ws.rs.core.Response;
 @Path("/auth")
 @RequestScoped
 
-public class AuthResource{
+public class AuthResource {
 
     private static final int REFRESH_MAX_AGE = 604800; // 7 days
     private static final String REFRESH_TOKEN_NAME = "refresh_token";

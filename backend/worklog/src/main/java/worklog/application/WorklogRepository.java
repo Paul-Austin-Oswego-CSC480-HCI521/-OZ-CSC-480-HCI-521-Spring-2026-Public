@@ -78,13 +78,14 @@ public class WorklogRepository {
         }
 
         collection.deleteMany(Filters.and(
-                Filters.eq("authorName", entry.getAuthorName()),
+                Filters.eq("authorEmail", entry.getAuthorEmail()),
                 Filters.eq("worklogName", entry.getWorklogName()),
                 Filters.eq("isDraft", true)));
 
         Document newDoc = new Document();
 
         newDoc.put("authorName", entry.getAuthorName());
+        newDoc.put("authorEmail", entry.getAuthorEmail());
         newDoc.put("dateCreated", Date.from(entry.getDateCreated().toInstant(ZoneOffset.UTC)));
         newDoc.put("dateSubmitted", Date.from(entry.getDateSubmitted().toInstant(ZoneOffset.UTC)));
         newDoc.put("collaborators", entry.getCollaborators());
@@ -119,6 +120,7 @@ public class WorklogRepository {
                 .ifPresent(v -> newDoc.put("taskList", formatTask(v)));
 
         newDoc.put("authorName", entry.getAuthorName());
+        newDoc.put("authorEmail", entry.getAuthorEmail());
         newDoc.put("worklogName", entry.getWorklogName());
         newDoc.put("teamNames", entry.getTeamNames());
         newDoc.put("isDraft", true);
@@ -126,6 +128,7 @@ public class WorklogRepository {
 
         collection.findOneAndReplace(Filters.and(
                 Filters.eq("authorName", entry.getAuthorName()),
+                Filters.eq("authorEmail", entry.getAuthorEmail()),
                 Filters.eq("worklogName", entry.getWorklogName()),
                 Filters.eq("isDraft", true)
 
@@ -283,6 +286,7 @@ public class WorklogRepository {
         Document newDoc = new Document();
 
         newDoc.put("authorName", updatedEntry.getAuthorName());
+        newDoc.put("authorEmail", updatedEntry.getAuthorEmail());
         newDoc.put("dateCreated", Date.from(updatedEntry.getDateCreated().toInstant(ZoneOffset.UTC)));
         newDoc.put("dateSubmitted", Date.from(updatedEntry.getDateSubmitted().toInstant(ZoneOffset.UTC)));
         newDoc.put("collaborators", updatedEntry.getCollaborators());

@@ -14,9 +14,12 @@ public class WorklogEntry {
     @NotEmpty(message = "Worklog must have an author!")
     private String authorName;
 
+    @NotEmpty(message = "Worklog must have an author email!")
+    private String authorEmail;
+
     // @NotEmpty(message = "Worklog must have all the teams associated!")
     private List<String> teamNames;
-    
+
     @NotEmpty(message = "Worklog must have week name!")
     private String worklogName;
 
@@ -38,8 +41,6 @@ public class WorklogEntry {
 
     private boolean isDraft;
 
-
-
     public void setAuthorName(String name) {
         this.authorName = name;
     }
@@ -59,7 +60,7 @@ public class WorklogEntry {
     public void setWorklogName(String worklogName) {
         this.worklogName = worklogName;
     }
-    
+
     public String getWorklogName() {
         return worklogName;
     }
@@ -120,5 +121,8 @@ public class WorklogEntry {
         return reviewed;
     }
 
+    public void setAuthorEmail(String authorEmail) { this.authorEmail = authorEmail; }
+
+    public String getAuthorEmail() { return authorEmail; }
 
 }
