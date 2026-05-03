@@ -234,6 +234,7 @@ function ReviewToggle({
       const stripZ = (v: string) => (v ? v.replace("Z", "") : v);
       const body = {
         authorName: log.authorName,
+        authorEmail: log.authorEmail,
         worklogName: log.worklogName,
         dateCreated: stripZ(log.dateCreated),
         dateSubmitted: stripZ(log.dateSubmitted),
@@ -496,7 +497,7 @@ export default function StudentHistoryPage() {
     { email: emailParam, name: emailParam, role: "student", team: [] };
 
   const studentLogs = (worklogsData ?? []).filter(
-    (l: any) => l.authorName === emailParam && !l.isDraft,
+    (l: any) => l.authorEmail === emailParam && !l.isDraft,
   );
 
   const worklogInfo = getWorklogDate(SEMESTER_START);

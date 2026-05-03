@@ -32,6 +32,7 @@ export const taskSchema = z
 export const workLogPostSchema = z.object({
   worklogName: z.string().optional(),
   authorName: z.string(),
+  authorEmail: z.string(),
   dateCreated: z.string(),
   dateSubmitted: z.string(),
   collaborators: z.array(z.string()),

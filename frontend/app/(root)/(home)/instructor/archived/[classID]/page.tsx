@@ -48,6 +48,7 @@ type Worklog = {
   _id?: { $oid: string } | string;
   worklogName?: string;
   authorName: string;
+  authorEmail?: string;
   dateCreated?: string;
   dateSubmitted?: string;
   collaborators?: string[];
@@ -108,7 +109,7 @@ export default function ArchivedClassDetailPage() {
     const submitted = list.filter((w) => !w.isDraft);
     const map = new Map<string, Worklog[]>();
     for (const w of submitted) {
-      const key = w.authorName ?? "unknown";
+      const key = w.authorEmail ?? "unknown";
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(w);
     }

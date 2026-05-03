@@ -461,7 +461,8 @@ export function WorkLogForm() {
 
     const obj: workLogPostType = {
       worklogName: weekNumber,
-      authorName: userInfo.email,
+      authorName: userInfo.name,
+      authorEmail: userInfo.email,
       dateCreated: dateCreated,
       dateSubmitted: dateCreated,
       collaborators: [],
@@ -494,7 +495,8 @@ export function WorkLogForm() {
     });
     const obj = {
       worklogName: weekNumber,
-      authorName: userInfo.email,
+      authorName: userInfo.name,
+      authorEmail: userInfo.email,
       dateCreated: dateCreated,
       dateSubmitted: dateCreated,
       collaborators: [],
