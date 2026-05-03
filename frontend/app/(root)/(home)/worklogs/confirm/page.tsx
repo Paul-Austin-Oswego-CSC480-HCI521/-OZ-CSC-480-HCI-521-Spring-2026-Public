@@ -35,7 +35,7 @@ export default function ConfirmPage() {
     <div className="p-6 sm:p-10">
       <Breadcrumbs
         items={[
-          { label: "Weekly Logs", href: "/" },
+          { label: "Weekly Logs", href: "/notifications" },
           { label: `Week ${pendingWorklog.worklogName} Log`, href: `/worklogs?week=${pendingWorklog.worklogName}` },
           { label: "Confirm Submission" },
         ]}
