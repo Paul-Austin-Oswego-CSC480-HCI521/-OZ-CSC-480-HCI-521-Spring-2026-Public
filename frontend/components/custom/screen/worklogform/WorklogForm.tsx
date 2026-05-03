@@ -532,7 +532,7 @@ export function WorkLogForm() {
             <div>
               <Breadcrumbs
                 items={[
-                  { label: "Weekly Logs", href: "/" },
+                  { label: "Weekly Logs", href: "/notifications" },
                   { label: `Week ${weekNumber} Log` },
                 ]}
                 className="mb-2"

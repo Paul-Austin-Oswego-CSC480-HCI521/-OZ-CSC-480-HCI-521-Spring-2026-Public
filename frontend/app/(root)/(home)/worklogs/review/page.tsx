@@ -210,7 +210,7 @@ function ReviewContent() {
     <div className="p-4 sm:p-6 md:p-8 w-full">
       <Breadcrumbs
         items={[
-          { label: "Weekly Logs", href: "/" },
+          { label: "Weekly Logs", href: "/notifications" },
           { label: `Week ${weekNum} Log` },
         ]}
       />
