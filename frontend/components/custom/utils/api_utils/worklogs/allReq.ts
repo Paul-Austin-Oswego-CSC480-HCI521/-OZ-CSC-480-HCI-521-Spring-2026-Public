@@ -11,11 +11,11 @@ export async function submitWorkLog(data: workLogPostType) {
   return res.data;
 }
 
-export async function getWorkLog(authorName: string | undefined) {
-  if (!authorName) return [];
+export async function getWorkLog(authorEmail: string | undefined) {
+  if (!authorEmail) return [];
   try {
-    const res = await client.get(`${WORKLOG_API_URL}/author/${authorName}`);
-    return res.data;
+    const all = await getAllWorkLogs();
+    return (all ?? []).filter((l: any) => l.authorEmail === authorEmail);
   } catch (err: any) {
     if (err.response?.status === 404) return [];
     throw err;
@@ -66,16 +66,16 @@ export async function getDrafts() {
 }
 
 export async function getDraftForWeek(
-  authorName: string | undefined,
+  authorEmail: string | undefined,
   worklogName: string | undefined,
 ) {
-  if (!authorName || !worklogName) return null;
+  if (!authorEmail || !worklogName) return null;
   try {
     const all = await getDrafts();
     return (
       (all ?? []).find(
         (d: any) =>
-          d.authorName === authorName &&
+          d.authorEmail === authorEmail &&
           String(d.worklogName) === String(worklogName),
       ) ?? null
     );

@@ -77,6 +77,7 @@ function ReviewButton({
       const stripZ = (v: string) => (v ? v.replace("Z", "") : v);
       const body = {
         authorName: log.authorName,
+        authorEmail: log.authorEmail,
         worklogName: log.worklogName,
         dateCreated: stripZ(log.dateCreated),
         dateSubmitted: stripZ(log.dateSubmitted),
@@ -817,7 +818,7 @@ const InstructorDashboard = () => {
   // Build per-student status for selected week
   const studentStatuses: StudentEntry[] = allStudents.map((email: string) => {
     const logs = weekLogs
-      .filter((l: any) => l.authorName === email && !l.isDraft)
+      .filter((l: any) => l.authorEmail === email && !l.isDraft)
       .sort((a: any, b: any) =>
         new Date(b.dateSubmitted).getTime() - new Date(a.dateSubmitted).getTime(),
       );
@@ -1141,7 +1142,7 @@ const InstructorDashboard = () => {
         allStudentLogs={
           selectedEmail
             ? allWorklogs.filter(
-                (l: any) => l.authorName === selectedEmail && !l.isDraft,
+                (l: any) => l.authorEmail === selectedEmail && !l.isDraft,
               )
             : []
         }
