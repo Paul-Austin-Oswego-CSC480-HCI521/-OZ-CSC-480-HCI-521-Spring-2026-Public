@@ -3,7 +3,10 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAtomValue, useSetAtom } from "jotai";
 import { userAtom, worklogEditAtom } from "@/components/custom/utils/context/state";
-import { getWorkLog } from "@/components/custom/utils/api_utils/worklogs/allReq";
+import {
+  getWorkLog,
+  getDraftForWeek,
+} from "@/components/custom/utils/api_utils/worklogs/allReq";
 import { useQuery } from "@tanstack/react-query";
 import { CalendarDays } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -34,13 +37,21 @@ const Welcome = () => {
     queryFn: () => getWorkLog(userInfo?.email),
   });
 
+  const { data: serverDraft } = useQuery({
+    queryKey: ["worklog-draft", userInfo?.email, weekNumber],
+    enabled: !!userInfo?.email && !!weekNumber,
+    queryFn: () => getDraftForWeek(userInfo?.email, weekNumber),
+  });
+
   const worklogs = data ?? [];
   const hasSubmission = worklogs.some(
-    (log: { worklogName?: string | number }) =>
-      String(log.worklogName) === weekNumber,
+    (log: { worklogName?: string | number; isDraft?: boolean }) =>
+      String(log.worklogName) === weekNumber && !log.isDraft,
   );
+  const hasServerDraft = !!serverDraft?.taskList?.length;
   const hasDraft =
-    worklogEdit?.weekNumber === weekNumber && worklogEdit.mode === "new";
+    hasServerDraft ||
+    (worklogEdit?.weekNumber === weekNumber && worklogEdit.mode === "new");
 
   let buttonLabel: string;
   let handleClick: () => void;
@@ -54,7 +65,10 @@ const Welcome = () => {
     badgeClass = "bg-green-100 text-green-900";
   } else if (hasDraft) {
     buttonLabel = "Continue Work Log";
-    handleClick = () => router.push(`/worklogs?week=${weekNumber}&mode=new`);
+    handleClick = () => {
+      setWorklogEdit(null);
+      router.push(`/worklogs?week=${weekNumber}&mode=new`);
+    };
     badgeLabel = "IN PROGRESS";
     badgeClass = "bg-amber-100 text-amber-900";
   } else {
@@ -93,15 +107,25 @@ const Welcome = () => {
             Let&apos;s make this academic week productive and meaningful.
           </p>
         </div>
-        <div className="flex items-center gap-3 border rounded-lg px-4 py-2 bg-white shrink-0 self-start">
-          <div className="h-9 w-9 rounded bg-amber-100 flex items-center justify-center shrink-0">
-            <CalendarDays className="h-5 w-5 text-amber-700" />
-          </div>
-          <div className="whitespace-nowrap">
-            <p className="text-xs text-muted-foreground">Week Status</p>
-            <p className="text-sm font-semibold">
-              Week {weekNum || "—"} of {TOTAL_WEEKS}
-            </p>
+        <div className="flex flex-col items-start gap-3 shrink-0 self-start">
+          {userInfo?.classID && (
+            <div>
+              <p className="text-sm text-muted-foreground">Class</p>
+              <p className="text-xl sm:text-2xl font-bold text-zinc-900">
+                {userInfo.classID}
+              </p>
+            </div>
+          )}
+          <div className="flex items-center gap-3 border rounded-lg px-4 py-2 bg-white">
+            <div className="h-9 w-9 rounded bg-amber-100 flex items-center justify-center shrink-0">
+              <CalendarDays className="h-5 w-5 text-amber-700" />
+            </div>
+            <div className="whitespace-nowrap">
+              <p className="text-xs text-muted-foreground">Week Status</p>
+              <p className="text-sm font-semibold">
+                Week {weekNum || "—"} of {TOTAL_WEEKS}
+              </p>
+            </div>
           </div>
         </div>
       </div>

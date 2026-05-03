@@ -1,6 +1,9 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
-import { getWorkLog } from "@/components/custom/utils/api_utils/worklogs/allReq";
+import {
+  getWorkLog,
+  getDrafts,
+} from "@/components/custom/utils/api_utils/worklogs/allReq";
 import { useAtomValue, useSetAtom } from "jotai";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -231,6 +234,15 @@ export const Notification = () => {
     queryFn: () => getWorkLog(userInfo?.email),
   });
 
+  const { data: drafts } = useQuery({
+    queryKey: ["worklog-drafts-mine", userInfo?.email],
+    enabled: !!userInfo?.email,
+    queryFn: async () => {
+      const all = await getDrafts();
+      return (all ?? []).filter((d: any) => d.authorEmail === userInfo?.email);
+    },
+  });
+
   if (isLoading) return <p className="p-4 sm:p-10">Loading...</p>;
   if (error)
     return (
@@ -243,7 +255,8 @@ export const Notification = () => {
     );
 
   const worklogs = data ?? [];
-  const entries = buildWeekEntries(worklogs);
+  const allLogs = [...worklogs, ...(drafts ?? [])];
+  const entries = buildWeekEntries(allLogs);
 
   const worklogInfo = getWorklogDate(SEMESTER_START);
   const currentWeekNum = worklogInfo
@@ -275,8 +288,11 @@ export const Notification = () => {
       entry.status === "submitted" ||
       entry.status === "late" ||
       entry.submittedDate;
-    if (hasSubmission || entry.hasDraft) {
+    if (hasSubmission) {
       router.push(`/worklogs/review?week=${entry.week}`);
+    } else if (entry.hasDraft) {
+      setWorklogEdit(null);
+      router.push(`/worklogs?week=${entry.week}&mode=new`);
     } else {
       setWorklogEdit({
         mode: "new",
@@ -456,9 +472,6 @@ export const Notification = () => {
                     <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 border border-amber-200">
                       Draft saved
                     </span>
-                  )}
-                  {showDraftLabel && !entry.hasDraft && (
-                    <span className="text-sm text-gray-600">Draft</span>
                   )}
                   <ChevronRight className="h-4 w-4" />
                 </div>
