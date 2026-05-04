@@ -276,11 +276,6 @@ public class WorklogRepository {
         return taskDocs;
     }
 
-    // Need to make other functions to update specific fields like title, duedate,
-    // etc.
-    // Right now this replaces the entire entry.
-    // (Xander): ^May not be needed, worklog aspects dont really have to be updated
-    // once they're in the db.... question for requirments?
     public Response updateWorklog(String id, WorklogEntry updatedEntry, boolean isInstructor) {
         MongoCollection<Document> collection = getClassCollection();
         Document newDoc = new Document();

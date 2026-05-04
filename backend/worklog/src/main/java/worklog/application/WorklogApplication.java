@@ -8,7 +8,7 @@ import jakarta.ws.rs.core.Application;
 
 @ApplicationPath("/api")
 @LoginConfig(authMethod = "MP-JWT", realmName = "MP-JWT")
-@DeclareRoles({"student", "instructor"})
+@DeclareRoles({"student", "instructor", "co-instructor"})
 public class WorklogApplication extends Application {
     
 }

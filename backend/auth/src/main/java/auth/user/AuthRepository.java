@@ -35,7 +35,7 @@ public class AuthRepository{
         if(role==null || (!role.equals("student") && !role.equals("instructor") && !role.equals("co-instructor"))){
             role = "student";
         }
-        if(role.equals("instructor")) {
+        if(role.equals("instructor") || role.equals("co-instructor")) {
             team.add("stakeholders");
         }
         else {
