@@ -110,7 +110,7 @@ public class AuthService {
             if(user==null){
                 throw new IllegalArgumentException("User not found");
             }
-            if(newRole==null || (!newRole.equals("student") && !newRole.equals("instructor"))){
+            if(newRole==null || (!newRole.equals("student") && !newRole.equals("instructor") && !newRole.equals("co-instructor"))){
                 throw new IllegalArgumentException("Valid role is required");
             }
             repo.updateUserRole(email, newRole);

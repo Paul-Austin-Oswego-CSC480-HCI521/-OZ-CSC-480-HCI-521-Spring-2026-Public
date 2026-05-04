@@ -132,9 +132,17 @@ public class AuthRepository{
         Document user = findByEmail(email);
         if(user!=null){
             if (newRole.equals("instructor")) return updateUserToInstructor(user);
-
+            
+            MongoDatabase currentClass = mongoClient.getDatabase(user.getString("classID"));
+            MongoCollection<Document> currentClassDoc = currentClass.getCollection("classData");
             user.put("role", newRole);
             collection.replaceOne(new Document("email", email), user);
+
+            currentClassDoc.updateOne(
+                new Document("classID", user.getString("classID"))
+                    .append("students.email", user.getString("email")),
+                new Document("$set", new Document("students.$.role", user.getString("role")))
+            );
         }
         return user;
     }
@@ -144,11 +152,19 @@ public class AuthRepository{
         MongoCollection<Document> currentClassDoc = currentClass.getCollection("classData");
         
         user.put("role", "co-instructor");
-        if (currentClassDoc.find(new Document("role", "instructor")).first() == null) {
+        if (currentClassDoc.find(new Document("students.role", "instructor")).first() == null) {
             user.put("role", "instructor");
         }
 
+        
         collection.replaceOne(new Document("email", user.getString("email")), user);
+
+        currentClassDoc.updateOne(
+            new Document("classID", user.getString("classID"))
+                .append("students.email", user.getString("email")),
+            new Document("$set", new Document("students.$.role", user.getString("role")))
+        );
+        
         return user;
 
     }
