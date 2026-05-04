@@ -32,7 +32,7 @@ public class AuthRepository{
 
     public Document createUser(String email, String name, String role, String preferredName, List<String> team){
         if (team == null) team = new ArrayList<>();     
-        if(role==null || (!role.equals("student") && !role.equals("instructor"))){
+        if(role==null || (!role.equals("student") && !role.equals("instructor") && !role.equals("co-instructor"))){
             role = "student";
         }
         if(role.equals("instructor")) {
