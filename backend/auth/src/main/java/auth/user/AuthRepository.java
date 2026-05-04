@@ -62,7 +62,10 @@ public class AuthRepository{
         if (user == null) return null;
 
         String existingClassID = user.getString("classID");
-        if (existingClassID != null && !existingClassID.equals(classID)) {
+
+        if (existingClassID != null) {
+            if (existingClassID.equals(classID)) return null;
+
             MongoDatabase oldClassDb = mongoClient.getDatabase(existingClassID);
             MongoCollection<Document> oldClassData = oldClassDb.getCollection("classData");
             oldClassData.updateOne(
