@@ -43,7 +43,7 @@ public class AuthService {
                 throw new IllegalArgumentException("ROLE IS REQUIRED");
             }
             String role = requestedRole.trim().toLowerCase();
-            if(!role.equals("student") && !role.equals("instructor")){
+            if(!role.equals("student") && !role.equals("instructor") && !role.equals("co-instructor")){
                 throw new IllegalArgumentException("Valid role is required");
             }
             if(email.equals("shusank8basyal@gmail.com") || email.equals("basyalsusan456@gmail.com") ||  email.equals("paul.austin@oswego.edu") || email.equals("vanessa.maike@oswego.edu")){
