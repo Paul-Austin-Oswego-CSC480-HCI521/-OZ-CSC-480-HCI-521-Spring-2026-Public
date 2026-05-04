@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { userAtom } from "@/components/custom/utils/context/state";
 import { worklogEditAtom } from "@/components/custom/utils/context/state";
 import getWorklogDate from "../../utils/func/getDate";
-import { fmtDate } from "../../utils/func/formatDate";
+import { fmtDateTime } from "../../utils/func/formatDate";
 import { useRouter } from "next/navigation";
 import {
   CheckCircle2,
@@ -110,7 +110,7 @@ function buildWeekEntries(
           week: w,
           dueDate,
           dueDateStr,
-          submittedDate: fmtDate(log.dateSubmitted),
+          submittedDate: fmtDateTime(log.dateSubmitted),
           status: diffDays > 0 ? "late" : "submitted",
           lateByDays: diffDays > 0 ? diffDays : undefined,
           hasDraft,
@@ -132,7 +132,7 @@ function buildWeekEntries(
         week: w,
         dueDate,
         dueDateStr,
-        submittedDate: fmtDate(log.dateSubmitted),
+        submittedDate: fmtDateTime(log.dateSubmitted),
         status: diffDays > 0 ? "late" : "submitted",
         lateByDays: diffDays > 0 ? diffDays : undefined,
         hasDraft,
@@ -272,15 +272,17 @@ export const Notification = () => {
   const late = pastEntries.filter((e) => e.status === "late").length;
   const missing = pastEntries.filter((e) => e.status === "missing").length;
 
+  const currentWeekHasLocalDraft =
+    worklogEdit?.weekNumber === String(currentWeekNum) &&
+    worklogEdit.mode === "new";
   const currentWeekPrimaryLabel =
     currentWeekNum > 0 && currentWeekEntry
       ? currentWeekEntry.status === "submitted" ||
         currentWeekEntry.status === "late"
         ? "Review Current Week's Work Log"
-        : worklogEdit?.weekNumber === String(currentWeekNum) &&
-            worklogEdit.mode === "new"
+        : currentWeekEntry.hasDraft || currentWeekHasLocalDraft
           ? "Continue Current Week's Work Log"
-          : "Continue Current Week's Work Log"
+          : "Create This Week's Work Log"
       : null;
 
   const handleWeekClick = (entry: WeekEntry) => {
@@ -312,22 +314,12 @@ export const Notification = () => {
       {/* Header */}
       <div className="mb-4 sm:mb-5">
         <h1
-          className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight mb-1 flex items-center gap-2.5"
+          className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight mb-1"
           style={{ color: accentGreen }}
         >
-          <span
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border-2 bg-white shadow-sm"
-            style={{ borderColor: accentGreen }}
-          >
-            <FileText
-              className="h-5 w-5"
-              style={{ color: accentGreen }}
-              aria-hidden
-            />
-          </span>
           Weekly Work Log
         </h1>
-        <p className="text-xs sm:text-sm text-muted-foreground pl-0 sm:pl-[46px]">
+        <p className="text-xs sm:text-sm text-muted-foreground">
           Manage and review your work log progress records.
         </p>
       </div>

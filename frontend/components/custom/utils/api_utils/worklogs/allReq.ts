@@ -55,6 +55,11 @@ export async function saveDraft(data: workLogPostType) {
   return res.data;
 }
 
+export async function deleteWorklog(id: string) {
+  const res = await client.delete(`${WORKLOG_API_URL}/id/${id}`);
+  return res.data;
+}
+
 export async function getDrafts() {
   try {
     const res = await client.get(`${WORKLOG_API_URL}/draft`);
