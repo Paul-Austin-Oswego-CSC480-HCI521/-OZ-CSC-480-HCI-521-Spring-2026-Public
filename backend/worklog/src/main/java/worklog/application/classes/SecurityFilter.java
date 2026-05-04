@@ -27,7 +27,7 @@ public class SecurityFilter implements ContainerRequestFilter {
         }     
         // Instructors don't have a classID claim; they manage multiple classes.
         // Authorization is still enforced per-endpoint via @RolesAllowed.
-        if (token.getGroups() != null && token.getGroups().contains("instructor")) {                                                                                                       
+        if (token.getGroups() != null && (token.getGroups().contains("instructor") || token.getGroups().contains("co-instructor"))) {                                                                                                       
         // Instructors can scope a request to a class via ?classID=                                                                                                                    
             String paramClassID = requestContext.getUriInfo()                                                                                                                              
                 .getQueryParameters()                                                                                                                                                      
