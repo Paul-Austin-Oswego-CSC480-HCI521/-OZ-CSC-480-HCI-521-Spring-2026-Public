@@ -22,6 +22,7 @@ import {
   User as UserIcon,
   Info,
   Archive,
+  ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -207,17 +208,27 @@ export function Profile() {
   const isStudent = userInfo.role === "student";
 
   return (
-    <div className="p-3 sm:p-4 md:p-6 w-full max-w-4xl">
-      <div className="mb-5 sm:mb-6">
-        <h1
-          className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-1"
-          style={{ color: "#1E4B35" }}
-        >
-          Profile Settings
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Manage your profile information here
-        </p>
+    <div className="p-3 sm:p-4 md:p-6 w-full max-w-5xl">
+      <div className="flex items-start justify-between gap-4 mb-5 sm:mb-6 flex-wrap">
+        <div>
+          <h1
+            className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-1"
+            style={{ color: "#1E4B35" }}
+          >
+            Profile Settings
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Manage your profile information here
+          </p>
+        </div>
+        {isStudent && userInfo.classID && (
+          <div className="text-right shrink-0">
+            <p className="text-sm text-muted-foreground">Class</p>
+            <p className="text-xl sm:text-2xl font-bold text-zinc-900">
+              {userInfo.classID}
+            </p>
+          </div>
+        )}
       </div>
 
       {isStudent && (team.length === 0 || !classStanding) && (
@@ -243,11 +254,11 @@ export function Profile() {
         </div>
       )}
 
-      <Card className="w-full">
+      <Card className="w-full bg-zinc-50 border">
         <CardContent className="p-5 sm:p-6">
           <div className="flex flex-col sm:flex-row sm:items-start gap-5 sm:gap-6">
             <div className="flex flex-col items-center shrink-0">
-              <div className="h-24 w-24 sm:h-28 sm:w-28 rounded-full bg-[#1E4B35]/10 flex items-center justify-center overflow-hidden">
+              <div className="h-24 w-24 sm:h-28 sm:w-28 rounded-2xl bg-[#1E4B35]/10 flex items-center justify-center overflow-hidden">
                 <UserIcon className="h-12 w-12 sm:h-14 sm:w-14 text-[#1E4B35]" />
               </div>
               <p className="mt-2 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
@@ -283,14 +294,10 @@ export function Profile() {
               </Field>
 
               {isStudent && (
-                <Field>
-                  <FieldLabel>Class</FieldLabel>
-                  <Input
-                    value={userInfo.classID || "Not enrolled"}
-                    disabled
-                    readOnly
-                  />
-                </Field>
+                <div className="flex items-center gap-2 text-sm font-semibold text-green-700">
+                  <ShieldCheck className="h-4 w-4 shrink-0" />
+                  Verified Student Account
+                </div>
               )}
             </div>
           </div>
@@ -300,10 +307,7 @@ export function Profile() {
       {isStudent && (
         <>
           <div className="mt-8">
-            <h2
-              className="text-xl sm:text-2xl font-bold mb-3"
-              style={{ color: "#1E4B35" }}
-            >
+            <h2 className="text-xl sm:text-2xl font-bold mb-3 text-zinc-900">
               Change Team
             </h2>
             <div className="flex flex-wrap gap-3">
@@ -315,7 +319,7 @@ export function Profile() {
                     type="button"
                     onClick={() => toggleTeam(t)}
                     className={cn(
-                      "px-5 py-2.5 rounded-md border text-sm font-medium transition-colors",
+                      "px-5 py-2.5 rounded-md border text-sm font-medium transition-colors cursor-pointer",
                       selected
                         ? "bg-amber-400 border-amber-400 text-[#1E4B35]"
                         : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50",
@@ -329,10 +333,7 @@ export function Profile() {
           </div>
 
           <div className="mt-8">
-            <h2
-              className="text-xl sm:text-2xl font-bold mb-3"
-              style={{ color: "#1E4B35" }}
-            >
+            <h2 className="text-xl sm:text-2xl font-bold mb-3 text-zinc-900">
               Change Class Standing
             </h2>
             <div className="flex flex-wrap gap-3">
@@ -344,7 +345,7 @@ export function Profile() {
                     type="button"
                     onClick={() => setClassStanding(s)}
                     className={cn(
-                      "px-5 py-2.5 rounded-md border text-sm font-medium transition-colors",
+                      "px-5 py-2.5 rounded-md border text-sm font-medium transition-colors cursor-pointer",
                       selected
                         ? "bg-amber-400 border-amber-400 text-[#1E4B35]"
                         : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50",
