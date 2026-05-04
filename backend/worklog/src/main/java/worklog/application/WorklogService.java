@@ -31,7 +31,7 @@ import jakarta.ws.rs.core.SecurityContext;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @ApplicationScoped
-@RolesAllowed({"student", "instructor"})
+@RolesAllowed({"student", "instructor", "co-instructor"})
 public class WorklogService {
     @Inject
     Validator validator;
@@ -145,7 +145,7 @@ public class WorklogService {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Update worklog draft by mongo ID in the database.")
     public Response updateWorklog(@PathParam("id") String id, @Valid WorklogEntry updatedEntry) {
-        boolean isInstructor = securityContext.isUserInRole("instructor");
+        boolean isInstructor = securityContext.isUserInRole("instructor") || securityContext.isUserInRole("co-instructor");
         return repo.updateWorklog(id, updatedEntry, isInstructor);
     }
 

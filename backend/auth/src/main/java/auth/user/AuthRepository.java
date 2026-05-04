@@ -32,10 +32,10 @@ public class AuthRepository{
 
     public Document createUser(String email, String name, String role, String preferredName, List<String> team){
         if (team == null) team = new ArrayList<>();     
-        if(role==null || (!role.equals("student") && !role.equals("instructor"))){
+        if(role==null || (!role.equals("student") && !role.equals("instructor") && !role.equals("co-instructor"))){
             role = "student";
         }
-        if(role.equals("instructor")) {
+        if(role.equals("instructor") || role.equals("co-instructor")) {
             team.add("stakeholders");
         }
         else {
@@ -128,12 +128,45 @@ public class AuthRepository{
     }
 
     public Document updateUserRole(String email, String newRole){
+        
         Document user = findByEmail(email);
         if(user!=null){
+            if (newRole.equals("instructor")) return updateUserToInstructor(user);
+            
+            MongoDatabase currentClass = mongoClient.getDatabase(user.getString("classID"));
+            MongoCollection<Document> currentClassDoc = currentClass.getCollection("classData");
             user.put("role", newRole);
             collection.replaceOne(new Document("email", email), user);
+
+            currentClassDoc.updateOne(
+                new Document("classID", user.getString("classID"))
+                    .append("students.email", user.getString("email")),
+                new Document("$set", new Document("students.$.role", user.getString("role")))
+            );
         }
         return user;
+    }
+
+    public Document updateUserToInstructor(Document user) {
+        MongoDatabase currentClass = mongoClient.getDatabase(user.getString("classID"));
+        MongoCollection<Document> currentClassDoc = currentClass.getCollection("classData");
+        
+        user.put("role", "co-instructor");
+        if (currentClassDoc.find(new Document("students.role", "instructor")).first() == null) {
+            user.put("role", "instructor");
+        }
+
+        
+        collection.replaceOne(new Document("email", user.getString("email")), user);
+
+        currentClassDoc.updateOne(
+            new Document("classID", user.getString("classID"))
+                .append("students.email", user.getString("email")),
+            new Document("$set", new Document("students.$.role", user.getString("role")))
+        );
+        
+        return user;
+
     }
 
     public Document updateUserTeams(String email, List<String> newTeams) {

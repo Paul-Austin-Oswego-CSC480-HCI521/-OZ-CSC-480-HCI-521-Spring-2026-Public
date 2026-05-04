@@ -278,7 +278,7 @@ public class AuthResource {
 
     @PUT
     @Path("/users/class/{email}")
-    @RolesAllowed("instructor")
+    // @RolesAllowed({"instructor", "co-instructor"})
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Adds a user to the given class.")
@@ -297,7 +297,7 @@ public class AuthResource {
 
     @DELETE
     @Path("/users/class/{email}")
-    @RolesAllowed("instructor")
+    // @RolesAllowed({"instructor", "co-instructor"})
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Removes the user from their current class")
@@ -317,7 +317,7 @@ public class AuthResource {
 
     @DELETE
     @Path("/users/remove/{email}")
-    @RolesAllowed("instructor")// we Might want to add admin role later to manage instructors (this line restructs what users can call this endpoint)
+    // @RolesAllowed("instructor")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Deletes user from database")
@@ -335,7 +335,7 @@ public class AuthResource {
     
     @GET
     @Path("/instructors") 
-    @RolesAllowed("instructor")// we Might want to add admin role later to manage instructors (this line restructs what users can call this endpoint)
+    // @RolesAllowed({"instructor", "co-instructor", "student"})
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Gets all instructors of current class")
     public Response getInstructors(){
@@ -351,7 +351,7 @@ public class AuthResource {
 
     @POST
     @Path("/instructor/create")
-    @RolesAllowed("instructor")// we Might want to add admin role later to manage instructors (this line restructs what users can call this endpoint)
+    // @RolesAllowed("instructor")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Creates instructor in current class")
@@ -370,7 +370,7 @@ public class AuthResource {
 
     @PUT
     @Path("/instructor/create/{email}")
-    @RolesAllowed("instructor")// we Might want to add admin role later to manage instructors (this line restructs what users can call this endpoint)
+    // @RolesAllowed("instructor")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Creates/updates user into instructor")
@@ -388,7 +388,7 @@ public class AuthResource {
 
     @PUT
     @Path("/instructor/remove/{email}")
-    @RolesAllowed("instructor")// we Might want to add admin role later to manage instructors (this line restructs what users can call this endpoint)
+    // @RolesAllowed("instructor")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
      @Operation(summary = "Removes instructor role from user")
@@ -406,7 +406,7 @@ public class AuthResource {
 
     @PUT
     @Path("/user/addTeam/{email}/{team}")
-    @RolesAllowed({"instructor", "student"})
+    // @RolesAllowed({"instructor", "co-instructor", "student"})
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response addUserTeam(@PathParam("email") String email, @PathParam("team") String team){
@@ -422,7 +422,7 @@ public class AuthResource {
             
     @POST
     @Path("/class/create")
-    @RolesAllowed("instructor")
+    // @RolesAllowed("instructor")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
      @Operation(summary = "Creates a class")
@@ -440,7 +440,7 @@ public class AuthResource {
 
     @PUT
     @Path("/user/removeTeam/{email}/{team}")
-    @RolesAllowed({"instructor", "student"})
+    // @RolesAllowed({"instructor", "co-instructor", "student"})
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response removeUserTeam(@PathParam("email") String email, @PathParam("team") String team){
@@ -457,7 +457,7 @@ public class AuthResource {
 
     @PUT
     @Path("/user/updatePreferredName/{email}/{preferredName}")
-    @RolesAllowed({"instructor", "student"})
+    // @RolesAllowed({"instructor", "co-instructor", "student"})
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response updateUserPreferredName(@PathParam("email") String email, @PathParam("preferredName") String preferredName){
@@ -474,7 +474,7 @@ public class AuthResource {
 
     @PUT
     @Path("/user/updateStanding/{email}/{classStanding}")
-    @RolesAllowed({"instructor", "student"})
+    // @RolesAllowed({"instructor", "co-instructor", "student"})
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response updateUserClassStanding(@PathParam("email") String email, @PathParam("classStanding") String classStanding){
@@ -491,7 +491,7 @@ public class AuthResource {
 
     @PUT
     @Path("/user/archive/{email}")
-    @RolesAllowed({"instructor", "student"})
+    // @RolesAllowed({"instructor", "co-instructor"})
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response archiveUser(@PathParam("email") String email){
@@ -508,7 +508,7 @@ public class AuthResource {
 
     @PUT
     @Path("/user/unarchive/{email}")
-    @RolesAllowed("instructor")
+    // @RolesAllowed({"instructor", "co-instructor"})
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response unarchiveUser(@PathParam("email") String email){
@@ -525,7 +525,7 @@ public class AuthResource {
 
     @GET
     @Path("/user/archived")
-    @RolesAllowed("instructor")
+    // @RolesAllowed({"instructor", "co-instructor"})
     @Produces(MediaType.APPLICATION_JSON)
     public Response getArchivedUsers(){
         try {
@@ -540,7 +540,7 @@ public class AuthResource {
 
     @PUT                                                                                                                                                                               
     @Path("/class/archive/{classID}")
-    @RolesAllowed("instructor")                                                                                                                                                        
+    // @RolesAllowed("instructor")                                                                                                                                                        
     @Produces(MediaType.APPLICATION_JSON)                                                                                                                                            
     public Response archiveClass(@PathParam("classID") String classID) {                                                                                                               
         try {                                                           
@@ -554,7 +554,7 @@ public class AuthResource {
 
     @GET
     @Path("/class/{classID}")
-    @RolesAllowed("instructor")
+    // @RolesAllowed({"instructor", "co-instructor"})
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Gets class data of a given classID")
@@ -572,7 +572,7 @@ public class AuthResource {
 
     @GET
     @Path("/classes")
-    @RolesAllowed("instructor")
+    // @RolesAllowed("instructor")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Gets all current classes")
@@ -590,7 +590,7 @@ public class AuthResource {
 
     @DELETE
     @Path("/class/delete/{classID}")
-    @RolesAllowed("instructor")
+    // @RolesAllowed("instructor")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Deletes a given class by given classID")

@@ -54,6 +54,9 @@
                 <security-role name="instructor">
                     <special-subject type="ALL_AUTHENTICATED_USERS"/>
                 </security-role>
+                <security-role name="co-instructor">
+                    <special-subject type="ALL_AUTHENTICATED_USERS"/>
+                </security-role>
                 <security-role name="student">
                     <special-subject type="ALL_AUTHENTICATED_USERS"/>
                 </security-role>
