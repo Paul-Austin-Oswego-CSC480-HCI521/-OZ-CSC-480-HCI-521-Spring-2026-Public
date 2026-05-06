@@ -7,6 +7,11 @@
 </div>
 <br/>
 
+<div align="center">
+  <strong>🌐 Live at: <a href="https://lakerlogs.duckdns.org">lakerlogs.duckdns.org</a></strong>
+</div>
+<br/>
+
 **Laker Logs** is a web-based weekly work log system built exclusively for the **Software Design course (CSC480 / HCI 521)** at the **State University of New York (SUNY) at Oswego**. It standardizes how students document and submit their weekly progress, and gives instructors a clear, organized way to review those submissions.
 
 ---
@@ -42,6 +47,7 @@
     - [Tech Stack](#tech-stack)
     - [Deployment](#deployment)
   - [Contributing](#contributing)
+  - [License](#license)
 
 ---
 
@@ -316,10 +322,43 @@ docker-compose.aws.yml     # All services + Caddy (production)
 
 ## Contributing
 
-For running the project for local development, please refer to [CONTRIBUTING.md](./CONTRIBUTING.md).
+For full setup instructions, see [CONTRIBUTING.md](./CONTRIBUTING.md).
 
-Feel free to create issue and PR.
+**Prerequisites** — Java 21+, Node.js / npm, Docker, Git, Maven (or use the included `mvnw` wrapper).
+
+**Quick start (Mac/Linux):**
+
+```bash
+git clone https://github.com/Paul-Austin-Oswego-CSC480-HCI521/-OZ-CSC-480-HCI-521-Spring-2026-Public
+cd ./-OZ-CSC-480-HCI-521-Spring-2026-Public
+```
+Refer to [Secrets](https://drive.google.com/drive/folders/18o940HLTQVe0yTq6HfDeKFZzcWMFWRJ9?usp=sharing) folder for credentials.
+```bash
+make setup        # install all dependencies
+make dev-mongodb  # start MongoDB container
+make dev-frontend # start Next.js dev server (http://localhost:3000)
+make dev-backend  # start all four Open Liberty services
+```
+
+> Windows users: use Git Bash, Chocolatey (`choco install make`), or WSL. See [CONTRIBUTING.md](./CONTRIBUTING.md#windows) for details.
+
+**Running tests** (from a backend service directory):
+
+```bash
+./mvnw test     # unit tests
+./mvnw verify   # unit + integration tests
+```
+
+Feel free to open an issue or pull request — PR and issue templates are provided in the repo.
 
 ---
 
-_Laker Logs was developed as part of the CSC480 / HCI 521 Software Design course at SUNY Oswego, Spring 2026.
+## License
+
+© 2026 SUNY Oswego — CSC480 / HCI 521 Software Design Course. All rights reserved.
+
+This project was created for academic purposes. Redistribution or use outside of the course context requires explicit permission from the authors.
+
+---
+
+_Laker Logs was developed as part of the CSC480 / HCI 521 Software Design course at SUNY Oswego, Spring 2026._
