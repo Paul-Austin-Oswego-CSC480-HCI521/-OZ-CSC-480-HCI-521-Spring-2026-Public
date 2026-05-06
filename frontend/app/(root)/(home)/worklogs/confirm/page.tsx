@@ -26,7 +26,7 @@ export default function ConfirmPage() {
   if (!pendingWorklog) {
     return (
       <div className="flex items-center justify-center p-6 sm:p-10">
-        <p className="text-muted-foreground">No worklog to submit.</p>
+        <p className="text-muted-foreground">No work log to submit.</p>
       </div>
     );
   }

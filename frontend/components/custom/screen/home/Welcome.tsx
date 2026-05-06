@@ -201,7 +201,7 @@ const Welcome = () => {
         <div className="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-2.5 mb-4 text-sm">
           <CalendarDays className="h-4 w-4 text-amber-300 shrink-0" />
           <span>
-            Next Worklog due on{" "}
+            Next Work Log due on{" "}
             <span className="font-semibold text-amber-200">
               {dueLabel ?? "—"} EDT
             </span>

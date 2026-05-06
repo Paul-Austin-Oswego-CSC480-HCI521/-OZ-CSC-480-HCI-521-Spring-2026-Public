@@ -195,7 +195,7 @@ export default function ClassDetailPage() {
       <Card className="mt-6">
         <CardHeader>
           <CardTitle className="text-lg">
-            Worklogs ({sortedWorklogs.length})
+            Work Logs ({sortedWorklogs.length})
           </CardTitle>
         </CardHeader>
         <CardContent>

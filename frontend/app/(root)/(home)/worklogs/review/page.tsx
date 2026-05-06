@@ -244,7 +244,7 @@ function ReviewContent() {
   if (isLoading || draftLoading) return <p className="p-6">Loading...</p>;
   if (error) return (
     <div className="p-6">
-      <p className="text-red-600 font-medium">Failed to load worklogs</p>
+      <p className="text-red-600 font-medium">Failed to load work logs</p>
       <p className="text-sm text-muted-foreground mt-1">{(error as any)?.message}</p>
     </div>
   );

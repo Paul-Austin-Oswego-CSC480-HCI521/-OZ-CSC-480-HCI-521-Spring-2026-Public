@@ -272,7 +272,7 @@ export const Notification = () => {
   if (error)
     return (
       <div className="p-4 sm:p-10">
-        <p className="text-red-600 font-medium">Failed to load worklogs</p>
+        <p className="text-red-600 font-medium">Failed to load work logs</p>
         <p className="text-sm text-muted-foreground mt-1">
           {(error as Error)?.message}
         </p>
