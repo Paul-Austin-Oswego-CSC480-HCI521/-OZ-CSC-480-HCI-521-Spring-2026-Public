@@ -1000,22 +1000,18 @@ export function WorkLogForm() {
                                 const collabList = (collaborators ?? []).filter(
                                   (c: string) => c !== "",
                                 );
-                                const hasCollaborators = collabList.length > 0;
+                                if (collabList.length === 0) return <></>;
                                 const collabNames =
-                                  collabList.length === 0
-                                    ? "your collaborator(s)"
-                                    : collabList.length === 1
-                                      ? collabList[0]
-                                      : collabList.length === 2
-                                        ? `${collabList[0]} and ${collabList[1]}`
-                                        : `${collabList.slice(0, -1).join(", ")}, and ${collabList[collabList.length - 1]}`;
+                                  collabList.length === 1
+                                    ? collabList[0]
+                                    : collabList.length === 2
+                                      ? `${collabList[0]} and ${collabList[1]}`
+                                      : `${collabList.slice(0, -1).join(", ")}, and ${collabList[collabList.length - 1]}`;
                                 return (
                                   <Field data-invalid={fieldState.invalid}>
                                     <FieldLabel>
                                       How did you work with {collabNames}?
-                                      {hasCollaborators && (
-                                        <span className="text-red-500">*</span>
-                                      )}
+                                      <span className="text-red-500">*</span>
                                     </FieldLabel>
                                     <FieldDescription>
                                       Describe your collaboration — what each
@@ -1026,16 +1022,11 @@ export function WorkLogForm() {
                                       <InputGroupTextarea
                                         {...field}
                                         value={field.value ?? ""}
-                                        placeholder={
-                                          hasCollaborators
-                                            ? "Describe how you worked together..."
-                                            : "Add a collaborator above to fill this in"
-                                        }
+                                        placeholder="Describe how you worked together..."
                                         rows={3}
                                         className="min-h-20 resize-none"
                                         aria-invalid={fieldState.invalid}
                                         maxLength={1000}
-                                        disabled={!hasCollaborators}
                                       />
                                       <InputGroupAddon align="block-end">
                                         <InputGroupText className="tabular-nums">

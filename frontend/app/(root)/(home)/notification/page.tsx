@@ -2,17 +2,17 @@
 import React, { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getWorkLog } from "@/components/custom/utils/api_utils/worklogs/allReq";
+import { getClass } from "@/components/custom/utils/api_utils/req/class";
 import { useAtomValue } from "jotai";
 import { isInstructorRole, userAtom } from "@/components/custom/utils/context/state";
-import getWorklogDate from "@/components/custom/utils/func/getDate";
 import { fmtDateTime } from "@/components/custom/utils/func/formatDate";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, AlertTriangle, CalendarDays } from "lucide-react";
 
-const SEMESTER_START = new Date("2026-01-26T00:00:00");
-const TOTAL_WEEKS = 16;
+const FALLBACK_SEMESTER_START = new Date("2026-01-26T00:00:00");
+const FALLBACK_TOTAL_WEEKS = 16;
 const accentGreen = "#1E4B35";
 
 function calendarDaysBetween(from: Date, to: Date): number {
@@ -21,10 +21,21 @@ function calendarDaysBetween(from: Date, to: Date): number {
   return Math.round((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-function getLateDays(log: any): number {
+function parseClassDate(s: string | undefined | null): Date | null {
+  if (!s) return null;
+  try {
+    const cleaned = s.replace(/\[[^\]]+\]$/, "");
+    const d = new Date(cleaned);
+    return Number.isNaN(d.getTime()) ? null : d;
+  } catch {
+    return null;
+  }
+}
+
+function getLateDays(log: any, semesterStart: Date): number {
   const week = parseInt(log.worklogName);
   if (isNaN(week)) return 0;
-  const dueDate = new Date(SEMESTER_START);
+  const dueDate = new Date(semesterStart);
   dueDate.setDate(dueDate.getDate() + week * 7);
   dueDate.setHours(23, 59, 0, 0);
   const submitted = new Date(log.dateSubmitted);
@@ -56,6 +67,12 @@ export default function NotificationPage() {
     queryFn: () => getWorkLog(userInfo?.email),
   });
 
+  const { data: classData } = useQuery({
+    queryKey: ["class", userInfo?.classID],
+    enabled: !!userInfo?.classID,
+    queryFn: () => getClass(userInfo!.classID!),
+  });
+
   if (!mounted || !userInfo) {
     return <p className="p-4 sm:p-10">Loading...</p>;
   }
@@ -80,16 +97,32 @@ export default function NotificationPage() {
     );
 
   const worklogs = (data ?? []).filter((log: any) => !log.isDraft);
-  const worklogInfo = getWorklogDate(SEMESTER_START);
-  const weekNum = worklogInfo ? parseInt(worklogInfo.weekNumber) - 1 : 0;
+  const classStartDate =
+    parseClassDate(classData?.semesterStartDate) ?? FALLBACK_SEMESTER_START;
+  const classEndDate = parseClassDate(classData?.semsesterEndDate);
+  const totalWeeks = classEndDate
+    ? Math.max(
+        1,
+        Math.ceil(calendarDaysBetween(classStartDate, classEndDate) / 7),
+      )
+    : FALLBACK_TOTAL_WEEKS;
+  const now = new Date();
+  const daysSinceStart = calendarDaysBetween(classStartDate, now);
+  const weekNum = Math.max(0, Math.floor(daysSinceStart / 7) + 1);
 
-  const upcomingDue = new Date(SEMESTER_START);
+  const upcomingDue = new Date(classStartDate);
   if (weekNum > 0) {
     upcomingDue.setDate(upcomingDue.getDate() + weekNum * 7);
   }
   upcomingDue.setHours(23, 59, 0, 0);
-  const now = new Date();
   const daysUntilDue = calendarDaysBetween(now, upcomingDue);
+  const upcomingDueLabel = upcomingDue.toLocaleString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
 
   const submittedWeeks = new Set(
     worklogs
@@ -101,7 +134,7 @@ export default function NotificationPage() {
     [];
   for (let w = 1; w < weekNum; w++) {
     if (!submittedWeeks.has(w)) {
-      const dueDate = new Date(SEMESTER_START);
+      const dueDate = new Date(classStartDate);
       dueDate.setDate(dueDate.getDate() + w * 7);
       dueDate.setHours(23, 59, 0, 0);
       const diffDays = calendarDaysBetween(dueDate, now);
@@ -203,7 +236,7 @@ export default function NotificationPage() {
               <CardContent className="p-2 sm:p-3">
                 <div className="divide-y">
                   {sortedWorklogs.map((log: any, i: number) => {
-                    const lateDays = getLateDays(log);
+                    const lateDays = getLateDays(log, classStartDate);
                     return (
                       <div
                         key={i}
@@ -263,7 +296,7 @@ export default function NotificationPage() {
               <div>
                 <p className="text-xs text-muted-foreground">Week Status</p>
                 <p className="text-sm font-semibold">
-                  Week {weekNum || "—"} of {TOTAL_WEEKS}
+                  Week {weekNum || "—"} of {totalWeeks}
                 </p>
               </div>
             </div>
@@ -285,7 +318,7 @@ export default function NotificationPage() {
                     Week {weekNum} Work Log
                   </p>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Deadline: {worklogInfo?.due ?? "—"}
+                    Deadline: {upcomingDueLabel}
                   </p>
                 </div>
               </div>

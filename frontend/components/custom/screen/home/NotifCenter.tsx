@@ -2,16 +2,33 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getWorkLog } from "@/components/custom/utils/api_utils/worklogs/allReq";
+import { getClass } from "@/components/custom/utils/api_utils/req/class";
 import { useAtomValue } from "jotai";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { userAtom } from "@/components/custom/utils/context/state";
-import getWorklogDate from "../../utils/func/getDate";
 import { AlertTriangle, CheckCircle2, Clock } from "lucide-react";
 
-const SEMESTER_START = new Date("2026-01-26T00:00:00");
+const FALLBACK_SEMESTER_START = new Date("2026-01-26T00:00:00");
 const TZ = "America/New_York";
+
+function calendarDaysBetween(from: Date, to: Date): number {
+  const a = new Date(from.getFullYear(), from.getMonth(), from.getDate());
+  const b = new Date(to.getFullYear(), to.getMonth(), to.getDate());
+  return Math.round((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+function parseClassDate(s: string | undefined | null): Date | null {
+  if (!s) return null;
+  try {
+    const cleaned = s.replace(/\[[^\]]+\]$/, "");
+    const d = new Date(cleaned);
+    return Number.isNaN(d.getTime()) ? null : d;
+  } catch {
+    return null;
+  }
+}
 
 function fmtDueShort(d: Date): string {
   const time = d.toLocaleTimeString("en-US", {
@@ -60,6 +77,12 @@ export const NotifCenter = () => {
     queryFn: () => getWorkLog(userInfo?.email),
   });
 
+  const { data: classData } = useQuery({
+    queryKey: ["class", userInfo?.classID],
+    enabled: !!userInfo?.classID,
+    queryFn: () => getClass(userInfo!.classID!),
+  });
+
   if (isLoading)
     return <p className="p-4 sm:p-6">Loading notifications...</p>;
   if (error)
@@ -75,10 +98,11 @@ export const NotifCenter = () => {
     );
 
   const worklogs: WorkLog[] = data ?? [];
-  const worklogInfo = getWorklogDate(SEMESTER_START);
-  const currentWeek = worklogInfo
-    ? parseInt(worklogInfo.weekNumber) - 1
-    : 0;
+  const classStartDate =
+    parseClassDate(classData?.semesterStartDate) ?? FALLBACK_SEMESTER_START;
+  const today = new Date();
+  const daysSinceStart = calendarDaysBetween(classStartDate, today);
+  const currentWeek = Math.max(0, Math.floor(daysSinceStart / 7) + 1);
 
   const submitted = worklogs.filter((w) => !w.isDraft);
   const submittedWeeks = new Set<number>(
@@ -91,7 +115,7 @@ export const NotifCenter = () => {
   let mostRecentOverdue: { week: number; dueDate: Date } | null = null;
   for (let w = currentWeek - 1; w >= 1; w--) {
     if (!submittedWeeks.has(w)) {
-      const dueDate = new Date(SEMESTER_START);
+      const dueDate = new Date(classStartDate);
       dueDate.setDate(dueDate.getDate() + w * 7);
       dueDate.setHours(23, 59, 0, 0);
       mostRecentOverdue = { week: w, dueDate };
@@ -102,7 +126,7 @@ export const NotifCenter = () => {
   // Upcoming = current week if not yet submitted.
   let upcoming: { week: number; dueDate: Date } | null = null;
   if (currentWeek > 0 && !submittedWeeks.has(currentWeek)) {
-    const dueDate = new Date(SEMESTER_START);
+    const dueDate = new Date(classStartDate);
     dueDate.setDate(dueDate.getDate() + currentWeek * 7);
     dueDate.setHours(23, 59, 0, 0);
     upcoming = { week: currentWeek, dueDate };
@@ -123,7 +147,7 @@ export const NotifCenter = () => {
       }
     : null;
 
-  const weekStartForUpcoming = new Date(SEMESTER_START);
+  const weekStartForUpcoming = new Date(classStartDate);
   weekStartForUpcoming.setDate(
     weekStartForUpcoming.getDate() + (currentWeek - 1) * 7,
   );

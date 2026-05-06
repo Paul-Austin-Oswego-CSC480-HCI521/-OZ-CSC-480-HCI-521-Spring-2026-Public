@@ -9,13 +9,20 @@ import {
   archiveClass,
   createClass,
   demoteFromInstructor,
+  getAllUsers,
   getClasses,
   unenrollUser,
   updateClass,
   StudentClass,
   ClassUser,
 } from "@/components/custom/utils/api_utils/req/class";
-import { getUsersFromClass, refreshToken } from "@/components/custom/utils/api_utils/req/req";
+import {
+  addUserTeam,
+  getUsersFromClass,
+  refreshToken,
+  removeUserTeam,
+  updateUserStanding,
+} from "@/components/custom/utils/api_utils/req/req";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,6 +57,7 @@ import {
   Plus,
   Archive,
   X,
+  Info,
 } from "lucide-react";
 import { toast } from "sonner";
 import StudentSearchPicker from "@/components/custom/instructor/classes/StudentSearchPicker";
@@ -60,6 +68,15 @@ const BRAND_GREEN = "#1E4B35";
 const BRAND_GREEN_TINT = "#E8F0EC";
 const BRAND_AMBER_TINT = "#FCEBD3";
 const PAGE_SIZE = 10;
+
+const TEAMS = [
+  "Requirements",
+  "Usability",
+  "Front-End",
+  "Back-End",
+  "Quality Assurance",
+] as const;
+const STANDINGS = ["Undergraduate", "Graduate"] as const;
 
 type SplitName = { first: string; last: string };
 
@@ -102,7 +119,16 @@ export default function ClassesPage() {
   const [inviteInstructorsOpen, setInviteInstructorsOpen] = useState(false);
   const [openRowMenu, setOpenRowMenu] = useState<string | null>(null);
   const [menuAnchor, setMenuAnchor] = useState<{ top: number; right: number } | null>(null);
+  const [openInactiveMenu, setOpenInactiveMenu] = useState<string | null>(null);
+  const [inactiveMenuAnchor, setInactiveMenuAnchor] = useState<{ top: number; right: number } | null>(null);
+  const [openInstructorMenu, setOpenInstructorMenu] = useState<string | null>(null);
+  const [instructorMenuAnchor, setInstructorMenuAnchor] = useState<{ top: number; right: number } | null>(null);
   const [studentToRemove, setStudentToRemove] = useState<ClassUser | null>(null);
+  const [coInstructorToRemove, setCoInstructorToRemove] =
+    useState<ClassUser | null>(null);
+  const [studentToManage, setStudentToManage] = useState<ClassUser | null>(null);
+  const [manageTeams, setManageTeams] = useState<string[]>([]);
+  const [manageStanding, setManageStanding] = useState<string>("");
   const [archiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
   const [editStartDate, setEditStartDate] = useState("");
   const [editEndDate, setEditEndDate] = useState("");
@@ -125,6 +151,46 @@ export default function ClassesPage() {
     });
     setOpenRowMenu(email);
   };
+
+  const closeInactiveMenu = () => {
+    setOpenInactiveMenu(null);
+    setInactiveMenuAnchor(null);
+  };
+  const openInactiveMenuFor = (
+    email: string,
+    e: React.MouseEvent<HTMLElement>,
+  ) => {
+    if (openInactiveMenu === email) {
+      closeInactiveMenu();
+      return;
+    }
+    const rect = e.currentTarget.getBoundingClientRect();
+    setInactiveMenuAnchor({
+      top: rect.bottom + 4,
+      right: window.innerWidth - rect.right,
+    });
+    setOpenInactiveMenu(email);
+  };
+
+  const closeInstructorMenu = () => {
+    setOpenInstructorMenu(null);
+    setInstructorMenuAnchor(null);
+  };
+  const openInstructorMenuFor = (
+    email: string,
+    e: React.MouseEvent<HTMLElement>,
+  ) => {
+    if (openInstructorMenu === email) {
+      closeInstructorMenu();
+      return;
+    }
+    const rect = e.currentTarget.getBoundingClientRect();
+    setInstructorMenuAnchor({
+      top: rect.bottom + 4,
+      right: window.innerWidth - rect.right,
+    });
+    setOpenInstructorMenu(email);
+  };
   const [selectedClassID, setSelectedClassID] = useState<string | null>(null);
   const [classID, setClassID] = useState("");
   const [semesterStartDate, setSemesterStartDate] = useState("");
@@ -136,6 +202,12 @@ export default function ClassesPage() {
   const { data: classes } = useQuery({
     queryKey: ["classes"],
     queryFn: getClasses,
+    enabled: isInstructorRole(userInfo?.role),
+  });
+
+  const { data: allUsers } = useQuery({
+    queryKey: ["all-users"],
+    queryFn: getAllUsers,
     enabled: isInstructorRole(userInfo?.role),
   });
 
@@ -161,10 +233,25 @@ export default function ClassesPage() {
   );
 
   useEffect(() => {
+    if (studentToManage) {
+      setManageTeams(
+        (studentToManage.team ?? []).filter(
+          (t) => t && t.toLowerCase() !== "unassigned",
+        ),
+      );
+      setManageStanding(studentToManage.classStanding ?? "");
+    }
+  }, [studentToManage]);
+
+  useEffect(() => {
     if (settingsOpen && activeClass) {
-      setEditStartDate(activeClass.semesterStartDate ?? "");
-      setEditEndDate(activeClass.semsesterEndDate ?? "");
-      setEditAccessEndDate(activeClass.studendAccessEndDate ?? "");
+      // Backend may serialize dates with a timestamp (e.g. "2026-01-19T00:00:00Z");
+      // <input type="date"> requires exactly "YYYY-MM-DD", so strip anything past 10 chars.
+      const toIsoDate = (v: string | undefined | null) =>
+        v ? String(v).slice(0, 10) : "";
+      setEditStartDate(toIsoDate(activeClass.semesterStartDate));
+      setEditEndDate(toIsoDate(activeClass.semsesterEndDate));
+      setEditAccessEndDate(toIsoDate(activeClass.studendAccessEndDate));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settingsOpen, activeClass?.classID]);
@@ -194,10 +281,6 @@ export default function ClassesPage() {
     .filter((u) => u.role === "instructor" || u.role === "co-instructor")
     .filter(matchesSearch);
   const students = list.filter((u) => u.role === "student").filter(matchesSearch);
-  const totalInstructorCount = list.filter(
-    (u) => u.role === "instructor" || u.role === "co-instructor",
-  ).length;
-  const remainingInstructorSlots = Math.max(0, 3 - totalInstructorCount);
 
   const totalPages = Math.max(1, Math.ceil(students.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
@@ -289,6 +372,38 @@ export default function ClassesPage() {
       toast.error(e?.message ?? "Failed to archive class"),
   });
 
+  const updateStudentMutation = useMutation({
+    mutationFn: async (vars: {
+      email: string;
+      originalTeams: string[];
+      newTeams: string[];
+      originalStanding: string;
+      newStanding: string;
+    }) => {
+      const teamsToAdd = vars.newTeams.filter(
+        (t) => !vars.originalTeams.includes(t),
+      );
+      const teamsToRemove = vars.originalTeams.filter(
+        (t) => !vars.newTeams.includes(t),
+      );
+      await Promise.all([
+        ...teamsToRemove.map((t) => removeUserTeam(vars.email, t)),
+        ...teamsToAdd.map((t) => addUserTeam(vars.email, t)),
+        vars.newStanding !== vars.originalStanding
+          ? updateUserStanding(vars.email, vars.newStanding)
+          : Promise.resolve(),
+      ]);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["users-from-class", activeClass?.classID] });
+      qc.invalidateQueries({ queryKey: ["all-users"] });
+      toast.success("Student profile saved.");
+      setStudentToManage(null);
+    },
+    onError: (e: Error) =>
+      toast.error(e?.message ?? "Failed to save student profile"),
+  });
+
   const updateClassMutation = useMutation({
     mutationFn: (vars: {
       classID: string;
@@ -329,6 +444,19 @@ export default function ClassesPage() {
     },
     onError: (e: Error) =>
       toast.error(e?.message ?? "Failed to remove instructor"),
+  });
+
+  const removeCoInstructorMutation = useMutation({
+    mutationFn: (email: string) => unenrollUser(email),
+    onSuccess: (_data, email) => {
+      qc.invalidateQueries({ queryKey: ["users-from-class", activeClass?.classID] });
+      qc.invalidateQueries({ queryKey: ["all-users"] });
+      qc.invalidateQueries({ queryKey: ["classes"] });
+      toast.success(`Removed ${email} from class.`);
+      setCoInstructorToRemove(null);
+    },
+    onError: (e: Error) =>
+      toast.error(e?.message ?? "Failed to remove co-instructor"),
   });
 
   if (!mounted || !userInfo) return <p className="p-4 sm:p-10">Loading...</p>;
@@ -391,13 +519,13 @@ export default function ClassesPage() {
             Manage and organize your academic roaster and instructor teams
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          {activeClass && (
-            <div
-              className="flex items-center rounded-md border-2 bg-white px-3 h-9 text-sm font-medium"
-              style={{ borderColor: BRAND_GREEN, color: BRAND_GREEN }}
-            >
-              {activeClass.classID}
+        <div className="flex flex-col items-end gap-3 shrink-0 self-start">
+          {activeClass?.classID && (
+            <div className="text-right">
+              <p className="text-sm text-muted-foreground">Active Class</p>
+              <p className="text-xl sm:text-2xl font-bold text-zinc-900">
+                {activeClass.classID}
+              </p>
             </div>
           )}
           <Button
@@ -440,17 +568,10 @@ export default function ClassesPage() {
           <div className="flex items-center gap-2">
             <Button
               size="sm"
-              disabled={
-                !activeClass?.classID || remainingInstructorSlots <= 0
-              }
+              disabled={!activeClass?.classID}
               className="gap-1.5 cursor-pointer text-white hover:opacity-90 disabled:cursor-not-allowed"
               style={{ backgroundColor: BRAND_GREEN }}
               onClick={() => setInviteInstructorsOpen(true)}
-              title={
-                remainingInstructorSlots <= 0
-                  ? "Maximum of 3 instructors reached"
-                  : undefined
-              }
             >
               <UserPlus className="h-3.5 w-3.5" />
               Invite Instructor
@@ -551,12 +672,10 @@ export default function ClassesPage() {
                         {isPrimary ? "Instructor" : "Co-Instructor"}
                       </span>
                     </td>
-                    <td className="px-4 py-3 relative">
+                    <td className="px-4 py-3">
                       <button
                         className="text-muted-foreground hover:text-foreground cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
-                        onClick={() =>
-                          setOpenRowMenu(menuOpen ? null : u.email)
-                        }
+                        onClick={(e) => openInstructorMenuFor(u.email, e)}
                         disabled={!canDemote}
                         title={
                           isPrimary
@@ -569,27 +688,6 @@ export default function ClassesPage() {
                       >
                         <MoreVertical className="h-4 w-4" />
                       </button>
-                      {menuOpen && canDemote && (
-                        <>
-                          <div
-                            className="fixed inset-0 z-10"
-                            onClick={() => setOpenRowMenu(null)}
-                          />
-                          <div className="absolute right-2 top-10 z-20 min-w-[180px] rounded-md border bg-white shadow-lg py-1">
-                            <button
-                              type="button"
-                              className="w-full text-left px-3 py-2 text-sm hover:bg-red-50 text-red-700 cursor-pointer disabled:opacity-50"
-                              disabled={demoteMutation.isPending}
-                              onClick={() => {
-                                setOpenRowMenu(null);
-                                demoteMutation.mutate(u.email);
-                              }}
-                            >
-                              Demote to student
-                            </button>
-                          </div>
-                        </>
-                      )}
                     </td>
                   </tr>
                 );
@@ -842,9 +940,82 @@ export default function ClassesPage() {
             </button>
           </CollapsibleTrigger>
           <CollapsibleContent>
-            <div className="px-4 py-6 text-sm text-muted-foreground border-t">
-              No inactive students.
-            </div>
+            {(activeClass?.inactiveStudents ?? []).length === 0 ? (
+              <div className="px-4 py-6 text-sm text-muted-foreground border-t">
+                No inactive students.
+              </div>
+            ) : (
+              <div className="max-h-80 overflow-y-auto border-t">
+                <table className="w-full text-sm">
+                <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground sticky top-0 z-10">
+                  <tr>
+                    <th className="px-4 py-2.5 w-10"></th>
+                    <th className="px-4 py-2.5 text-left">Last Name</th>
+                    <th className="px-4 py-2.5 text-left">First Name</th>
+                    <th className="px-4 py-2.5 text-left">Email</th>
+                    <th className="px-4 py-2.5 text-left">Class</th>
+                    <th className="px-4 py-2.5 text-left">Team</th>
+                    <th className="px-4 py-2.5 w-10"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(activeClass?.inactiveStudents ?? []).map((s) => {
+                    const { first, last } = splitName(s.name);
+                    const teams = (s.team ?? []).filter(
+                      (t) => t && t.toLowerCase() !== "unassigned",
+                    );
+                    return (
+                      <tr key={s.email} className="border-t">
+                        <td className="px-4 py-3">
+                          <X className="h-4 w-4 text-red-600" />
+                        </td>
+                        <td className="px-4 py-3 font-medium">
+                          {last || "—"}
+                        </td>
+                        <td className="px-4 py-3">{first || "—"}</td>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          {s.email}
+                        </td>
+                        <td className="px-4 py-3">
+                          {s.classStanding ? (
+                            <span className="text-xs whitespace-pre-line">
+                              {s.classStanding.replace(" ", "\n")}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex flex-wrap gap-1">
+                            {teams.length === 0 && (
+                              <span className="text-xs text-muted-foreground">—</span>
+                            )}
+                            {teams.map((t) => (
+                              <span
+                                key={t}
+                                className={`text-[11px] font-medium px-2 py-0.5 rounded ${teamChipClasses(t)}`}
+                              >
+                                {t}
+                              </span>
+                            ))}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <button
+                            className="text-muted-foreground hover:text-foreground cursor-pointer"
+                            onClick={(e) => openInactiveMenuFor(s.email, e)}
+                            aria-label="Row actions"
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              </div>
+            )}
           </CollapsibleContent>
         </Collapsible>
       </Card>
@@ -879,8 +1050,11 @@ export default function ClassesPage() {
                 type="button"
                 className="w-full text-left px-3 py-2 text-sm hover:bg-muted cursor-pointer"
                 onClick={() => {
+                  const target = pagedStudents.find(
+                    (s) => s.email === openRowMenu,
+                  );
                   closeRowMenu();
-                  toast.message("Manage student (coming soon)");
+                  if (target) setStudentToManage(target);
                 }}
               >
                 Manage student
@@ -897,6 +1071,81 @@ export default function ClassesPage() {
                 }}
               >
                 Remove from class
+              </button>
+            </div>
+          </>,
+          document.body,
+        )}
+
+      {openInstructorMenu &&
+        instructorMenuAnchor &&
+        list.some(
+          (u) =>
+            u.email === openInstructorMenu &&
+            (u.role === "instructor" || u.role === "co-instructor"),
+        ) &&
+        createPortal(
+          <>
+            <div
+              className="fixed inset-0 z-40"
+              onClick={closeInstructorMenu}
+            />
+            <div
+              className="fixed z-50 w-44 rounded-md border bg-white shadow-lg py-1"
+              style={{
+                top: instructorMenuAnchor.top,
+                right: instructorMenuAnchor.right,
+              }}
+            >
+              <button
+                type="button"
+                className="w-full text-left px-3 py-2 text-sm hover:bg-red-50 text-red-700 cursor-pointer disabled:opacity-50"
+                disabled={removeCoInstructorMutation.isPending}
+                onClick={() => {
+                  const target = list.find(
+                    (u) => u.email === openInstructorMenu,
+                  );
+                  closeInstructorMenu();
+                  if (target) setCoInstructorToRemove(target);
+                }}
+              >
+                Remove from class
+              </button>
+            </div>
+          </>,
+          document.body,
+        )}
+
+      {openInactiveMenu &&
+        inactiveMenuAnchor &&
+        (activeClass?.inactiveStudents ?? []).some(
+          (s) => s.email === openInactiveMenu,
+        ) &&
+        createPortal(
+          <>
+            <div className="fixed inset-0 z-40" onClick={closeInactiveMenu} />
+            <div
+              className="fixed z-50 w-44 rounded-md border bg-white shadow-lg py-1"
+              style={{
+                top: inactiveMenuAnchor.top,
+                right: inactiveMenuAnchor.right,
+              }}
+            >
+              <button
+                type="button"
+                className="w-full text-left px-3 py-2 text-sm hover:bg-muted cursor-pointer"
+                onClick={() => {
+                  const email = openInactiveMenu;
+                  const cls = activeClass?.classID;
+                  closeInactiveMenu();
+                  if (email) {
+                    router.push(
+                      `/instructor/students/${encodeURIComponent(email)}?from=classes${cls ? `&classID=${encodeURIComponent(cls)}` : ""}`,
+                    );
+                  }
+                }}
+              >
+                View all worklogs
               </button>
             </div>
           </>,
@@ -929,8 +1178,6 @@ export default function ClassesPage() {
 
           {activeClass ? (
             (() => {
-              const today = new Date().toISOString().slice(0, 10);
-              const startInPast = !!editStartDate && editStartDate < today;
               const endAfterStart =
                 !editStartDate ||
                 !editEndDate ||
@@ -991,11 +1238,6 @@ export default function ClassesPage() {
                         disabled={!isPrimary}
                         onChange={(e) => setEditStartDate(e.target.value)}
                       />
-                      {startInPast && (
-                        <p className="text-xs text-red-600">
-                          Warning: The start date has passed.
-                        </p>
-                      )}
                     </div>
                     <div className="space-y-1.5">
                       <Label>Semester End Date</Label>
@@ -1153,36 +1395,234 @@ export default function ClassesPage() {
       </AlertDialog>
 
       <AlertDialog
-        open={!!studentToRemove}
-        onOpenChange={(open) => !open && setStudentToRemove(null)}
+        open={!!studentToManage}
+        onOpenChange={(open) => !open && setStudentToManage(null)}
       >
-        <AlertDialogContent>
+        <AlertDialogContent className="sm:max-w-lg">
+          <button
+            type="button"
+            aria-label="Close"
+            onClick={() => setStudentToManage(null)}
+            className="absolute right-4 top-4 text-red-600 hover:text-red-700 cursor-pointer"
+          >
+            <X className="h-5 w-5" />
+          </button>
           <AlertDialogHeader>
-            <AlertDialogTitle style={{ color: BRAND_GREEN }}>
-              Remove student from class
+            <AlertDialogTitle
+              className="text-2xl"
+              style={{ color: BRAND_GREEN }}
+            >
+              Manage Student
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {studentToRemove ? (
-                <>
-                  Remove <span className="font-medium">{studentToRemove.name}</span>
-                  {" "}({studentToRemove.email}) from{" "}
-                  <span className="font-medium">{activeClass?.classID}</span>?
-                  They&apos;ll lose access to this class. Their submitted
-                  worklogs are preserved.
-                </>
-              ) : null}
+              Edit Student&apos;s Profile
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel
+
+          {studentToManage && (
+            <div className="space-y-5 py-2">
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 rounded bg-muted shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-base font-semibold truncate">
+                    {studentToManage.name}
+                  </p>
+                  <p className="text-sm text-muted-foreground truncate">
+                    {studentToManage.email}
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-sm font-semibold mb-2">Current Teams</p>
+                <div className="flex flex-wrap gap-2">
+                  {TEAMS.map((t) => {
+                    const selected = manageTeams.includes(t);
+                    return (
+                      <button
+                        key={t}
+                        type="button"
+                        onClick={() =>
+                          setManageTeams((prev) =>
+                            selected
+                              ? prev.filter((x) => x !== t)
+                              : [...prev, t],
+                          )
+                        }
+                        className={`px-3 py-1.5 rounded-md border text-sm font-medium cursor-pointer transition-colors ${
+                          selected
+                            ? "bg-amber-400 border-amber-400 text-[#1E4B35]"
+                            : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+                        }`}
+                      >
+                        {t}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <p className="text-sm font-semibold mb-2">Class Standing</p>
+                <div className="flex flex-wrap gap-2">
+                  {STANDINGS.map((s) => {
+                    const selected = manageStanding === s;
+                    return (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => setManageStanding(s)}
+                        className={`px-3 py-1.5 rounded-md border text-sm font-medium cursor-pointer transition-colors ${
+                          selected
+                            ? "bg-amber-400 border-amber-400 text-[#1E4B35]"
+                            : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+                        }`}
+                      >
+                        {s}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <AlertDialogFooter className="sm:justify-start sm:gap-2">
+            <Button
+              variant="outline"
               className="cursor-pointer"
-              disabled={unenrollStudentMutation.isPending}
+              disabled={updateStudentMutation.isPending}
+              onClick={() => {
+                const target = studentToManage;
+                if (target) {
+                  setStudentToManage(null);
+                  setStudentToRemove(target);
+                }
+              }}
+            >
+              Remove Student
+            </Button>
+            <Button
+              className="cursor-pointer text-white hover:opacity-90"
+              style={{ backgroundColor: BRAND_GREEN }}
+              disabled={updateStudentMutation.isPending}
+              onClick={() => {
+                if (!studentToManage) return;
+                const originalTeams = (studentToManage.team ?? []).filter(
+                  (t) => t && t.toLowerCase() !== "unassigned",
+                );
+                updateStudentMutation.mutate({
+                  email: studentToManage.email,
+                  originalTeams,
+                  newTeams: manageTeams,
+                  originalStanding: studentToManage.classStanding ?? "",
+                  newStanding: manageStanding,
+                });
+              }}
+            >
+              {updateStudentMutation.isPending ? "Saving..." : "Save Profile"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={!!coInstructorToRemove}
+        onOpenChange={(open) => !open && setCoInstructorToRemove(null)}
+      >
+        <AlertDialogContent className="sm:max-w-lg">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-center text-xl sm:text-2xl font-bold leading-snug">
+              {coInstructorToRemove ? (
+                <>
+                  Are you sure you want to remove {coInstructorToRemove.name} from{" "}
+                  {activeClass?.classID}?
+                </>
+              ) : null}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="sr-only">
+              Confirm removal of co-instructor from class.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div
+            className="flex items-start gap-3 rounded-lg px-4 py-3"
+            style={{ backgroundColor: "#E8F0EC" }}
+          >
+            <Info
+              className="h-5 w-5 shrink-0 mt-0.5"
+              style={{ color: BRAND_GREEN }}
+            />
+            <p className="text-sm">
+              They will be removed from the class. They can be re-added later.
+            </p>
+          </div>
+
+          <AlertDialogFooter className="sm:justify-center sm:gap-3 pt-2">
+            <Button
+              variant="outline"
+              className="cursor-pointer border-2"
+              style={{ borderColor: BRAND_GREEN, color: BRAND_GREEN }}
+              disabled={removeCoInstructorMutation.isPending}
+              onClick={() => {
+                if (coInstructorToRemove) {
+                  removeCoInstructorMutation.mutate(coInstructorToRemove.email);
+                }
+              }}
+            >
+              {removeCoInstructorMutation.isPending
+                ? "Removing..."
+                : "Yes, Remove Co-Instructor"}
+            </Button>
+            <AlertDialogCancel
+              className="cursor-pointer text-white hover:opacity-90 mt-0 border-0"
+              style={{ backgroundColor: BRAND_GREEN }}
+              disabled={removeCoInstructorMutation.isPending}
             >
               Cancel
             </AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={!!studentToRemove}
+        onOpenChange={(open) => !open && setStudentToRemove(null)}
+      >
+        <AlertDialogContent className="sm:max-w-lg">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-center text-xl sm:text-2xl font-bold leading-snug">
+              {studentToRemove ? (
+                <>
+                  Are you sure you want to remove {studentToRemove.name} from{" "}
+                  {activeClass?.classID}?
+                </>
+              ) : null}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="sr-only">
+              Confirm removal of student from class.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div
+            className="flex items-start gap-3 rounded-lg px-4 py-3"
+            style={{ backgroundColor: "#E8F0EC" }}
+          >
+            <Info
+              className="h-5 w-5 shrink-0 mt-0.5"
+              style={{ color: BRAND_GREEN }}
+            />
+            <p className="text-sm">
+              This student will be moved to the inactive students list and can
+              be re-added at any time.
+            </p>
+          </div>
+
+          <AlertDialogFooter className="sm:justify-center sm:gap-3 pt-2">
             <Button
-              variant="destructive"
-              className="cursor-pointer"
+              variant="outline"
+              className="cursor-pointer border-2"
+              style={{ borderColor: BRAND_GREEN, color: BRAND_GREEN }}
               disabled={unenrollStudentMutation.isPending}
               onClick={() => {
                 if (studentToRemove) {
@@ -1190,8 +1630,17 @@ export default function ClassesPage() {
                 }
               }}
             >
-              {unenrollStudentMutation.isPending ? "Removing..." : "Remove"}
+              {unenrollStudentMutation.isPending
+                ? "Removing..."
+                : "Yes, Remove Student"}
             </Button>
+            <AlertDialogCancel
+              className="cursor-pointer text-white hover:opacity-90 mt-0 border-0"
+              style={{ backgroundColor: BRAND_GREEN }}
+              disabled={unenrollStudentMutation.isPending}
+            >
+              Cancel
+            </AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -1207,7 +1656,7 @@ export default function ClassesPage() {
             </AlertDialogTitle>
             <AlertDialogDescription>
               {activeClass
-                ? `Add co-instructors to ${activeClass.classID}. Up to 3 instructors total.`
+                ? `Add co-instructors to ${activeClass.classID}.`
                 : "Pick a class first."}
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -1215,7 +1664,6 @@ export default function ClassesPage() {
             <InstructorSearchPicker
               classID={activeClass.classID}
               classUsers={list}
-              remainingSlots={remainingInstructorSlots}
             />
           )}
           <AlertDialogFooter>

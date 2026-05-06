@@ -20,7 +20,10 @@ import {
   Clock,
   ChevronDown,
   ChevronRight,
+  ChevronUp,
   Pencil,
+  ClipboardCheck,
+  User,
 } from "lucide-react";
 import { fmtDate, fmtDateTime } from "@/components/custom/utils/func/formatDate";
 import { Suspense, useEffect, useState } from "react";
@@ -31,6 +34,120 @@ const statusLabel: Record<string, string> = {
   "in-progress": "In Progress",
   complete: "Completed",
 };
+
+const ACCENT_GREEN = "#1E4B35";
+
+function statusBadgeClass(status: string): string {
+  switch (status) {
+    case "complete":
+      return "bg-emerald-700 text-white";
+    case "in-progress":
+      return "bg-blue-100 text-blue-800";
+    default:
+      return "bg-gray-100 text-gray-700";
+  }
+}
+
+function TaskCollapsible({ task, taskNum }: { task: any; taskNum: number }) {
+  const [open, setOpen] = useState(true);
+  const collabList = (task.collaborators ?? []).filter((c: string) => c);
+  const hasCollabs = collabList.length > 0;
+  return (
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <div className="border rounded-xl bg-white">
+        <CollapsibleTrigger asChild>
+          <div className="flex items-center justify-between px-4 py-3 sm:px-5 cursor-pointer hover:bg-muted/40 rounded-t-xl">
+            <h3
+              className="text-base sm:text-lg font-bold"
+              style={{ color: ACCENT_GREEN }}
+            >
+              Task {taskNum}: {task.taskName}
+            </h3>
+            {open ? (
+              <ChevronUp className="h-4 w-4 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            )}
+          </div>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="px-4 pb-4 sm:px-5 space-y-4 border-t pt-4">
+            <div>
+              <p className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase mb-1">
+                Task Name
+              </p>
+              <p className="text-sm">{task.taskName}</p>
+            </div>
+            <div>
+              <p className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase mb-1">
+                Main Goal
+              </p>
+              <p className="text-sm whitespace-pre-wrap">{task.goal}</p>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase mb-1">
+                  Deadline
+                </p>
+                <p className="text-sm font-semibold">
+                  {fmtDate(task.dueDate)}
+                </p>
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase mb-1">
+                  Task Status
+                </p>
+                <span
+                  className={`inline-block text-[10px] font-semibold uppercase tracking-wider px-3 py-1 rounded ${statusBadgeClass(task.status)}`}
+                >
+                  {statusLabel[task.status] ?? task.status}
+                </span>
+              </div>
+            </div>
+            {hasCollabs && (
+              <div>
+                <p className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase mb-2">
+                  Collaborators
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {collabList.map((c: string, j: number) => (
+                    <span
+                      key={j}
+                      className="text-xs bg-white border rounded-md px-2 py-1 inline-flex items-center gap-1"
+                    >
+                      <User className="h-3 w-3 text-muted-foreground" />
+                      {c}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {hasCollabs && task.collabDescription && (
+              <div>
+                <p className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase mb-1">
+                  How did you work with collaborator(s)
+                </p>
+                <p className="text-sm whitespace-pre-wrap">
+                  {task.collabDescription}
+                </p>
+              </div>
+            )}
+            {task.reflection && (
+              <div>
+                <p className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase mb-1">
+                  Reflection
+                </p>
+                <p className="text-sm whitespace-pre-wrap">
+                  {task.reflection}
+                </p>
+              </div>
+            )}
+          </div>
+        </CollapsibleContent>
+      </div>
+    </Collapsible>
+  );
+}
 
 function SubmissionCollapsible({
   submission,
@@ -45,71 +162,34 @@ function SubmissionCollapsible({
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
-      <div className="border rounded-xl">
+      <div className="border-l-4 rounded-xl bg-white overflow-hidden" style={{ borderLeftColor: ACCENT_GREEN }}>
         <CollapsibleTrigger asChild>
-          <div className="flex items-center justify-between px-4 py-3 sm:px-5 cursor-pointer hover:bg-muted/50 rounded-xl">
-            <div className="flex items-center gap-3">
-              <h2 className="text-base font-semibold">Submission {subNum}</h2>
-              <span className="text-xs text-muted-foreground flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                {fmtDateTime(submission.dateSubmitted)}
-              </span>
+          <div className="flex items-center justify-between px-4 py-3 sm:px-5 cursor-pointer bg-muted/40 hover:bg-muted/60">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="h-10 w-10 rounded-md bg-emerald-100 flex items-center justify-center shrink-0">
+                <ClipboardCheck className="h-5 w-5" style={{ color: ACCENT_GREEN }} />
+              </div>
+              <div className="min-w-0">
+                <h2 className="text-base font-semibold">
+                  Work Log Submission {subNum}
+                </h2>
+                <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                  <Clock className="h-3 w-3" />
+                  Submitted on {fmtDateTime(submission.dateSubmitted)}
+                </p>
+              </div>
             </div>
             {open ? (
-              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              <ChevronUp className="h-4 w-4 text-muted-foreground" />
             ) : (
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
             )}
           </div>
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <div className="px-4 pb-4 sm:px-5 space-y-4">
+          <div className="p-4 sm:p-5 space-y-4 bg-white">
             {(submission.taskList ?? []).map((task: any, i: number) => (
-              <Card key={i} className="border rounded-xl">
-                <CardContent className="p-4 sm:p-5 space-y-4">
-                  <h3 className="text-base font-bold">
-                    Task {i + 1}: {task.taskName}
-                  </h3>
-                  <div>
-                    <p className="text-xs font-medium text-muted-foreground mb-1">Main Goal</p>
-                    <p className="text-sm">{task.goal}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium text-muted-foreground mb-1">Collaborators</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {(task.collaborators ?? []).length > 0 ? (
-                        task.collaborators.map((c: string, j: number) => (
-                          <span
-                            key={j}
-                            className="text-xs bg-zinc-100 border rounded-md px-2 py-0.5"
-                          >
-                            {c}
-                          </span>
-                        ))
-                      ) : (
-                        <span className="text-sm text-muted-foreground">None</span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-xs font-medium text-muted-foreground mb-1">Deadline</p>
-                      <p className="text-sm flex items-center gap-1.5">
-                        <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" />
-                        {fmtDate(task.dueDate)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-muted-foreground mb-1">Completion</p>
-                      <p className="text-sm">{statusLabel[task.status] ?? task.status}</p>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium text-muted-foreground mb-1">Reflection</p>
-                    <p className="text-sm whitespace-pre-wrap">{task.reflection}</p>
-                  </div>
-                </CardContent>
-              </Card>
+              <TaskCollapsible key={i} task={task} taskNum={i + 1} />
             ))}
           </div>
         </CollapsibleContent>
@@ -215,27 +295,54 @@ function ReviewContent() {
         ]}
       />
 
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold">
-            Week {weekNum}
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {weekSubmissions.length} submission
-            {weekSubmissions.length === 1 ? "" : "s"}
-            {draft ? " · 1 draft in progress" : ""}
-          </p>
-        </div>
-        {weekSubmissions.length > 0 && (
-          <Button
-            className="shrink-0 rounded-lg font-semibold text-white border-0"
-            style={{ backgroundColor: "#1E4B35" }}
-            onClick={handleResubmit}
-          >
-            Create Resubmission
-          </Button>
-        )}
-      </div>
+      {(() => {
+        const SEMESTER_START = new Date("2026-01-26T00:00:00");
+        const weekIdx = parseInt(weekNum) - 1;
+        const weekStart = new Date(SEMESTER_START);
+        weekStart.setDate(weekStart.getDate() + weekIdx * 7);
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekEnd.getDate() + 6);
+        const dueDate = new Date(weekStart);
+        dueDate.setDate(dueDate.getDate() + 7);
+        dueDate.setHours(23, 59, 0, 0);
+        const fmtMD = (d: Date) =>
+          d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+        const fmtDue = (d: Date) =>
+          `${d.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+          })}, ${d.toLocaleTimeString("en-US", {
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true,
+          })}`;
+        return (
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div>
+              <h1
+                className="text-2xl sm:text-3xl md:text-4xl font-bold"
+                style={{ color: "#1E4B35" }}
+              >
+                Week {weekNum} ({fmtMD(weekStart)} - {fmtMD(weekEnd)})
+              </h1>
+              <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1.5">
+                <CalendarDays className="h-4 w-4" />
+                Due: {fmtDue(dueDate)}
+              </p>
+            </div>
+            {weekSubmissions.length > 0 && (
+              <Button
+                className="shrink-0 rounded-lg font-semibold text-zinc-900 border-0 hover:opacity-90"
+                style={{ backgroundColor: "#f59e0b" }}
+                onClick={handleResubmit}
+              >
+                <Pencil className="h-4 w-4 mr-2" />
+                Create Resubmission
+              </Button>
+            )}
+          </div>
+        );
+      })()}
 
       <div className="space-y-4">
         {draft && (

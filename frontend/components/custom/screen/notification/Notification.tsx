@@ -4,12 +4,12 @@ import {
   getWorkLog,
   getDrafts,
 } from "@/components/custom/utils/api_utils/worklogs/allReq";
+import { getClass } from "@/components/custom/utils/api_utils/req/class";
 import { useAtomValue, useSetAtom } from "jotai";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { userAtom } from "@/components/custom/utils/context/state";
 import { worklogEditAtom } from "@/components/custom/utils/context/state";
-import getWorklogDate from "../../utils/func/getDate";
 import { fmtDateTime } from "../../utils/func/formatDate";
 import { useRouter } from "next/navigation";
 import {
@@ -43,12 +43,23 @@ interface WeekEntry {
 }
 
 const accentGreen = "#1E4B35";
-const SEMESTER_START = new Date("2026-01-26T00:00:00");
+const FALLBACK_SEMESTER_START = new Date("2026-01-26T00:00:00");
 
 function calendarDaysBetween(from: Date, to: Date): number {
   const a = new Date(from.getFullYear(), from.getMonth(), from.getDate());
   const b = new Date(to.getFullYear(), to.getMonth(), to.getDate());
   return Math.round((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+function parseClassDate(s: string | undefined | null): Date | null {
+  if (!s) return null;
+  try {
+    const cleaned = s.replace(/\[[^\]]+\]$/, "");
+    const d = new Date(cleaned);
+    return Number.isNaN(d.getTime()) ? null : d;
+  } catch {
+    return null;
+  }
 }
 
 function buildWeekEntries(
@@ -57,10 +68,11 @@ function buildWeekEntries(
     dateSubmitted?: string;
     isDraft?: boolean;
   }[],
+  semesterStart: Date,
 ): WeekEntry[] {
   const now = new Date();
-  const worklogInfo = getWorklogDate(SEMESTER_START);
-  const currentWeek = worklogInfo ? parseInt(worklogInfo.weekNumber) - 1 : 0;
+  const daysSinceStart = calendarDaysBetween(semesterStart, now);
+  const currentWeek = Math.max(0, Math.floor(daysSinceStart / 7) + 1);
 
   const submittedMap = new Map<number, { dateSubmitted?: string }>();
   const draftWeeks = new Set<number>();
@@ -78,7 +90,7 @@ function buildWeekEntries(
   const entries: WeekEntry[] = [];
 
   for (let w = totalWeeks; w >= 1; w--) {
-    const dueDate = new Date(SEMESTER_START);
+    const dueDate = new Date(semesterStart);
     dueDate.setDate(dueDate.getDate() + w * 7);
     dueDate.setHours(23, 59, 0, 0);
     const dueDateStr = dueDate.toLocaleDateString("en-US", {
@@ -243,6 +255,12 @@ export const Notification = () => {
     },
   });
 
+  const { data: classData } = useQuery({
+    queryKey: ["class", userInfo?.classID],
+    enabled: !!userInfo?.classID,
+    queryFn: () => getClass(userInfo!.classID!),
+  });
+
   if (isLoading) return <p className="p-4 sm:p-10">Loading...</p>;
   if (error)
     return (
@@ -256,12 +274,13 @@ export const Notification = () => {
 
   const worklogs = data ?? [];
   const allLogs = [...worklogs, ...(drafts ?? [])];
-  const entries = buildWeekEntries(allLogs);
+  const classStartDate =
+    parseClassDate(classData?.semesterStartDate) ?? FALLBACK_SEMESTER_START;
+  const entries = buildWeekEntries(allLogs, classStartDate);
 
-  const worklogInfo = getWorklogDate(SEMESTER_START);
-  const currentWeekNum = worklogInfo
-    ? parseInt(worklogInfo.weekNumber) - 1
-    : 0;
+  const today = new Date();
+  const daysSinceStart = calendarDaysBetween(classStartDate, today);
+  const currentWeekNum = Math.max(0, Math.floor(daysSinceStart / 7) + 1);
   const currentWeekEntry = entries.find((e) => e.week === currentWeekNum);
 
   const pastEntries = entries.filter((e) => e.status !== "upcoming");

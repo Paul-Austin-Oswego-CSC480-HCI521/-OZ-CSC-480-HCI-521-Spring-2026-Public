@@ -5,7 +5,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
 import { isInstructorRole, userAtom } from "@/components/custom/utils/context/state";
-import { getAllUsers, getClasses } from "@/components/custom/utils/api_utils/req/class";
+import { getAllUsers, getClass, getClasses } from "@/components/custom/utils/api_utils/req/class";
 import {
   getWorklogsForClass,
   updateWorklog,
@@ -27,6 +27,7 @@ import {
   ArrowLeft,
   ChevronRight,
   ChevronDown,
+  ChevronUp,
   CheckCircle2,
   XCircle,
   Clock,
@@ -35,6 +36,8 @@ import {
   Mail,
   AlertTriangle,
   X,
+  User,
+  ClipboardCheck,
 } from "lucide-react";
 import getWorklogDate from "@/components/custom/utils/func/getDate";
 import { fmtDate, fmtDateTime } from "@/components/custom/utils/func/formatDate";
@@ -48,6 +51,17 @@ function calendarDaysBetween(from: Date, to: Date): number {
   const a = new Date(from.getFullYear(), from.getMonth(), from.getDate());
   const b = new Date(to.getFullYear(), to.getMonth(), to.getDate());
   return Math.round((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+function parseClassDate(s: string | undefined | null): Date | null {
+  if (!s) return null;
+  try {
+    const cleaned = s.replace(/\[[^\]]+\]$/, "");
+    const d = new Date(cleaned);
+    return Number.isNaN(d.getTime()) ? null : d;
+  } catch {
+    return null;
+  }
 }
 
 type WeekStatus = "submitted" | "late" | "missing" | "current" | "upcoming";
@@ -64,9 +78,13 @@ interface WeekRow {
   reviewed: boolean;
 }
 
-function buildWeekRows(studentLogs: any[], currentWeek: number): WeekRow[] {
-  const now = new Date();
-
+function buildWeekRows(
+  studentLogs: any[],
+  semesterStart: Date,
+  effectiveNow: Date,
+  currentWeek: number,
+  isArchived: boolean,
+): WeekRow[] {
   const logsByWeek = new Map<number, any[]>();
   studentLogs.forEach((log) => {
     const w = parseInt(String(log.worklogName));
@@ -82,11 +100,12 @@ function buildWeekRows(studentLogs: any[], currentWeek: number): WeekRow[] {
     ),
   );
 
-  const totalWeeks = currentWeek + 1; // include "next" upcoming week
+  // Archived classes have no "next" upcoming week — every week is in the past.
+  const totalWeeks = isArchived ? currentWeek : currentWeek + 1;
   const rows: WeekRow[] = [];
 
   for (let w = totalWeeks; w >= 1; w--) {
-    const dueDate = new Date(SEMESTER_START);
+    const dueDate = new Date(semesterStart);
     dueDate.setDate(dueDate.getDate() + w * 7);
     dueDate.setHours(23, 59, 0, 0);
     const dueDateStr = dueDate.toLocaleDateString("en-US", {
@@ -99,9 +118,9 @@ function buildWeekRows(studentLogs: any[], currentWeek: number): WeekRow[] {
     const logs = logsByWeek.get(w) ?? [];
     const latest = logs[0] ?? null;
     const reviewed = latest?.reviewed === true;
-    const daysUntilDue = calendarDaysBetween(now, dueDate);
+    const daysUntilDue = calendarDaysBetween(effectiveNow, dueDate);
 
-    if (w > currentWeek) {
+    if (!isArchived && w > currentWeek) {
       rows.push({
         week: w,
         dueDate,
@@ -111,7 +130,7 @@ function buildWeekRows(studentLogs: any[], currentWeek: number): WeekRow[] {
         logs,
         reviewed,
       });
-    } else if (w === currentWeek) {
+    } else if (!isArchived && w === currentWeek) {
       if (latest) {
         const submitted = new Date(latest.dateSubmitted);
         const diff = calendarDaysBetween(dueDate, submitted);
@@ -148,7 +167,11 @@ function buildWeekRows(studentLogs: any[], currentWeek: number): WeekRow[] {
         reviewed,
       });
     } else {
-      const overdueDays = calendarDaysBetween(dueDate, now);
+      const overdueDays = calendarDaysBetween(dueDate, effectiveNow);
+      if (isArchived && overdueDays < 0) {
+        // Archived class ended before this week's deadline — skip this row.
+        continue;
+      }
       rows.push({
         week: w,
         dueDate,
@@ -261,6 +284,186 @@ function ReviewToggle({
   );
 }
 
+function ReviewTaskBlock({ task, taskNum }: { task: any; taskNum: number }) {
+  const [open, setOpen] = useState(true);
+  const collabList = (task.collaborators ?? []).filter((c: string) => c);
+  const hasCollabs = collabList.length > 0;
+  const statusBadgeClass =
+    task.status === "complete"
+      ? "bg-emerald-700 text-white"
+      : task.status === "in-progress"
+        ? "bg-blue-100 text-blue-800"
+        : "bg-gray-100 text-gray-700";
+  const statusLabel =
+    task.status === "complete"
+      ? "Completed"
+      : task.status === "in-progress"
+        ? "In Progress"
+        : "Not Started";
+  return (
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <div className="border rounded-xl bg-white">
+        <CollapsibleTrigger asChild>
+          <div className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-muted/40 rounded-t-xl">
+            <h3
+              className="text-base font-bold"
+              style={{ color: ACCENT_GREEN }}
+            >
+              Task {taskNum}: {task.taskName || "Untitled"}
+            </h3>
+            {open ? (
+              <ChevronUp className="h-4 w-4 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            )}
+          </div>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="px-4 pb-4 space-y-4 border-t pt-4">
+            <div>
+              <p className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase mb-1">
+                Task Name
+              </p>
+              <p className="text-sm">{task.taskName || "Untitled"}</p>
+            </div>
+            {task.goal && (
+              <div>
+                <p className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase mb-1">
+                  Main Goal
+                </p>
+                <p className="text-sm whitespace-pre-wrap">{task.goal}</p>
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase mb-1">
+                  Deadline
+                </p>
+                <p className="text-sm font-semibold">
+                  {task.dueDate ? fmtDate(task.dueDate) : "—"}
+                </p>
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase mb-1">
+                  Task Status
+                </p>
+                <span
+                  className={`inline-block text-[10px] font-semibold uppercase tracking-wider px-3 py-1 rounded ${statusBadgeClass}`}
+                >
+                  {statusLabel}
+                </span>
+              </div>
+            </div>
+            {hasCollabs && (
+              <div>
+                <p className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase mb-2">
+                  Collaborators
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {collabList.map((c: string, j: number) => (
+                    <span
+                      key={j}
+                      className="text-xs bg-white border rounded-md px-2 py-1 inline-flex items-center gap-1"
+                    >
+                      <User className="h-3 w-3 text-muted-foreground" />
+                      {c}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {hasCollabs && task.collabDescription && (
+              <div>
+                <p className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase mb-1">
+                  How did you work with collaborator(s)
+                </p>
+                <p className="text-sm whitespace-pre-wrap">
+                  {task.collabDescription}
+                </p>
+              </div>
+            )}
+            {task.reflection && (
+              <div>
+                <p className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase mb-1">
+                  Reflection
+                </p>
+                <p className="text-sm whitespace-pre-wrap">
+                  {task.reflection}
+                </p>
+              </div>
+            )}
+          </div>
+        </CollapsibleContent>
+      </div>
+    </Collapsible>
+  );
+}
+
+function ReviewSubmissionCard({
+  log,
+  subNum,
+  isLatest,
+}: {
+  log: any;
+  subNum: number;
+  isLatest: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <div
+        className="border-l-4 rounded-xl bg-white overflow-hidden"
+        style={{ borderLeftColor: ACCENT_GREEN }}
+      >
+        <CollapsibleTrigger asChild>
+          <div className="flex items-center justify-between gap-3 px-4 py-3 sm:px-5 cursor-pointer bg-muted/40 hover:bg-muted/60">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="h-10 w-10 rounded-md bg-emerald-100 flex items-center justify-center shrink-0">
+                <ClipboardCheck
+                  className="h-5 w-5"
+                  style={{ color: ACCENT_GREEN }}
+                />
+              </div>
+              <div className="min-w-0">
+                <h2 className="text-base font-semibold flex items-center gap-2">
+                  Work Log Submission {subNum}
+                  {isLatest && (
+                    <span
+                      className="text-[10px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded"
+                      style={{
+                        backgroundColor: "rgba(30, 75, 53, 0.1)",
+                        color: ACCENT_GREEN,
+                      }}
+                    >
+                      Latest
+                    </span>
+                  )}
+                </h2>
+                <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                  <Clock className="h-3 w-3" />
+                  Submitted on {fmtDateTime(log.dateSubmitted)}
+                </p>
+              </div>
+            </div>
+            {open ? (
+              <ChevronUp className="h-4 w-4 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            )}
+          </div>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="p-4 sm:p-5 space-y-3 bg-white">
+            {(log.taskList ?? []).map((task: any, ti: number) => (
+              <ReviewTaskBlock key={ti} task={task} taskNum={ti + 1} />
+            ))}
+          </div>
+        </CollapsibleContent>
+      </div>
+    </Collapsible>
+  );
+}
+
 function WeekReviewDialog({
   row,
   studentName,
@@ -330,7 +533,10 @@ function WeekReviewDialog({
       >
         <div className="flex items-start justify-between gap-4 px-6 py-5 border-b">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center shrink-0 text-base font-semibold">
+            <div
+              className="h-12 w-12 rounded-full flex items-center justify-center shrink-0 text-base font-semibold text-white"
+              style={{ backgroundColor: ACCENT_GREEN }}
+            >
               {initials}
             </div>
             <div className="min-w-0">
@@ -359,81 +565,12 @@ function WeekReviewDialog({
             </p>
           ) : (
             row.logs.map((log: any, li: number) => (
-              <div
+              <ReviewSubmissionCard
                 key={li}
-                className="border rounded-lg bg-white overflow-hidden"
-              >
-                <div className="flex items-center justify-between gap-3 px-4 py-3 border-b">
-                  <p className="text-sm font-semibold flex items-center gap-2">
-                    Submission {row.logs.length - li}
-                    {li === 0 && (
-                      <span
-                        className="text-[10px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded"
-                        style={{
-                          backgroundColor: "rgba(30, 75, 53, 0.1)",
-                          color: ACCENT_GREEN,
-                        }}
-                      >
-                        Latest
-                      </span>
-                    )}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Submitted {fmtDateTime(log.dateSubmitted)} ·{" "}
-                    {log.taskList?.length ?? 0} task(s)
-                  </p>
-                </div>
-                <div className="px-4 py-3 space-y-2">
-                  {(log.taskList ?? []).map((task: any, ti: number) => (
-                    <div
-                      key={ti}
-                      className="border rounded-lg px-3 py-2 text-sm space-y-1"
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="font-medium">
-                          Task {ti + 1}: {task.taskName || "Untitled"}
-                        </p>
-                        <span
-                          className={cn(
-                            "text-xs px-2 py-0.5 rounded-full",
-                            task.status === "complete"
-                              ? "bg-green-100 text-green-700"
-                              : task.status === "in-progress"
-                                ? "bg-blue-100 text-blue-700"
-                                : "bg-gray-100 text-gray-700",
-                          )}
-                        >
-                          {task.status === "complete"
-                            ? "Completed"
-                            : task.status === "in-progress"
-                              ? "In Progress"
-                              : "Not Started"}
-                        </span>
-                      </div>
-                      {task.goal && (
-                        <p className="text-xs text-muted-foreground">
-                          {task.goal}
-                        </p>
-                      )}
-                      <div className="flex flex-wrap gap-x-3 text-xs text-muted-foreground">
-                        {task.dueDate && (
-                          <span className="flex items-center gap-1">
-                            <CalendarDays className="h-3 w-3" />
-                            {fmtDate(task.dueDate)}
-                          </span>
-                        )}
-                        {task.collaborators?.filter((c: string) => c).length >
-                          0 && <span>With: {task.collaborators.join(", ")}</span>}
-                      </div>
-                      {task.reflection && (
-                        <p className="text-xs text-muted-foreground italic">
-                          &quot;{task.reflection}&quot;
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
+                log={log}
+                subNum={row.logs.length - li}
+                isLatest={li === 0}
+              />
             ))
           )}
         </div>
@@ -485,7 +622,6 @@ function WeekRowItem({
   classID?: string;
   onOpenReview: (row: WeekRow) => void;
 }) {
-  const [open, setOpen] = useState(false);
   const hasSubmissions = row.logs.length > 0;
   const latestLog = row.logs[0] ?? null;
   const isCurrent = row.status === "current";
@@ -500,140 +636,49 @@ function WeekRowItem({
       : null;
 
   return (
-    <Collapsible open={open && hasSubmissions} onOpenChange={(o) => hasSubmissions && setOpen(o)}>
-      <div
-        className={cn(
-          "rounded-xl border bg-white transition-colors overflow-hidden",
-          isCurrent && "bg-amber-50 border-amber-300",
-          isMissing && "bg-red-50/50 border-red-200",
-        )}
-      >
-        <CollapsibleTrigger asChild>
-          <div
-            className={cn(
-              "flex items-center gap-3 p-3 sm:p-4",
-              hasSubmissions && "cursor-pointer hover:bg-black/[0.02]",
-            )}
-          >
-            <WeekBadgeIcon status={row.status} />
-            <div className="flex-1 min-w-0">
-              <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 mb-1">
-                <h3 className="text-base sm:text-lg font-bold text-zinc-900">
-                  Week {row.week}
-                </h3>
-                <StatusBadge row={row} />
-              </div>
-              <div className="flex flex-col sm:flex-row sm:gap-6 gap-1 text-xs sm:text-sm text-zinc-600">
-                <span className="flex items-center gap-1.5">
-                  <CalendarDays className="h-3.5 w-3.5 shrink-0 opacity-70" />
-                  Due: {row.dueDateStr}
-                  {deadlineHint && (
-                    <span className="ml-2 text-red-600 font-medium">
-                      {deadlineHint}
-                    </span>
-                  )}
+    <div
+      className={cn(
+        "rounded-xl border bg-white transition-colors overflow-hidden",
+        isCurrent && "bg-amber-50 border-amber-300",
+        isMissing && "bg-red-50/50 border-red-200",
+      )}
+    >
+      <div className="flex items-center gap-3 p-3 sm:p-4">
+        <WeekBadgeIcon status={row.status} />
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 mb-1">
+            <h3 className="text-base sm:text-lg font-bold text-zinc-900">
+              Week {row.week}
+            </h3>
+            <StatusBadge row={row} />
+          </div>
+          <div className="flex flex-col sm:flex-row sm:gap-6 gap-1 text-xs sm:text-sm text-zinc-600">
+            <span className="flex items-center gap-1.5">
+              <CalendarDays className="h-3.5 w-3.5 shrink-0 opacity-70" />
+              Due: {row.dueDateStr}
+              {deadlineHint && (
+                <span className="ml-2 text-red-600 font-medium">
+                  {deadlineHint}
                 </span>
-                {latestLog?.dateSubmitted && (
-                  <span className="flex items-center gap-1.5">
-                    <Clock className="h-3.5 w-3.5 shrink-0 opacity-70" />
-                    Submitted: {fmtDate(latestLog.dateSubmitted)}
-                  </span>
-                )}
-              </div>
-            </div>
-            <div
-              className="flex items-center gap-2 shrink-0"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {hasSubmissions && latestLog ? (
-                <ReviewToggle log={latestLog} onOpen={() => onOpenReview(row)} />
-              ) : (
-                <span className="text-xs text-muted-foreground">—</span>
               )}
-              {hasSubmissions ? (
-                <ChevronDown
-                  className={cn(
-                    "h-4 w-4 text-muted-foreground transition-transform",
-                    open ? "" : "-rotate-90",
-                  )}
-                />
-              ) : (
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              )}
-            </div>
+            </span>
+            {latestLog?.dateSubmitted && (
+              <span className="flex items-center gap-1.5">
+                <Clock className="h-3.5 w-3.5 shrink-0 opacity-70" />
+                Submitted: {fmtDate(latestLog.dateSubmitted)}
+              </span>
+            )}
           </div>
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <div className="border-t px-3 sm:px-4 py-3 space-y-3 bg-white">
-            {row.logs.map((log: any, li: number) => (
-              <div
-                key={li}
-                className="border rounded-lg p-3 space-y-2"
-              >
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold">
-                    Submission {row.logs.length - li}
-                    {li === 0 && (
-                      <span
-                        className="ml-2 text-[10px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded"
-                        style={{
-                          backgroundColor: "rgba(30, 75, 53, 0.1)",
-                          color: ACCENT_GREEN,
-                        }}
-                      >
-                        Latest
-                      </span>
-                    )}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {fmtDateTime(log.dateSubmitted)} ·{" "}
-                    {log.taskList?.length ?? 0} task(s)
-                  </p>
-                </div>
-                {(log.taskList ?? []).map((task: any, ti: number) => (
-                  <div
-                    key={ti}
-                    className="border rounded-md px-3 py-2 text-sm space-y-1"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="font-medium">
-                        Task {ti + 1}: {task.taskName || "Untitled"}
-                      </p>
-                      <span
-                        className={cn(
-                          "text-xs px-2 py-0.5 rounded-full",
-                          task.status === "complete"
-                            ? "bg-green-100 text-green-700"
-                            : task.status === "in-progress"
-                              ? "bg-blue-100 text-blue-700"
-                              : "bg-gray-100 text-gray-700",
-                        )}
-                      >
-                        {task.status === "complete"
-                          ? "Completed"
-                          : task.status === "in-progress"
-                            ? "In Progress"
-                            : "Not Started"}
-                      </span>
-                    </div>
-                    {task.goal && (
-                      <p className="text-xs text-muted-foreground">
-                        {task.goal}
-                      </p>
-                    )}
-                    {task.reflection && (
-                      <p className="text-xs text-muted-foreground italic">
-                        &quot;{task.reflection}&quot;
-                      </p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            ))}
-          </div>
-        </CollapsibleContent>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          {hasSubmissions && latestLog ? (
+            <ReviewToggle log={latestLog} onOpen={() => onOpenReview(row)} />
+          ) : (
+            <span className="text-xs text-muted-foreground">—</span>
+          )}
+        </div>
       </div>
-    </Collapsible>
+    </div>
   );
 }
 
@@ -678,6 +723,11 @@ export default function StudentHistoryPage() {
     queryFn: getAllUsers,
     enabled: isInstructorRole(userInfo?.role),
   });
+  const { data: classDetail } = useQuery({
+    queryKey: ["class", activeClassID],
+    queryFn: () => getClass(activeClassID),
+    enabled: !!activeClassID,
+  });
 
   if (!mounted || !userInfo)
     return <p className="p-4 sm:p-10">Loading...</p>;
@@ -698,17 +748,49 @@ export default function StudentHistoryPage() {
     (l: any) => l.authorEmail === emailParam && !l.isDraft,
   );
 
-  const worklogInfo = getWorklogDate(SEMESTER_START);
-  const currentWeek = worklogInfo ? parseInt(worklogInfo.weekNumber) - 1 : 0;
-  const rows = buildWeekRows(studentLogs, currentWeek);
+  const isArchived = classDetail?.isArchived === true;
+  const parsedStart = parseClassDate(classDetail?.semesterStartDate);
+  const parsedEnd = parseClassDate(classDetail?.semsesterEndDate);
+  const semesterStart =
+    isArchived && parsedStart ? parsedStart : SEMESTER_START;
+  const today = new Date();
+  // For archived classes, cap "now" at the semester end so overdue counts
+  // don't grow forever. Without a stored archive timestamp, we use
+  // min(today, semesterEnd) as a best-effort end-of-class moment.
+  const effectiveNow =
+    isArchived && parsedEnd
+      ? new Date(Math.min(today.getTime(), parsedEnd.getTime()))
+      : today;
+
+  let currentWeek: number;
+  if (isArchived) {
+    const daysSinceStart = calendarDaysBetween(semesterStart, effectiveNow);
+    const weekFromTime = Math.max(0, Math.floor(daysSinceStart / 7));
+    const maxStudentWeek = studentLogs.reduce((m: number, log: any) => {
+      const wk = parseInt(String(log.worklogName));
+      return isNaN(wk) ? m : Math.max(m, wk);
+    }, 0);
+    currentWeek = Math.max(weekFromTime, maxStudentWeek);
+  } else {
+    const worklogInfo = getWorklogDate(SEMESTER_START);
+    currentWeek = worklogInfo ? parseInt(worklogInfo.weekNumber) - 1 : 0;
+  }
+  const rows = buildWeekRows(
+    studentLogs,
+    semesterStart,
+    effectiveNow,
+    currentWeek,
+    isArchived,
+  );
 
   // Completion stats: weeks 1..currentWeek count as eligible
   const eligibleRows = rows.filter((r) => r.week <= currentWeek);
   const submittedCount = eligibleRows.filter(
     (r) => r.status === "submitted" || r.status === "late",
   ).length;
-  const totalEligible = eligibleRows.length || 1;
-  const completionPct = Math.round((submittedCount / totalEligible) * 100);
+  const totalEligible = eligibleRows.length;
+  const completionPct =
+    totalEligible > 0 ? Math.round((submittedCount / totalEligible) * 100) : 0;
 
   const initials = (student.name || student.email || "?")
     .split(" ")
@@ -725,18 +807,18 @@ export default function StudentHistoryPage() {
     <div className="p-3 sm:p-4 md:p-6 w-full">
       <Breadcrumbs
         items={
-          classIDFromQuery
+          fromParam === "classes"
             ? [
-                { label: "Archived Classes", href: "/instructor/archived" },
-                {
-                  label: classIDFromQuery,
-                  href: `/instructor/archived/${encodeURIComponent(classIDFromQuery)}`,
-                },
+                { label: "Manage Class", href: "/instructor/classes" },
                 { label: student.name || student.email },
               ]
-            : fromParam === "classes"
+            : classIDFromQuery
               ? [
-                  { label: "Manage Class", href: "/instructor/classes" },
+                  { label: "Archived Classes", href: "/instructor/archived" },
+                  {
+                    label: classIDFromQuery,
+                    href: `/instructor/archived/${encodeURIComponent(classIDFromQuery)}`,
+                  },
                   { label: student.name || student.email },
                 ]
               : [
@@ -806,8 +888,9 @@ export default function StudentHistoryPage() {
                   />
                 </div>
                 <p className="text-xs text-white/80 mt-2">
-                  {submittedCount} out of {totalEligible} log
-                  {totalEligible === 1 ? "" : "s"} submitted
+                  {totalEligible === 0
+                    ? "No deadlines yet"
+                    : `${submittedCount} out of ${totalEligible} log${totalEligible === 1 ? "" : "s"} submitted`}
                 </p>
               </CardContent>
             </Card>

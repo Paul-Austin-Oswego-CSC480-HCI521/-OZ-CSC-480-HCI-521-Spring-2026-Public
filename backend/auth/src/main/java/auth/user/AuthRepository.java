@@ -92,6 +92,12 @@ public class AuthRepository{
             new Document("$push", new Document("students", studentDoc))
         );
 
+        classData.updateOne(
+            new Document("classID", classID),
+            new Document("$pull",
+            new Document("inactiveStudents", new Document("email", email)))
+        );
+
         return user;
     }
 
@@ -103,14 +109,61 @@ public class AuthRepository{
         if (!mongoClient.listDatabaseNames().into(new ArrayList<>()).contains(user.getString("classID"))) return null;
 
         String existingClassID = user.getString("classID");
-        if (existingClassID != null) {
-            MongoDatabase oldClassDb = mongoClient.getDatabase(existingClassID);
-            MongoCollection<Document> oldClassData = oldClassDb.getCollection("classData");
+    //     if (existingClassID != null) {
+    //         MongoDatabase oldClassDb = mongoClient.getDatabase(existingClassID);
+    //         MongoCollection<Document> oldClassData = oldClassDb.getCollection("classData");
+    //         oldClassData.updateOne(
+    //             new Document("classID", existingClassID),
+    //             new Document("$pull", new Document("students", new Document("email", email)))
+    //         );
+    //         if ("student".equals(user.getString("role"))) {
+    //             oldClassData.updateOne(
+    //             new Document("classID", existingClassID),
+    //             new Document("$addToSet",
+    //             new Document("inactiveStudents", email))
+    //       );
+    //   }
+    //     }
+
+    if (existingClassID != null) {
+        MongoDatabase oldClassDb = mongoClient.getDatabase(existingClassID);
+        MongoCollection<Document> oldClassData = oldClassDb.getCollection("classData");
+
+        // Snapshot: read the student's per-class entry BEFORE we pull them off
+        // the roster, so we can preserve classStanding for the inactive list.
+        Document classDoc = oldClassData.find(new Document("classID", existingClassID)).first();
+        Document rosterEntry = null;
+        if (classDoc != null) {
+            List<Document> roster = classDoc.getList("students", Document.class, new ArrayList<>());
+            for (Document s : roster) {
+                if (email.equals(s.getString("email"))) {
+                    rosterEntry = s;
+                    break;
+                }
+            }
+        }
+
+        oldClassData.updateOne(
+            new Document("classID", existingClassID),
+            new Document("$pull", new Document("students", new Document("email", email)))
+        );
+
+        if ("student".equals(user.getString("role"))) {
+            Document snapshot = new Document()
+                .append("email", email)
+                .append("name", user.getString("name"))
+                .append("classStanding",
+                    rosterEntry != null ? rosterEntry.getString("classStanding") : null)
+                .append("team", user.get("team"));
+
             oldClassData.updateOne(
                 new Document("classID", existingClassID),
-                new Document("$pull", new Document("students", new Document("email", email)))
+                new Document("$addToSet", new Document("inactiveStudents", snapshot))
             );
         }
+    }
+
+    
 
         user.remove("classID");
         user.put("team", new ArrayList<>());
@@ -286,7 +339,8 @@ public class AuthRepository{
             .append("studendAccessEndDate", studentClass.getStudendAccessEndDate())
             .append("isArchived", studentClass.getIsArchived())
             .append("students", studentClass.getStudents())
-            .append("instructors", initialInstructors); 
+            .append("instructors", initialInstructors)
+            .append("inactiveStudents", new ArrayList<>()); 
 
         classData.insertOne(classDoc);
         // add instructor to the class

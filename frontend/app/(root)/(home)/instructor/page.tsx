@@ -21,7 +21,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import getWorklogDate from "@/components/custom/utils/func/getDate";
 import { fmtDate, fmtDateTime } from "@/components/custom/utils/func/formatDate";
 import {
   AlertDialog,
@@ -39,12 +38,14 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronDown,
+  ChevronUp,
   Search,
   AlertTriangle,
   CalendarDays,
   Users,
   X,
   ClipboardCheck,
+  User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -56,8 +57,19 @@ function calendarDaysBetween(from: Date, to: Date): number {
   return Math.round((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-function getWeekRange(week: number) {
-  const start = new Date(semesterStart);
+function parseClassDate(s: string | undefined | null): Date | null {
+  if (!s) return null;
+  try {
+    const cleaned = s.replace(/\[[^\]]+\]$/, "");
+    const d = new Date(cleaned);
+    return Number.isNaN(d.getTime()) ? null : d;
+  } catch {
+    return null;
+  }
+}
+
+function getWeekRange(week: number, base: Date = semesterStart) {
+  const start = new Date(base);
   start.setDate(start.getDate() + (week - 1) * 7);
   const end = new Date(start);
   end.setDate(end.getDate() + 6);
@@ -331,6 +343,7 @@ function StudentDetailDialog({
   open,
   onClose,
   classID,
+  semStart,
 }: {
   student: StudentEntry | null;
   selectedWeek: number;
@@ -340,6 +353,7 @@ function StudentDetailDialog({
   open: boolean;
   onClose: () => void;
   classID?: string;
+  semStart: Date;
 }) {
   if (!student) return null;
 
@@ -385,7 +399,10 @@ function StudentDetailDialog({
       >
         <div className="flex items-start justify-between gap-4 px-6 py-5 border-b">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center shrink-0 text-base font-semibold">
+            <div
+              className="h-12 w-12 rounded-full flex items-center justify-center shrink-0 text-base font-semibold text-white"
+              style={{ backgroundColor: "#1E4B35" }}
+            >
               {student.name
                 .split(" ")
                 .map((n) => n[0])
@@ -446,6 +463,7 @@ function StudentDetailDialog({
                 logs={logs}
                 isSelectedWeek={week === selectedWeek}
                 classID={classID}
+                semStart={semStart}
               />
             ))
           )}
@@ -471,18 +489,18 @@ function WeekSection({
   logs,
   isSelectedWeek,
   classID,
+  semStart,
 }: {
   week: number;
   logs: any[];
   isSelectedWeek: boolean;
   classID?: string;
+  semStart: Date;
 }) {
   const [open, setOpen] = useState(isSelectedWeek);
   const latestLog = logs[0] ?? null;
   const hasSubmissions = logs.length > 0;
 
-  // Status calculation — same rules as the main page
-  const semStart = new Date("2026-01-26T00:00:00");
   const dueDate = new Date(semStart);
   dueDate.setDate(dueDate.getDate() + week * 7);
   dueDate.setHours(23, 59, 0, 0);
@@ -608,6 +626,121 @@ function WeekSection({
   );
 }
 
+function DashboardTaskBlock({ task, taskNum }: { task: any; taskNum: number }) {
+  const [open, setOpen] = useState(true);
+  const collabList = (task.collaborators ?? []).filter((c: string) => c);
+  const hasCollabs = collabList.length > 0;
+  const statusBadgeClass =
+    task.status === "complete"
+      ? "bg-emerald-700 text-white"
+      : task.status === "in-progress"
+        ? "bg-blue-100 text-blue-800"
+        : "bg-gray-100 text-gray-700";
+  const statusLabel =
+    task.status === "complete"
+      ? "Completed"
+      : task.status === "in-progress"
+        ? "In Progress"
+        : "Not Started";
+  return (
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <div className="border rounded-xl bg-white">
+        <CollapsibleTrigger asChild>
+          <div className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-muted/40 rounded-t-xl">
+            <h3
+              className="text-base font-bold"
+              style={{ color: "#1E4B35" }}
+            >
+              Task {taskNum}: {task.taskName || "Untitled"}
+            </h3>
+            {open ? (
+              <ChevronUp className="h-4 w-4 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            )}
+          </div>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="px-4 pb-4 space-y-4 border-t pt-4">
+            <div>
+              <p className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase mb-1">
+                Task Name
+              </p>
+              <p className="text-sm">{task.taskName || "Untitled"}</p>
+            </div>
+            {task.goal && (
+              <div>
+                <p className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase mb-1">
+                  Main Goal
+                </p>
+                <p className="text-sm whitespace-pre-wrap">{task.goal}</p>
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase mb-1">
+                  Deadline
+                </p>
+                <p className="text-sm font-semibold">
+                  {task.dueDate ? fmtDate(task.dueDate) : "—"}
+                </p>
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase mb-1">
+                  Task Status
+                </p>
+                <span
+                  className={`inline-block text-[10px] font-semibold uppercase tracking-wider px-3 py-1 rounded ${statusBadgeClass}`}
+                >
+                  {statusLabel}
+                </span>
+              </div>
+            </div>
+            {hasCollabs && (
+              <div>
+                <p className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase mb-2">
+                  Collaborators
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {collabList.map((c: string, j: number) => (
+                    <span
+                      key={j}
+                      className="text-xs bg-white border rounded-md px-2 py-1 inline-flex items-center gap-1"
+                    >
+                      <User className="h-3 w-3 text-muted-foreground" />
+                      {c}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {hasCollabs && task.collabDescription && (
+              <div>
+                <p className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase mb-1">
+                  How did you work with collaborator(s)
+                </p>
+                <p className="text-sm whitespace-pre-wrap">
+                  {task.collabDescription}
+                </p>
+              </div>
+            )}
+            {task.reflection && (
+              <div>
+                <p className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase mb-1">
+                  Reflection
+                </p>
+                <p className="text-sm whitespace-pre-wrap">
+                  {task.reflection}
+                </p>
+              </div>
+            )}
+          </div>
+        </CollapsibleContent>
+      </div>
+    </Collapsible>
+  );
+}
+
 function SubmissionCollapsible({
   log,
   subNum,
@@ -623,84 +756,51 @@ function SubmissionCollapsible({
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
-      <div className="border rounded-lg bg-white overflow-hidden">
+      <div
+        className="border-l-4 rounded-xl bg-white overflow-hidden"
+        style={{ borderLeftColor: "#1E4B35" }}
+      >
         <CollapsibleTrigger asChild>
-          <div className="flex items-center justify-between gap-3 px-4 py-3 cursor-pointer hover:bg-muted/40">
-            <div className="min-w-0">
-              <p className="text-sm font-semibold flex items-center gap-2">
-                Submission {subNum}
-                {isLatest && (
-                  <span
-                    className="text-[10px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded"
-                    style={{
-                      backgroundColor: "rgba(30, 75, 53, 0.1)",
-                      color: "#1E4B35",
-                    }}
-                  >
-                    Latest
-                  </span>
-                )}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Submitted {fmtDateTime(log.dateSubmitted)} ·{" "}
-                {log.taskList?.length ?? 0} task(s)
-              </p>
+          <div className="flex items-center justify-between gap-3 px-4 py-3 sm:px-5 cursor-pointer bg-muted/40 hover:bg-muted/60">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="h-10 w-10 rounded-md bg-emerald-100 flex items-center justify-center shrink-0">
+                <ClipboardCheck
+                  className="h-5 w-5"
+                  style={{ color: "#1E4B35" }}
+                />
+              </div>
+              <div className="min-w-0">
+                <h2 className="text-base font-semibold flex items-center gap-2">
+                  Work Log Submission {subNum}
+                  {isLatest && (
+                    <span
+                      className="text-[10px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded"
+                      style={{
+                        backgroundColor: "rgba(30, 75, 53, 0.1)",
+                        color: "#1E4B35",
+                      }}
+                    >
+                      Latest
+                    </span>
+                  )}
+                </h2>
+                <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                  <Clock className="h-3 w-3" />
+                  Submitted on {fmtDateTime(log.dateSubmitted)}
+                </p>
+              </div>
             </div>
-            <ChevronDown
-              className={cn(
-                "h-4 w-4 text-muted-foreground shrink-0 transition-transform",
-                open ? "" : "-rotate-90",
-              )}
-            />
+            {open ? (
+              <ChevronUp className="h-4 w-4 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            )}
           </div>
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <div className="px-4 pb-4 space-y-2">
+          <div className="p-4 sm:p-5 space-y-3 bg-white">
             {(log.taskList ?? []).map((task: any, ti: number) => (
-              <div
-                key={ti}
-                className="border rounded-lg px-3 py-2 text-sm space-y-1"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <p className="font-medium">
-                    Task {ti + 1}: {task.taskName || "Untitled"}
-                  </p>
-                  <span
-                    className={`text-xs px-2 py-0.5 rounded-full ${
-                      task.status === "complete"
-                        ? "bg-green-100 text-green-700"
-                        : task.status === "in-progress"
-                          ? "bg-blue-100 text-blue-700"
-                          : "bg-gray-100 text-gray-700"
-                    }`}
-                  >
-                    {task.status === "complete"
-                      ? "Completed"
-                      : task.status === "in-progress"
-                        ? "In Progress"
-                        : "Not Started"}
-                  </span>
-                </div>
-                {task.goal && (
-                  <p className="text-xs text-muted-foreground">{task.goal}</p>
-                )}
-                <div className="flex flex-wrap gap-x-3 text-xs text-muted-foreground">
-                  {task.dueDate && (
-                    <span className="flex items-center gap-1">
-                      <CalendarDays className="h-3 w-3" />
-                      {fmtDate(task.dueDate)}
-                    </span>
-                  )}
-                  {task.collaborators?.filter((c: string) => c).length > 0 && (
-                    <span>With: {task.collaborators.join(", ")}</span>
-                  )}
-                </div>
-                {task.reflection && (
-                  <p className="text-xs text-muted-foreground italic">
-                    &quot;{task.reflection}&quot;
-                  </p>
-                )}
-              </div>
+              <DashboardTaskBlock key={ti} task={task} taskNum={ti + 1} />
             ))}
           </div>
         </CollapsibleContent>
@@ -718,10 +818,7 @@ const InstructorDashboard = () => {
     setMounted(true);
   }, []);
 
-  const worklogInfo = getWorklogDate(semesterStart);
-  const maxWeek = worklogInfo ? parseInt(worklogInfo.weekNumber) : 1;
-
-  const [selectedWeek, setSelectedWeek] = useState(maxWeek - 1);
+  const [selectedWeek, setSelectedWeek] = useState(1);
   const [search, setSearch] = useState("");
   const [selectedEmail, setSelectedEmail] = useState<string | null>(null);
   const [dialogMode, setDialogMode] = useState<"week" | "history">("history");
@@ -729,6 +826,7 @@ const InstructorDashboard = () => {
   const [teamFilter, setTeamFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [reviewFilter, setReviewFilter] = useState<string>("all");
+
   const ROW_LIMIT = 10;
 
   const {
@@ -746,6 +844,39 @@ const InstructorDashboard = () => {
       (c: any) => !c.isArchived && c.classID === userInfo?.classID,
     ) ?? null;
   const activeClassID = activeClass?.classID ?? "";
+
+  // Derive week boundaries from the active class's actual dates instead of a
+  // hardcoded semester. maxWeek = upcoming week, maxWeek - 1 = current week.
+  const classStartDate =
+    parseClassDate(activeClass?.semesterStartDate) ?? semesterStart;
+  const classEndDate = parseClassDate(activeClass?.semsesterEndDate);
+  const totalWeeks = classEndDate
+    ? Math.max(
+        1,
+        Math.ceil(calendarDaysBetween(classStartDate, classEndDate) / 7),
+      )
+    : 16;
+  const today = new Date();
+  const daysSinceStart = calendarDaysBetween(classStartDate, today);
+  const maxWeek = Math.max(1, Math.floor(daysSinceStart / 7) + 2);
+
+  // When the active class first resolves, snap the selected week to "current".
+  useEffect(() => {
+    if (activeClass) {
+      setSelectedWeek(Math.max(1, maxWeek - 1));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeClass?.classID]);
+
+  // Reset status filter when switching between current vs previous week, since
+  // "Pending" only applies to the current week and "Missing" only to past weeks.
+  useEffect(() => {
+    setStatusFilter((prev) => {
+      if (prev === "pending" && selectedWeek !== maxWeek) return "all";
+      if (prev === "missing" && selectedWeek === maxWeek) return "all";
+      return prev;
+    });
+  }, [selectedWeek, maxWeek]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["worklogs-for-class", activeClassID],
@@ -841,8 +972,7 @@ const InstructorDashboard = () => {
         new Date(b.dateSubmitted).getTime() - new Date(a.dateSubmitted).getTime(),
       );
     const latestLog = logs[0] ?? null;
-    const semStart = new Date("2026-01-26T00:00:00");
-    const dueDate = new Date(semStart);
+    const dueDate = new Date(classStartDate);
     dueDate.setDate(dueDate.getDate() + selectedWeek * 7);
     dueDate.setHours(23, 59, 0, 0);
 
@@ -927,15 +1057,25 @@ const InstructorDashboard = () => {
         >
           <span>👋</span> Hello, {firstName}.
         </h1>
-        <div className="flex items-center gap-3 border rounded-lg px-4 py-2 bg-white shrink-0 self-start">
-          <div className="h-9 w-9 rounded bg-amber-100 flex items-center justify-center shrink-0">
-            <CalendarDays className="h-5 w-5 text-amber-700" />
-          </div>
-          <div className="whitespace-nowrap">
-            <p className="text-xs text-muted-foreground">Week Status</p>
-            <p className="text-sm font-semibold">
-              Week {Math.max(1, maxWeek - 1)} of 16
-            </p>
+        <div className="flex flex-col items-end gap-3 shrink-0 self-start">
+          {userInfo?.classID && (
+            <div className="text-right">
+              <p className="text-sm text-muted-foreground">Active Class</p>
+              <p className="text-xl sm:text-2xl font-bold text-zinc-900">
+                {userInfo.classID}
+              </p>
+            </div>
+          )}
+          <div className="flex items-center gap-3 border rounded-lg px-4 py-2 bg-white">
+            <div className="h-9 w-9 rounded bg-amber-100 flex items-center justify-center shrink-0">
+              <CalendarDays className="h-5 w-5 text-amber-700" />
+            </div>
+            <div className="whitespace-nowrap">
+              <p className="text-xs text-muted-foreground">Week Status</p>
+              <p className="text-sm font-semibold">
+                Week {Math.max(1, maxWeek - 1)} of {totalWeeks}
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -973,7 +1113,7 @@ const InstructorDashboard = () => {
               Week {selectedWeek}
             </p>
             <p className="text-xs text-muted-foreground">
-              {getWeekRange(selectedWeek)}
+              {getWeekRange(selectedWeek, classStartDate)}
             </p>
           </div>
           <Button
@@ -1120,8 +1260,11 @@ const InstructorDashboard = () => {
                 <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="submitted">Submitted</SelectItem>
                 <SelectItem value="late">Late</SelectItem>
-                <SelectItem value="missing">Missing</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
+                {selectedWeek === maxWeek ? (
+                  <SelectItem value="pending">Pending</SelectItem>
+                ) : (
+                  <SelectItem value="missing">Missing</SelectItem>
+                )}
               </SelectContent>
             </Select>
             <Select value={reviewFilter} onValueChange={setReviewFilter}>
@@ -1241,6 +1384,7 @@ const InstructorDashboard = () => {
         open={!!selectedEmail}
         onClose={() => setSelectedEmail(null)}
         classID={activeClassID}
+        semStart={classStartDate}
       />
     </div>
   );

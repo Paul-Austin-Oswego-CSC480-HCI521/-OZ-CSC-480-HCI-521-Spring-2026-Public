@@ -7,6 +7,13 @@ const getAuthClient = () => {
   return createClient(AUTH_URL);
 };
 
+export interface InactiveStudent {
+  email: string;
+  name?: string;
+  classStanding?: string | null;
+  team?: string[];
+}
+
 export interface StudentClass {
   classID: string;
   semesterStartDate: string;
@@ -15,6 +22,7 @@ export interface StudentClass {
   isArchived?: boolean;
   students?: unknown[];
   instructors?: string[];
+  inactiveStudents?: InactiveStudent[];
 }
 
 export interface ClassUser {

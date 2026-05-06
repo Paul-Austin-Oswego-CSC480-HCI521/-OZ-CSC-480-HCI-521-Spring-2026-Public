@@ -7,13 +7,30 @@ import {
   getWorkLog,
   getDraftForWeek,
 } from "@/components/custom/utils/api_utils/worklogs/allReq";
+import { getClass } from "@/components/custom/utils/api_utils/req/class";
 import { useQuery } from "@tanstack/react-query";
 import { CalendarDays } from "lucide-react";
 import { useRouter } from "next/navigation";
-import getWorklogDate from "../../utils/func/getDate";
 
-const TOTAL_WEEKS = 16;
-const SEMESTER_START = new Date("2026-01-26T00:00:00");
+const FALLBACK_SEMESTER_START = new Date("2026-01-26T00:00:00");
+const FALLBACK_TOTAL_WEEKS = 16;
+
+function calendarDaysBetween(from: Date, to: Date): number {
+  const a = new Date(from.getFullYear(), from.getMonth(), from.getDate());
+  const b = new Date(to.getFullYear(), to.getMonth(), to.getDate());
+  return Math.round((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+function parseClassDate(s: string | undefined | null): Date | null {
+  if (!s) return null;
+  try {
+    const cleaned = s.replace(/\[[^\]]+\]$/, "");
+    const d = new Date(cleaned);
+    return Number.isNaN(d.getTime()) ? null : d;
+  } catch {
+    return null;
+  }
+}
 
 const Welcome = () => {
   const router = useRouter();
@@ -25,11 +42,40 @@ const Welcome = () => {
     userInfo?.name?.split(" ")[0] ||
     "there";
 
-  const worklogdayInfo = getWorklogDate(SEMESTER_START);
-  const weekNum = worklogdayInfo
-    ? parseInt(worklogdayInfo.weekNumber) - 1
-    : 0;
+  const { data: classData } = useQuery({
+    queryKey: ["class", userInfo?.classID],
+    enabled: !!userInfo?.classID,
+    queryFn: () => getClass(userInfo!.classID!),
+  });
+
+  const classStartDate =
+    parseClassDate(classData?.semesterStartDate) ?? FALLBACK_SEMESTER_START;
+  const classEndDate = parseClassDate(classData?.semsesterEndDate);
+  const totalWeeks = classEndDate
+    ? Math.max(
+        1,
+        Math.ceil(calendarDaysBetween(classStartDate, classEndDate) / 7),
+      )
+    : FALLBACK_TOTAL_WEEKS;
+
+  const today = new Date();
+  const daysSinceStart = calendarDaysBetween(classStartDate, today);
+  const weekNum = Math.max(0, Math.floor(daysSinceStart / 7) + 1);
   const weekNumber = String(weekNum);
+
+  const currentDeadline = new Date(classStartDate);
+  currentDeadline.setDate(currentDeadline.getDate() + weekNum * 7);
+  currentDeadline.setHours(23, 59, 0, 0);
+  const dueLabel =
+    weekNum > 0
+      ? currentDeadline.toLocaleString("en-US", {
+          weekday: "long",
+          month: "long",
+          day: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+        })
+      : null;
 
   const { data } = useQuery({
     queryKey: ["worklogs", userInfo?.id],
@@ -81,7 +127,7 @@ const Welcome = () => {
     badgeClass = "bg-gray-100 text-gray-900";
   }
 
-  const weekStart = new Date(SEMESTER_START);
+  const weekStart = new Date(classStartDate);
   weekStart.setDate(weekStart.getDate() + (weekNum - 1) * 7);
   const weekEnd = new Date(weekStart);
   weekEnd.setDate(weekEnd.getDate() + 6);
@@ -123,7 +169,7 @@ const Welcome = () => {
             <div className="whitespace-nowrap">
               <p className="text-xs text-muted-foreground">Week Status</p>
               <p className="text-sm font-semibold">
-                Week {weekNum || "—"} of {TOTAL_WEEKS}
+                Week {weekNum || "—"} of {totalWeeks}
               </p>
             </div>
           </div>
@@ -154,7 +200,7 @@ const Welcome = () => {
           <span>
             Next Worklog due on{" "}
             <span className="font-semibold text-amber-200">
-              {worklogdayInfo?.due ?? "—"} EDT
+              {dueLabel ?? "—"} EDT
             </span>
           </span>
         </div>

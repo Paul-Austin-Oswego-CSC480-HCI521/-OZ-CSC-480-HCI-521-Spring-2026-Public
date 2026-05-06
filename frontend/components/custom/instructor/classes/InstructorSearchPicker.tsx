@@ -15,7 +15,6 @@ import { toast } from "sonner";
 interface Props {
   classID: string;
   classUsers: ClassUser[];
-  remainingSlots: number;
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -23,7 +22,6 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export default function InstructorSearchPicker({
   classID,
   classUsers,
-  remainingSlots,
 }: Props) {
   const qc = useQueryClient();
   const [draft, setDraft] = useState("");
@@ -116,10 +114,6 @@ export default function InstructorSearchPicker({
     const user = userByEmail.get(email);
     if (!user) {
       setError("No account found. Ask them to sign in first.");
-      return false;
-    }
-    if (chips.length >= remainingSlots) {
-      setError(`Only ${remainingSlots} slot(s) remaining.`);
       return false;
     }
     setChips((prev) => [...prev, email]);
@@ -285,16 +279,11 @@ export default function InstructorSearchPicker({
       </div>
 
       {error && <p className="text-xs text-red-600">{error}</p>}
-      <p className="text-xs text-muted-foreground">
-        {remainingSlots > 0
-          ? `${remainingSlots} co-instructor slot${remainingSlots === 1 ? "" : "s"} remaining (max 3 total).`
-          : "Maximum of 3 instructors reached. Remove someone before adding another."}
-      </p>
 
       <div className="flex items-center justify-end gap-3">
         <Button
           size="sm"
-          disabled={chips.length === 0 || working || remainingSlots <= 0}
+          disabled={chips.length === 0 || working}
           onClick={handleInviteAll}
           className="cursor-pointer"
         >
