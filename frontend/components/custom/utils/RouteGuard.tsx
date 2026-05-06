@@ -24,6 +24,16 @@ export default function RouteGuard({
 
   useEffect(() => setMounted(true), []);
 
+  // Refresh once on entry so a recent role change (e.g. promoted to
+  // co-instructor) is picked up without a manual logout/login.
+  const didInitialRefresh = useRef(false);
+  useEffect(() => {
+    if (mounted && userInfo && !didInitialRefresh.current) {
+      didInitialRefresh.current = true;
+      refreshToken().catch(() => {});
+    }
+  }, [mounted, userInfo]);
+
   useEffect(() => {
     if (mounted && !userInfo) {
       document.cookie =

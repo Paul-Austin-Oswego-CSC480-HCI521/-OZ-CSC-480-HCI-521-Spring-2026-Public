@@ -1,7 +1,7 @@
 "use client";
 import { Suspense, useEffect, useState } from "react";
 import { WorkLogForm } from "@/components/custom/screen/worklogform/WorklogForm";
-import { userAtom } from "@/components/custom/utils/context/state";
+import { isInstructorRole, userAtom } from "@/components/custom/utils/context/state";
 import { useAtomValue } from "jotai";
 
 const WorklogPage = () => {
@@ -16,7 +16,7 @@ const WorklogPage = () => {
     return <p className="p-4 sm:p-10">Loading...</p>;
   }
 
-  if (userInfo.role === "instructor") {
+  if (isInstructorRole(userInfo.role)) {
     return <h1 className="p-4 sm:p-10">Sorry you do not have access to this page</h1>;
   }
 

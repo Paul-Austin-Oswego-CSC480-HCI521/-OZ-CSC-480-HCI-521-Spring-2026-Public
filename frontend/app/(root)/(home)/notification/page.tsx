@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getWorkLog } from "@/components/custom/utils/api_utils/worklogs/allReq";
 import { useAtomValue } from "jotai";
-import { userAtom } from "@/components/custom/utils/context/state";
+import { isInstructorRole, userAtom } from "@/components/custom/utils/context/state";
 import getWorklogDate from "@/components/custom/utils/func/getDate";
 import { fmtDateTime } from "@/components/custom/utils/func/formatDate";
 import { Card, CardContent } from "@/components/ui/card";
@@ -60,7 +60,7 @@ export default function NotificationPage() {
     return <p className="p-4 sm:p-10">Loading...</p>;
   }
 
-  if (userInfo.role === "instructor") {
+  if (isInstructorRole(userInfo.role)) {
     return (
       <h1 className="p-4 sm:p-10">
         Sorry you do not have access to this page

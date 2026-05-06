@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
-import { userAtom } from "@/components/custom/utils/context/state";
+import { isInstructorRole, userAtom } from "@/components/custom/utils/context/state";
 import {
   ClassUser,
   getAllUsers,
@@ -81,19 +81,19 @@ export default function ArchivedClassDetailPage() {
   const { data: classData } = useQuery({
     queryKey: ["class", classID],
     queryFn: () => getClass(classID),
-    enabled: !!classID && userInfo?.role === "instructor",
+    enabled: !!classID && isInstructorRole(userInfo?.role),
   });
 
   const { data: allUsers } = useQuery({
     queryKey: ["all-users"],
     queryFn: getAllUsers,
-    enabled: !!classID && userInfo?.role === "instructor",
+    enabled: !!classID && isInstructorRole(userInfo?.role),
   });
 
   const { data: worklogs, isLoading: worklogsLoading } = useQuery({
     queryKey: ["worklogs-for-class", classID],
     queryFn: () => getWorklogsForClass(classID),
-    enabled: !!classID && userInfo?.role === "instructor",
+    enabled: !!classID && isInstructorRole(userInfo?.role),
   });
 
   const userByEmail = useMemo(() => {
@@ -124,7 +124,15 @@ export default function ArchivedClassDetailPage() {
   }, [worklogs]);
 
   if (!mounted || !userInfo) return <p className="p-4 sm:p-10">Loading...</p>;
-  if (userInfo.role !== "instructor") {
+  if (!isInstructorRole(userInfo.role)) {
+    return (
+      <h1 className="p-4 sm:p-10">
+        Sorry you do not have access to this page
+      </h1>
+    );
+  }
+  if (!classData) return <p className="p-4 sm:p-10">Loading...</p>;
+  if (!(classData.instructors ?? []).includes(userInfo.email)) {
     return (
       <h1 className="p-4 sm:p-10">
         Sorry you do not have access to this page

@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { usePathname, useRouter } from "next/navigation";
 import { useAtomValue, useSetAtom } from "jotai";
-import { tokenAtom, userAtom } from "@/components/custom/utils/context/state";
+import { isInstructorRole, tokenAtom, userAtom } from "@/components/custom/utils/context/state";
 import { logout } from "@/components/custom/utils/api_utils/req/req";
 
 export function AppSidebar() {
@@ -43,7 +43,7 @@ export function AppSidebar() {
           { title: "Profile", url: "/profile", icon: UserIcon },
         ];
   }
-  if (userInfo && userInfo.role == "instructor") {
+  if (userInfo && isInstructorRole(userInfo.role)) {
     items = [
       { title: "Dashboard", url: "/instructor", icon: LayoutDashboard },
       { title: "Manage Class", url: "/instructor/classes", icon: Users },
@@ -87,7 +87,7 @@ export function AppSidebar() {
             LakerLogs
           </p>
           <p className="text-lg font-semibold text-white leading-tight">
-            {userInfo?.role === "instructor"
+            {isInstructorRole(userInfo?.role)
               ? "Instructor Portal"
               : "Student Hub"}
           </p>

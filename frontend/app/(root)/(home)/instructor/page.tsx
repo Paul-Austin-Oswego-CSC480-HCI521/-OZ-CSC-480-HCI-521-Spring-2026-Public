@@ -10,10 +10,17 @@ import {
 import { getUsersFromClass } from "@/components/custom/utils/api_utils/req/req";
 import { getClasses } from "@/components/custom/utils/api_utils/req/class";
 import { useAtomValue } from "jotai";
-import { userAtom } from "@/components/custom/utils/context/state";
+import { isInstructorRole, userAtom } from "@/components/custom/utils/context/state";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import getWorklogDate from "@/components/custom/utils/func/getDate";
 import { fmtDate, fmtDateTime } from "@/components/custom/utils/func/formatDate";
 import {
@@ -719,6 +726,9 @@ const InstructorDashboard = () => {
   const [selectedEmail, setSelectedEmail] = useState<string | null>(null);
   const [dialogMode, setDialogMode] = useState<"week" | "history">("history");
   const [showAll, setShowAll] = useState(false);
+  const [teamFilter, setTeamFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [reviewFilter, setReviewFilter] = useState<string>("all");
   const ROW_LIMIT = 10;
 
   const {
@@ -728,10 +738,13 @@ const InstructorDashboard = () => {
   } = useQuery({
     queryKey: ["classes"],
     queryFn: getClasses,
-    enabled: userInfo?.role === "instructor",
+    enabled: isInstructorRole(userInfo?.role),
   });
 
-  const activeClass = (classesData ?? []).find((c: any) => !c.isArchived) ?? null;
+  const activeClass =
+    (classesData ?? []).find(
+      (c: any) => !c.isArchived && c.classID === userInfo?.classID,
+    ) ?? null;
   const activeClassID = activeClass?.classID ?? "";
 
   const { data, isLoading, error } = useQuery({
@@ -750,7 +763,7 @@ const InstructorDashboard = () => {
     return <p className="p-4 sm:p-10">Loading...</p>;
   }
 
-  if (userInfo.role !== "instructor") {
+  if (!isInstructorRole(userInfo.role)) {
     return <h1 className="p-4 sm:p-10">Sorry you do not have access to this page</h1>;
   }
 
@@ -766,19 +779,24 @@ const InstructorDashboard = () => {
     );
 
   if (!activeClass) {
+    const isCoInstructor = userInfo.role === "co-instructor";
     return (
       <div className="p-4 sm:p-6 md:p-10">
         <Card>
           <CardContent className="text-center py-12">
             <p className="text-muted-foreground mb-4">
-              No active class. Create a new class.
+              {isCoInstructor
+                ? "No active class. Ask the primary instructor to add you as a co-instructor."
+                : "No active class. Create a new class."}
             </p>
-            <Link href="/instructor/classes">
-              <Button variant="outline" className="gap-2 cursor-pointer">
-                <Users className="h-4 w-4" />
-                Manage Classes
-              </Button>
-            </Link>
+            {!isCoInstructor && (
+              <Link href="/instructor/classes">
+                <Button variant="outline" className="gap-2 cursor-pointer">
+                  <Users className="h-4 w-4" />
+                  Manage Classes
+                </Button>
+              </Link>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -856,13 +874,42 @@ const InstructorDashboard = () => {
     (s: any) => s.logs.some((l: any) => l.reviewed === true),
   ).length;
 
-  // Search filter
-  const filtered = search
-    ? studentStatuses.filter((s: any) =>
-        s.email.toLowerCase().includes(search.toLowerCase()) ||
-        s.name.toLowerCase().includes(search.toLowerCase()),
-      )
-    : studentStatuses;
+  // Team options derived from current students (excluding "Unassigned" sentinel)
+  const teamOptions = Array.from(
+    new Set(
+      studentStatuses.flatMap((s) =>
+        (s.team ?? []).filter((t) => t && t.toLowerCase() !== "unassigned"),
+      ),
+    ),
+  ).sort();
+
+  // Combined filters
+  const filtered = studentStatuses.filter((s) => {
+    if (search) {
+      const q = search.toLowerCase();
+      if (
+        !s.email.toLowerCase().includes(q) &&
+        !s.name.toLowerCase().includes(q) &&
+        !s.team.some((t) => t.toLowerCase().includes(q))
+      ) {
+        return false;
+      }
+    }
+    if (teamFilter !== "all") {
+      if (teamFilter === "unassigned") {
+        const realTeams = s.team.filter(
+          (t) => t && t.toLowerCase() !== "unassigned",
+        );
+        if (realTeams.length > 0) return false;
+      } else if (!s.team.includes(teamFilter)) {
+        return false;
+      }
+    }
+    if (statusFilter !== "all" && s.status !== statusFilter) return false;
+    if (reviewFilter === "reviewed" && !s.hasReviewed) return false;
+    if (reviewFilter === "not-reviewed" && s.hasReviewed) return false;
+    return true;
+  });
 
   const visibleRows = showAll ? filtered : filtered.slice(0, ROW_LIMIT);
   const firstName =
@@ -1043,27 +1090,70 @@ const InstructorDashboard = () => {
       <Card className="overflow-hidden">
         <div className="px-4 py-3 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5 text-sm cursor-default"
-            >
-              All Teams <ChevronDown className="h-3.5 w-3.5" />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5 text-sm cursor-default"
-            >
-              Status <ChevronDown className="h-3.5 w-3.5" />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5 text-sm cursor-default"
-            >
-              Review Status <ChevronDown className="h-3.5 w-3.5" />
-            </Button>
+            <Select value={teamFilter} onValueChange={setTeamFilter}>
+              <SelectTrigger
+                size="sm"
+                className="text-sm cursor-pointer"
+                aria-label="Filter by team"
+              >
+                <SelectValue placeholder="All Teams" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Teams</SelectItem>
+                {teamOptions.map((t) => (
+                  <SelectItem key={t} value={t}>
+                    {t}
+                  </SelectItem>
+                ))}
+                <SelectItem value="unassigned">Unassigned</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger
+                size="sm"
+                className="text-sm cursor-pointer"
+                aria-label="Filter by status"
+              >
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="submitted">Submitted</SelectItem>
+                <SelectItem value="late">Late</SelectItem>
+                <SelectItem value="missing">Missing</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={reviewFilter} onValueChange={setReviewFilter}>
+              <SelectTrigger
+                size="sm"
+                className="text-sm cursor-pointer"
+                aria-label="Filter by review status"
+              >
+                <SelectValue placeholder="Review Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Reviews</SelectItem>
+                <SelectItem value="reviewed">Reviewed</SelectItem>
+                <SelectItem value="not-reviewed">Not Reviewed</SelectItem>
+              </SelectContent>
+            </Select>
+            {(teamFilter !== "all" ||
+              statusFilter !== "all" ||
+              reviewFilter !== "all") && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs cursor-pointer text-muted-foreground"
+                onClick={() => {
+                  setTeamFilter("all");
+                  setStatusFilter("all");
+                  setReviewFilter("all");
+                }}
+              >
+                Clear filters
+              </Button>
+            )}
           </div>
           <div className="relative w-full sm:w-72">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />

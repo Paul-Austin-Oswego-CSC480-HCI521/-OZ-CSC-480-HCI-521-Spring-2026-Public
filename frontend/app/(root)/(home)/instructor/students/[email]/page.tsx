@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
-import { userAtom } from "@/components/custom/utils/context/state";
+import { isInstructorRole, userAtom } from "@/components/custom/utils/context/state";
 import { getAllUsers, getClasses } from "@/components/custom/utils/api_utils/req/class";
 import {
   getWorklogsForClass,
@@ -19,6 +19,11 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   ArrowLeft,
   ChevronRight,
   ChevronDown,
@@ -29,6 +34,7 @@ import {
   FileText,
   Mail,
   AlertTriangle,
+  X,
 } from "lucide-react";
 import getWorklogDate from "@/components/custom/utils/func/getDate";
 import { fmtDate, fmtDateTime } from "@/components/custom/utils/func/formatDate";
@@ -222,39 +228,11 @@ function StatusBadge({ row }: { row: WeekRow }) {
 
 function ReviewToggle({
   log,
-  classID,
+  onOpen,
 }: {
   log: any;
-  classID?: string;
+  onOpen: () => void;
 }) {
-  const queryClient = useQueryClient();
-  const mutation = useMutation({
-    mutationFn: () => {
-      const id = typeof log._id === "object" ? log._id.$oid : log._id;
-      const stripZ = (v: string) => (v ? v.replace("Z", "") : v);
-      const body = {
-        authorName: log.authorName,
-        authorEmail: log.authorEmail,
-        worklogName: log.worklogName,
-        dateCreated: stripZ(log.dateCreated),
-        dateSubmitted: stripZ(log.dateSubmitted),
-        collaborators: log.collaborators ?? [],
-        taskList: (log.taskList ?? []).map((t: any) => ({
-          ...t,
-          dueDate: t.dueDate ? stripZ(t.dueDate) : t.dueDate,
-          creationDate: t.creationDate
-            ? stripZ(t.creationDate)
-            : t.creationDate,
-        })),
-        reviewed: !log.reviewed,
-      };
-      return updateWorklog(id, body, classID);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["worklogs-for-class"] });
-    },
-  });
-
   const reviewed = log.reviewed === true;
 
   return (
@@ -262,10 +240,9 @@ function ReviewToggle({
       type="button"
       variant={reviewed ? "default" : "outline"}
       size="sm"
-      disabled={mutation.isPending}
       onClick={(e) => {
         e.stopPropagation();
-        mutation.mutate();
+        onOpen();
       }}
       className={cn(
         "text-xs cursor-pointer",
@@ -284,12 +261,229 @@ function ReviewToggle({
   );
 }
 
+function WeekReviewDialog({
+  row,
+  studentName,
+  studentEmail,
+  open,
+  onClose,
+  classID,
+}: {
+  row: WeekRow | null;
+  studentName: string;
+  studentEmail: string;
+  open: boolean;
+  onClose: () => void;
+  classID?: string;
+}) {
+  const queryClient = useQueryClient();
+  const latestLog = row?.logs?.[0] ?? null;
+
+  const mutation = useMutation({
+    mutationFn: () => {
+      if (!latestLog) return Promise.resolve();
+      const id =
+        typeof latestLog._id === "object" ? latestLog._id.$oid : latestLog._id;
+      const stripZ = (v: string) => (v ? v.replace("Z", "") : v);
+      const body = {
+        authorName: latestLog.authorName,
+        authorEmail: latestLog.authorEmail,
+        worklogName: latestLog.worklogName,
+        dateCreated: stripZ(latestLog.dateCreated),
+        dateSubmitted: stripZ(latestLog.dateSubmitted),
+        collaborators: latestLog.collaborators ?? [],
+        taskList: (latestLog.taskList ?? []).map((t: any) => ({
+          ...t,
+          dueDate: t.dueDate ? stripZ(t.dueDate) : t.dueDate,
+          creationDate: t.creationDate
+            ? stripZ(t.creationDate)
+            : t.creationDate,
+        })),
+        reviewed: !latestLog.reviewed,
+      };
+      return updateWorklog(id, body, classID);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["worklogs-for-class"] });
+      onClose();
+    },
+  });
+
+  if (!row) return null;
+  const isReviewed = latestLog?.reviewed === true;
+  const initials = studentName
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+
+  return (
+    <AlertDialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <AlertDialogContent
+        className="p-0 overflow-hidden"
+        style={{
+          maxWidth: "1100px",
+          width: "min(92vw, 1100px)",
+          left: "calc(50% + 8rem)",
+        }}
+      >
+        <div className="flex items-start justify-between gap-4 px-6 py-5 border-b">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center shrink-0 text-base font-semibold">
+              {initials}
+            </div>
+            <div className="min-w-0">
+              <AlertDialogTitle className="text-lg font-semibold truncate">
+                {studentName}
+              </AlertDialogTitle>
+              <p className="text-sm text-muted-foreground truncate">
+                {studentEmail} · Week {row.week}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-muted-foreground hover:text-foreground p-1 rounded cursor-pointer"
+            aria-label="Close"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="max-h-[75vh] overflow-y-auto px-6 py-5 space-y-3">
+          {row.logs.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-8">
+              No submissions for week {row.week}.
+            </p>
+          ) : (
+            row.logs.map((log: any, li: number) => (
+              <div
+                key={li}
+                className="border rounded-lg bg-white overflow-hidden"
+              >
+                <div className="flex items-center justify-between gap-3 px-4 py-3 border-b">
+                  <p className="text-sm font-semibold flex items-center gap-2">
+                    Submission {row.logs.length - li}
+                    {li === 0 && (
+                      <span
+                        className="text-[10px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded"
+                        style={{
+                          backgroundColor: "rgba(30, 75, 53, 0.1)",
+                          color: ACCENT_GREEN,
+                        }}
+                      >
+                        Latest
+                      </span>
+                    )}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Submitted {fmtDateTime(log.dateSubmitted)} ·{" "}
+                    {log.taskList?.length ?? 0} task(s)
+                  </p>
+                </div>
+                <div className="px-4 py-3 space-y-2">
+                  {(log.taskList ?? []).map((task: any, ti: number) => (
+                    <div
+                      key={ti}
+                      className="border rounded-lg px-3 py-2 text-sm space-y-1"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-medium">
+                          Task {ti + 1}: {task.taskName || "Untitled"}
+                        </p>
+                        <span
+                          className={cn(
+                            "text-xs px-2 py-0.5 rounded-full",
+                            task.status === "complete"
+                              ? "bg-green-100 text-green-700"
+                              : task.status === "in-progress"
+                                ? "bg-blue-100 text-blue-700"
+                                : "bg-gray-100 text-gray-700",
+                          )}
+                        >
+                          {task.status === "complete"
+                            ? "Completed"
+                            : task.status === "in-progress"
+                              ? "In Progress"
+                              : "Not Started"}
+                        </span>
+                      </div>
+                      {task.goal && (
+                        <p className="text-xs text-muted-foreground">
+                          {task.goal}
+                        </p>
+                      )}
+                      <div className="flex flex-wrap gap-x-3 text-xs text-muted-foreground">
+                        {task.dueDate && (
+                          <span className="flex items-center gap-1">
+                            <CalendarDays className="h-3 w-3" />
+                            {fmtDate(task.dueDate)}
+                          </span>
+                        )}
+                        {task.collaborators?.filter((c: string) => c).length >
+                          0 && <span>With: {task.collaborators.join(", ")}</span>}
+                      </div>
+                      {task.reflection && (
+                        <p className="text-xs text-muted-foreground italic">
+                          &quot;{task.reflection}&quot;
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {latestLog && (
+          <div className="px-6 py-4 border-t bg-muted/20">
+            <Button
+              type="button"
+              disabled={mutation.isPending}
+              onClick={(e) => {
+                e.stopPropagation();
+                mutation.mutate();
+              }}
+              className={cn(
+                "w-full h-12 rounded-xl text-base font-semibold text-white cursor-pointer border-0",
+                isReviewed
+                  ? "bg-green-600 hover:bg-green-700"
+                  : "hover:opacity-90",
+              )}
+              style={isReviewed ? undefined : { backgroundColor: ACCENT_GREEN }}
+            >
+              {mutation.isPending ? (
+                "Saving..."
+              ) : isReviewed ? (
+                <>
+                  <CheckCircle2 className="h-4 w-4 mr-2" />
+                  Mark as Not Reviewed
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="h-4 w-4 mr-2" />
+                  Mark as Reviewed
+                </>
+              )}
+            </Button>
+          </div>
+        )}
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
 function WeekRowItem({
   row,
   classID,
+  onOpenReview,
 }: {
   row: WeekRow;
   classID?: string;
+  onOpenReview: (row: WeekRow) => void;
 }) {
   const [open, setOpen] = useState(false);
   const hasSubmissions = row.logs.length > 0;
@@ -352,7 +546,7 @@ function WeekRowItem({
               onClick={(e) => e.stopPropagation()}
             >
               {hasSubmissions && latestLog ? (
-                <ReviewToggle log={latestLog} classID={classID} />
+                <ReviewToggle log={latestLog} onOpen={() => onOpenReview(row)} />
               ) : (
                 <span className="text-xs text-muted-foreground">—</span>
               )}
@@ -450,7 +644,9 @@ export default function StudentHistoryPage() {
   const userInfo = useAtomValue(userAtom);
   const emailParam = decodeURIComponent(String(params?.email ?? ""));
   const classIDFromQuery = searchParams?.get("classID") ?? "";
+  const fromParam = searchParams?.get("from") ?? "";
   const [mounted, setMounted] = useState(false);
+  const [reviewRow, setReviewRow] = useState<WeekRow | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -459,10 +655,12 @@ export default function StudentHistoryPage() {
   const { data: classesData } = useQuery({
     queryKey: ["classes"],
     queryFn: getClasses,
-    enabled: userInfo?.role === "instructor" && !classIDFromQuery,
+    enabled: isInstructorRole(userInfo?.role) && !classIDFromQuery,
   });
   const activeClass =
-    (classesData ?? []).find((c: any) => !c.isArchived) ?? null;
+    (classesData ?? []).find(
+      (c: any) => !c.isArchived && c.classID === userInfo?.classID,
+    ) ?? null;
   const activeClassID = classIDFromQuery || (activeClass?.classID ?? "");
 
   const { data: worklogsData } = useQuery({
@@ -478,12 +676,12 @@ export default function StudentHistoryPage() {
   const { data: allUsersData } = useQuery({
     queryKey: ["all-users"],
     queryFn: getAllUsers,
-    enabled: userInfo?.role === "instructor",
+    enabled: isInstructorRole(userInfo?.role),
   });
 
   if (!mounted || !userInfo)
     return <p className="p-4 sm:p-10">Loading...</p>;
-  if (userInfo.role !== "instructor")
+  if (!isInstructorRole(userInfo.role))
     return (
       <h1 className="p-4 sm:p-10">
         Sorry you do not have access to this page
@@ -536,10 +734,15 @@ export default function StudentHistoryPage() {
                 },
                 { label: student.name || student.email },
               ]
-            : [
-                { label: "Dashboard", href: "/instructor" },
-                { label: student.name || student.email },
-              ]
+            : fromParam === "classes"
+              ? [
+                  { label: "Manage Class", href: "/instructor/classes" },
+                  { label: student.name || student.email },
+                ]
+              : [
+                  { label: "Dashboard", href: "/instructor" },
+                  { label: student.name || student.email },
+                ]
         }
       />
 
@@ -636,10 +839,20 @@ export default function StudentHistoryPage() {
               key={row.week}
               row={row}
               classID={activeClassID}
+              onOpenReview={setReviewRow}
             />
           ))
         )}
       </div>
+
+      <WeekReviewDialog
+        row={reviewRow}
+        studentName={student.name || student.email}
+        studentEmail={student.email}
+        open={!!reviewRow}
+        onClose={() => setReviewRow(null)}
+        classID={activeClassID}
+      />
     </div>
   );
 }

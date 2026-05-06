@@ -113,6 +113,7 @@ public class AuthRepository{
         }
 
         user.remove("classID");
+        user.put("team", new ArrayList<>());
         collection.replaceOne(new Document("email", email), user);
         
         return user;
@@ -132,21 +133,29 @@ public class AuthRepository{
 
     public Document updateUserRole(String email, String newRole){
         
-        Document user = findByEmail(email);
-        if(user!=null){
-            if (newRole.equals("instructor")) return updateUserToInstructor(user);
-            
-            MongoDatabase currentClass = mongoClient.getDatabase(user.getString("classID"));
-            MongoCollection<Document> currentClassDoc = currentClass.getCollection("classData");
-            user.put("role", newRole);
-            collection.replaceOne(new Document("email", email), user);
-
-            currentClassDoc.updateOne(
-                new Document("classID", user.getString("classID"))
-                    .append("students.email", user.getString("email")),
-                new Document("$set", new Document("students.$.role", user.getString("role")))
-            );
-        }
+             Document user = findByEmail(email);
+      if(user!=null){
+          if (newRole.equals("instructor")) return updateUserToInstructor(user);
+                                                                                                                                                                       
+          MongoDatabase currentClass = mongoClient.getDatabase(user.getString("classID"));
+          MongoCollection<Document> currentClassDoc = currentClass.getCollection("classData");                                                                         
+          user.put("role", newRole);                                                                                                                                   
+          collection.replaceOne(new Document("email", email), user);
+                                                                                                                                                                       
+          currentClassDoc.updateOne(                                                                                                                                   
+              new Document("classID", user.getString("classID"))
+                  .append("students.email", user.getString("email")),                                                                                                  
+              new Document("$set", new Document("students.$.role", user.getString("role")))
+          );                                                                                                                                                           
+  
+          if ("co-instructor".equals(newRole)) {                                                                                                                       
+              currentClassDoc.updateOne(                    
+                  new Document("classID", user.getString("classID")),
+                  new Document("$addToSet",                                                                                                                            
+                      new Document("instructors", user.getString("email")))
+              );                                                                                                                                                       
+          }                                                 
+      }
         return user;
     }
 
@@ -167,6 +176,11 @@ public class AuthRepository{
                 .append("students.email", user.getString("email")),
             new Document("$set", new Document("students.$.role", user.getString("role")))
         );
+        currentClassDoc.updateOne(                                                                                                                                   
+              new Document("classID", user.getString("classID")),                                                                                                      
+              new Document("$addToSet",                                                                                                                                
+                  new Document("instructors", user.getString("email")))
+          );   
         
         return user;
 
@@ -253,13 +267,17 @@ public class AuthRepository{
         return collection.find(new Document("classID", classID)).into(new ArrayList<>());
     }
 
-    public Document createClass(StudentClass studentClass) {
+    public Document createClass(StudentClass studentClass, String instructoremail) {
         MongoDatabase classDb = mongoClient.getDatabase(studentClass.getClassID());
         MongoCollection<Document> classData = classDb.getCollection("classData");
 
         if (classData.find().first() != null) {
             return null;
         }
+        List<String> initialInstructors = new ArrayList<>();                                                                                                                 
+        if (instructoremail != null && !instructoremail.isBlank()) {                                                                                                         
+            initialInstructors.add(instructoremail);
+        }    
 
         Document classDoc = new Document()
             .append("classID", studentClass.getClassID())
@@ -267,9 +285,14 @@ public class AuthRepository{
             .append("semsesterEndDate", studentClass.getSemsesterEndDate())
             .append("studendAccessEndDate", studentClass.getStudendAccessEndDate())
             .append("isArchived", studentClass.getIsArchived())
-            .append("students", studentClass.getStudents());
+            .append("students", studentClass.getStudents())
+            .append("instructors", initialInstructors); 
 
         classData.insertOne(classDoc);
+        // add instructor to the class
+        if (instructoremail != null && !instructoremail.isBlank()) {
+          addUserToClass(instructoremail, studentClass.getClassID());
+      }
         return classDoc;
 
     }
@@ -318,5 +341,30 @@ public class AuthRepository{
       );                                                                                                                                                                             
       return classData.find(new Document("classID", classID)).first();
   }    
+
+    public Document updateClass(String classID, Document updates) {                                                                                                      
+      MongoDatabase classDb = mongoClient.getDatabase(classID);
+      MongoCollection<Document> classData = classDb.getCollection("classData");                                                                                        
+                                                                                                                                                                       
+      // Whitelist editable fields. Never let the caller flip isArchived,                                                                                              
+      // change classID, or rewrite the students[] array via this path.                                                                                                
+      Document setDoc = new Document();                                                                                                                                
+      if (updates.containsKey("semesterStartDate"))         
+          setDoc.put("semesterStartDate", updates.get("semesterStartDate"));                                                                                           
+      if (updates.containsKey("semsesterEndDate"))          
+          setDoc.put("semsesterEndDate", updates.get("semsesterEndDate"));                                                                                             
+      if (updates.containsKey("studendAccessEndDate"))                                                                                                                 
+          setDoc.put("studendAccessEndDate", updates.get("studendAccessEndDate"));
+                                                                                                                                                                       
+      if (setDoc.isEmpty()) {                               
+          return classData.find(new Document("classID", classID)).first();                                                                                             
+      }                                                                                                                                                                
+   
+      classData.updateOne(                                                                                                                                             
+          new Document("classID", classID),                 
+          new Document("$set", setDoc)
+      );                                                                                                                                                               
+      return classData.find(new Document("classID", classID)).first();
+  }       
 
 }

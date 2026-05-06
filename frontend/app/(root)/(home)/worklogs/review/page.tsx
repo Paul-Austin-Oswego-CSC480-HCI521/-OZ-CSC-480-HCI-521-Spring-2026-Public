@@ -2,7 +2,7 @@
 import { useSearchParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useAtomValue, useSetAtom } from "jotai";
-import { userAtom, worklogEditAtom } from "@/components/custom/utils/context/state";
+import { isInstructorRole, userAtom, worklogEditAtom } from "@/components/custom/utils/context/state";
 import {
   getWorkLog,
   getDraftForWeek,
@@ -304,7 +304,7 @@ export default function ReviewPage() {
     return <p className="p-4 sm:p-10">Loading...</p>;
   }
 
-  if (userInfo.role === "instructor") {
+  if (isInstructorRole(userInfo.role)) {
     return <h1 className="p-4 sm:p-10">Sorry you do not have access to this page</h1>;
   }
 

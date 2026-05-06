@@ -5,7 +5,7 @@ import Script from "next/script";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { tokenAtom, userAtom } from "@/components/custom/utils/context/state";
+import { isInstructorRole, tokenAtom, userAtom } from "@/components/custom/utils/context/state";
 import { googleSignIn } from "@/components/custom/utils/api_utils/req/req";
 import {
   Card,
@@ -35,7 +35,7 @@ export default function SignUp() {
     onSuccess: (data) => {
       setToken(data.token);
       document.cookie = `token=${data.token}; path=/;`;
-      if (userInfo?.role == "instructor") router.push("/instructor");
+      if (isInstructorRole(userInfo?.role)) router.push("/instructor");
       router.push("/");
     },
   });
