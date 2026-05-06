@@ -10,12 +10,24 @@ import {
 import { getUsersFromClass } from "@/components/custom/utils/api_utils/req/req";
 import { getClasses } from "@/components/custom/utils/api_utils/req/class";
 import { useAtomValue } from "jotai";
-import { userAtom } from "@/components/custom/utils/context/state";
+import {
+  isInstructorRole,
+  userAtom,
+} from "@/components/custom/utils/context/state";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import getWorklogDate from "@/components/custom/utils/func/getDate";
-import { fmtDate, fmtDateTime } from "@/components/custom/utils/func/formatDate";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  fmtDate,
+  fmtDateTime,
+} from "@/components/custom/utils/func/formatDate";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -32,12 +44,14 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronDown,
+  ChevronUp,
   Search,
   AlertTriangle,
   CalendarDays,
   Users,
   X,
   ClipboardCheck,
+  User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -49,8 +63,30 @@ function calendarDaysBetween(from: Date, to: Date): number {
   return Math.round((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-function getWeekRange(week: number) {
-  const start = new Date(semesterStart);
+function teamChipClasses(team: string): string {
+  const t = team.toLowerCase();
+  if (t.includes("usab")) return "bg-[#B0C6DB] text-zinc-900";
+  if (t.includes("require")) return "bg-[#A1D2B5] text-zinc-900";
+  if (t.includes("qa") || t.includes("qualit") || t.includes("assur"))
+    return "bg-[#FAE18A] text-zinc-900";
+  if (t.includes("front")) return "bg-[#EDB970] text-zinc-900";
+  if (t.includes("back")) return "bg-[#BDCABF] text-zinc-900";
+  return "bg-slate-100 text-slate-800";
+}
+
+function parseClassDate(s: string | undefined | null): Date | null {
+  if (!s) return null;
+  try {
+    const cleaned = s.replace(/\[[^\]]+\]$/, "");
+    const d = new Date(cleaned);
+    return Number.isNaN(d.getTime()) ? null : d;
+  } catch {
+    return null;
+  }
+}
+
+function getWeekRange(week: number, base: Date = semesterStart) {
+  const start = new Date(base);
   start.setDate(start.getDate() + (week - 1) * 7);
   const end = new Date(start);
   end.setDate(end.getDate() + 6);
@@ -77,6 +113,7 @@ function ReviewButton({
       const stripZ = (v: string) => (v ? v.replace("Z", "") : v);
       const body = {
         authorName: log.authorName,
+        authorEmail: log.authorEmail,
         worklogName: log.worklogName,
         dateCreated: stripZ(log.dateCreated),
         dateSubmitted: stripZ(log.dateSubmitted),
@@ -84,7 +121,9 @@ function ReviewButton({
         taskList: (log.taskList ?? []).map((t: any) => ({
           ...t,
           dueDate: t.dueDate ? stripZ(t.dueDate) : t.dueDate,
-          creationDate: t.creationDate ? stripZ(t.creationDate) : t.creationDate,
+          creationDate: t.creationDate
+            ? stripZ(t.creationDate)
+            : t.creationDate,
         })),
         reviewed: !log.reviewed,
       };
@@ -107,13 +146,8 @@ function ReviewButton({
           e.stopPropagation();
           mutation.mutate();
         }}
-        className={cn(
-          "w-full h-12 rounded-xl text-base font-semibold text-white cursor-pointer border-0",
-          isReviewed
-            ? "bg-green-600 hover:bg-green-700"
-            : "hover:opacity-90",
-        )}
-        style={isReviewed ? undefined : { backgroundColor: "#1E4B35" }}
+        className="w-full h-12 rounded-xl text-base font-semibold text-white cursor-pointer border-0 hover:opacity-90"
+        style={{ backgroundColor: "#1E4B35" }}
       >
         {mutation.isPending ? (
           "Saving..."
@@ -267,15 +301,13 @@ function StudentRowFlat({
           .map((t) => (
             <span
               key={t}
-              className="text-xs bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-md px-2 py-0.5"
+              className={`text-xs rounded-md px-2 py-0.5 ${teamChipClasses(t)}`}
             >
               {t}
             </span>
           ))}
-        {student.team.filter((t) => t.toLowerCase() !== "unassigned")
-          .length === 0 && (
-          <span className="text-xs text-muted-foreground">—</span>
-        )}
+        {student.team.filter((t) => t.toLowerCase() !== "unassigned").length ===
+          0 && <span className="text-xs text-muted-foreground">—</span>}
       </div>
 
       {/* Status */}
@@ -323,6 +355,7 @@ function StudentDetailDialog({
   open,
   onClose,
   classID,
+  semStart,
 }: {
   student: StudentEntry | null;
   selectedWeek: number;
@@ -332,6 +365,7 @@ function StudentDetailDialog({
   open: boolean;
   onClose: () => void;
   classID?: string;
+  semStart: Date;
 }) {
   if (!student) return null;
 
@@ -377,7 +411,10 @@ function StudentDetailDialog({
       >
         <div className="flex items-start justify-between gap-4 px-6 py-5 border-b">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center shrink-0 text-base font-semibold">
+            <div
+              className="h-12 w-12 rounded-full flex items-center justify-center shrink-0 text-base font-semibold text-white"
+              style={{ backgroundColor: "#1E4B35" }}
+            >
               {student.name
                 .split(" ")
                 .map((n) => n[0])
@@ -438,6 +475,7 @@ function StudentDetailDialog({
                 logs={logs}
                 isSelectedWeek={week === selectedWeek}
                 classID={classID}
+                semStart={semStart}
               />
             ))
           )}
@@ -463,18 +501,18 @@ function WeekSection({
   logs,
   isSelectedWeek,
   classID,
+  semStart,
 }: {
   week: number;
   logs: any[];
   isSelectedWeek: boolean;
   classID?: string;
+  semStart: Date;
 }) {
   const [open, setOpen] = useState(isSelectedWeek);
   const latestLog = logs[0] ?? null;
   const hasSubmissions = logs.length > 0;
 
-  // Status calculation — same rules as the main page
-  const semStart = new Date("2026-01-26T00:00:00");
   const dueDate = new Date(semStart);
   dueDate.setDate(dueDate.getDate() + week * 7);
   dueDate.setHours(23, 59, 0, 0);
@@ -600,6 +638,116 @@ function WeekSection({
   );
 }
 
+function DashboardTaskBlock({ task, taskNum }: { task: any; taskNum: number }) {
+  const [open, setOpen] = useState(true);
+  const collabList = (task.collaborators ?? []).filter((c: string) => c);
+  const hasCollabs = collabList.length > 0;
+  const statusBadgeClass =
+    task.status === "complete"
+      ? "bg-emerald-700 text-white"
+      : task.status === "in-progress"
+        ? "bg-blue-100 text-blue-800"
+        : "bg-gray-100 text-gray-700";
+  const statusLabel =
+    task.status === "complete"
+      ? "Completed"
+      : task.status === "in-progress"
+        ? "In Progress"
+        : "Not Started";
+  return (
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <div className="border rounded-xl bg-white">
+        <CollapsibleTrigger asChild>
+          <div className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-muted/40 rounded-t-xl">
+            <h3 className="text-base font-bold" style={{ color: "#1E4B35" }}>
+              Task {taskNum}: {task.taskName || "Untitled"}
+            </h3>
+            {open ? (
+              <ChevronUp className="h-4 w-4 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            )}
+          </div>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="px-4 pb-4 space-y-4 border-t pt-4">
+            <div>
+              <p className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase mb-1">
+                Task Name
+              </p>
+              <p className="text-sm">{task.taskName || "Untitled"}</p>
+            </div>
+            {task.goal && (
+              <div>
+                <p className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase mb-1">
+                  Main Goal
+                </p>
+                <p className="text-sm whitespace-pre-wrap">{task.goal}</p>
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase mb-1">
+                  Deadline
+                </p>
+                <p className="text-sm font-semibold">
+                  {task.dueDate ? fmtDate(task.dueDate) : "—"}
+                </p>
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase mb-1">
+                  Task Status
+                </p>
+                <span
+                  className={`inline-block text-[10px] font-semibold uppercase tracking-wider px-3 py-1 rounded ${statusBadgeClass}`}
+                >
+                  {statusLabel}
+                </span>
+              </div>
+            </div>
+            {hasCollabs && (
+              <div>
+                <p className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase mb-2">
+                  Collaborators
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {collabList.map((c: string, j: number) => (
+                    <span
+                      key={j}
+                      className="text-xs bg-white border rounded-md px-2 py-1 inline-flex items-center gap-1"
+                    >
+                      <User className="h-3 w-3 text-muted-foreground" />
+                      {c}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {hasCollabs && task.collabDescription && (
+              <div>
+                <p className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase mb-1">
+                  How did you work with collaborator(s)
+                </p>
+                <p className="text-sm whitespace-pre-wrap">
+                  {task.collabDescription}
+                </p>
+              </div>
+            )}
+            {task.reflection && (
+              <div>
+                <p className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase mb-1">
+                  Reflection
+                </p>
+                <p className="text-sm whitespace-pre-wrap">{task.reflection}</p>
+              </div>
+            )}
+          </div>
+        </CollapsibleContent>
+      </div>
+    </Collapsible>
+  );
+}
+
 function SubmissionCollapsible({
   log,
   subNum,
@@ -615,84 +763,51 @@ function SubmissionCollapsible({
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
-      <div className="border rounded-lg bg-white overflow-hidden">
+      <div
+        className="border-l-4 rounded-xl bg-white overflow-hidden"
+        style={{ borderLeftColor: "#1E4B35" }}
+      >
         <CollapsibleTrigger asChild>
-          <div className="flex items-center justify-between gap-3 px-4 py-3 cursor-pointer hover:bg-muted/40">
-            <div className="min-w-0">
-              <p className="text-sm font-semibold flex items-center gap-2">
-                Submission {subNum}
-                {isLatest && (
-                  <span
-                    className="text-[10px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded"
-                    style={{
-                      backgroundColor: "rgba(30, 75, 53, 0.1)",
-                      color: "#1E4B35",
-                    }}
-                  >
-                    Latest
-                  </span>
-                )}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Submitted {fmtDateTime(log.dateSubmitted)} ·{" "}
-                {log.taskList?.length ?? 0} task(s)
-              </p>
+          <div className="flex items-center justify-between gap-3 px-4 py-3 sm:px-5 cursor-pointer bg-muted/40 hover:bg-muted/60">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="h-10 w-10 rounded-md bg-emerald-100 flex items-center justify-center shrink-0">
+                <ClipboardCheck
+                  className="h-5 w-5"
+                  style={{ color: "#1E4B35" }}
+                />
+              </div>
+              <div className="min-w-0">
+                <h2 className="text-base font-semibold flex items-center gap-2">
+                  Work Log Submission {subNum}
+                  {isLatest && (
+                    <span
+                      className="text-[10px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded"
+                      style={{
+                        backgroundColor: "rgba(30, 75, 53, 0.1)",
+                        color: "#1E4B35",
+                      }}
+                    >
+                      Latest
+                    </span>
+                  )}
+                </h2>
+                <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                  <Clock className="h-3 w-3" />
+                  Submitted on {fmtDateTime(log.dateSubmitted)}
+                </p>
+              </div>
             </div>
-            <ChevronDown
-              className={cn(
-                "h-4 w-4 text-muted-foreground shrink-0 transition-transform",
-                open ? "" : "-rotate-90",
-              )}
-            />
+            {open ? (
+              <ChevronUp className="h-4 w-4 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            )}
           </div>
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <div className="px-4 pb-4 space-y-2">
+          <div className="p-4 sm:p-5 space-y-3 bg-white">
             {(log.taskList ?? []).map((task: any, ti: number) => (
-              <div
-                key={ti}
-                className="border rounded-lg px-3 py-2 text-sm space-y-1"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <p className="font-medium">
-                    Task {ti + 1}: {task.taskName || "Untitled"}
-                  </p>
-                  <span
-                    className={`text-xs px-2 py-0.5 rounded-full ${
-                      task.status === "complete"
-                        ? "bg-green-100 text-green-700"
-                        : task.status === "in-progress"
-                          ? "bg-blue-100 text-blue-700"
-                          : "bg-gray-100 text-gray-700"
-                    }`}
-                  >
-                    {task.status === "complete"
-                      ? "Completed"
-                      : task.status === "in-progress"
-                        ? "In Progress"
-                        : "Not Started"}
-                  </span>
-                </div>
-                {task.goal && (
-                  <p className="text-xs text-muted-foreground">{task.goal}</p>
-                )}
-                <div className="flex flex-wrap gap-x-3 text-xs text-muted-foreground">
-                  {task.dueDate && (
-                    <span className="flex items-center gap-1">
-                      <CalendarDays className="h-3 w-3" />
-                      {fmtDate(task.dueDate)}
-                    </span>
-                  )}
-                  {task.collaborators?.filter((c: string) => c).length > 0 && (
-                    <span>With: {task.collaborators.join(", ")}</span>
-                  )}
-                </div>
-                {task.reflection && (
-                  <p className="text-xs text-muted-foreground italic">
-                    &quot;{task.reflection}&quot;
-                  </p>
-                )}
-              </div>
+              <DashboardTaskBlock key={ti} task={task} taskNum={ti + 1} />
             ))}
           </div>
         </CollapsibleContent>
@@ -710,14 +825,15 @@ const InstructorDashboard = () => {
     setMounted(true);
   }, []);
 
-  const worklogInfo = getWorklogDate(semesterStart);
-  const maxWeek = worklogInfo ? parseInt(worklogInfo.weekNumber) : 1;
-
-  const [selectedWeek, setSelectedWeek] = useState(maxWeek - 1);
+  const [selectedWeek, setSelectedWeek] = useState(1);
   const [search, setSearch] = useState("");
   const [selectedEmail, setSelectedEmail] = useState<string | null>(null);
   const [dialogMode, setDialogMode] = useState<"week" | "history">("history");
   const [showAll, setShowAll] = useState(false);
+  const [teamFilter, setTeamFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [reviewFilter, setReviewFilter] = useState<string>("all");
+
   const ROW_LIMIT = 10;
 
   const {
@@ -727,11 +843,47 @@ const InstructorDashboard = () => {
   } = useQuery({
     queryKey: ["classes"],
     queryFn: getClasses,
-    enabled: userInfo?.role === "instructor",
+    enabled: isInstructorRole(userInfo?.role),
   });
 
-  const activeClass = (classesData ?? []).find((c: any) => !c.isArchived) ?? null;
+  const activeClass =
+    (classesData ?? []).find(
+      (c: any) => !c.isArchived && c.classID === userInfo?.classID,
+    ) ?? null;
   const activeClassID = activeClass?.classID ?? "";
+
+  // Derive week boundaries from the active class's actual dates instead of a
+  // hardcoded semester. maxWeek = upcoming week, maxWeek - 1 = current week.
+  const classStartDate =
+    parseClassDate(activeClass?.semesterStartDate) ?? semesterStart;
+  const classEndDate = parseClassDate(activeClass?.semsesterEndDate);
+  const totalWeeks = classEndDate
+    ? Math.max(
+        1,
+        Math.ceil(calendarDaysBetween(classStartDate, classEndDate) / 7),
+      )
+    : 16;
+  const today = new Date();
+  const daysSinceStart = calendarDaysBetween(classStartDate, today);
+  const maxWeek = Math.max(1, Math.floor(daysSinceStart / 7) + 2);
+
+  // When the active class first resolves, snap the selected week to "current".
+  useEffect(() => {
+    if (activeClass) {
+      setSelectedWeek(Math.max(1, maxWeek - 1));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeClass?.classID]);
+
+  // Reset status filter when switching between current vs previous week, since
+  // "Pending" only applies to the current week and "Missing" only to past weeks.
+  useEffect(() => {
+    setStatusFilter((prev) => {
+      if (prev === "pending" && selectedWeek !== maxWeek) return "all";
+      if (prev === "missing" && selectedWeek === maxWeek) return "all";
+      return prev;
+    });
+  }, [selectedWeek, maxWeek]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["worklogs-for-class", activeClassID],
@@ -739,7 +891,11 @@ const InstructorDashboard = () => {
     enabled: !!activeClassID,
   });
 
-  const { data: usersData, isLoading: usersLoading, error: usersError } = useQuery({
+  const {
+    data: usersData,
+    isLoading: usersLoading,
+    error: usersError,
+  } = useQuery({
     queryKey: ["users-from-class", activeClassID],
     queryFn: () => getUsersFromClass(activeClassID),
     enabled: !!activeClassID,
@@ -749,8 +905,10 @@ const InstructorDashboard = () => {
     return <p className="p-4 sm:p-10">Loading...</p>;
   }
 
-  if (userInfo.role !== "instructor") {
-    return <h1 className="p-4 sm:p-10">Sorry you do not have access to this page</h1>;
+  if (!isInstructorRole(userInfo.role)) {
+    return (
+      <h1 className="p-4 sm:p-10">Sorry you do not have access to this page</h1>
+    );
   }
 
   if (classesLoading) return <p className="p-4 sm:p-10">Loading...</p>;
@@ -765,19 +923,24 @@ const InstructorDashboard = () => {
     );
 
   if (!activeClass) {
+    const isCoInstructor = userInfo.role === "co-instructor";
     return (
       <div className="p-4 sm:p-6 md:p-10">
         <Card>
           <CardContent className="text-center py-12">
             <p className="text-muted-foreground mb-4">
-              No active class. Create a new class.
+              {isCoInstructor
+                ? " Ask the primary instructor to add you as a co-instructor."
+                : " No active class. Create a new class."}
             </p>
-            <Link href="/instructor/classes">
-              <Button variant="outline" className="gap-2 cursor-pointer">
-                <Users className="h-4 w-4" />
-                Manage Classes
-              </Button>
-            </Link>
+            {!isCoInstructor && (
+              <Link href="/instructor/classes">
+                <Button variant="outline" className="gap-2 cursor-pointer">
+                  <Users className="h-4 w-4" />
+                  Manage Classes
+                </Button>
+              </Link>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -785,12 +948,15 @@ const InstructorDashboard = () => {
   }
 
   if (isLoading || usersLoading) return <p className="p-4 sm:p-10">Loading</p>;
-  if (error || usersError) return (
-    <div className="p-4 sm:p-10">
-      <p className="text-red-600 font-medium">Failed to load data</p>
-      <p className="text-sm text-muted-foreground mt-1">{(error as any)?.message || (usersError as any)?.message}</p>
-    </div>
-  );
+  if (error || usersError)
+    return (
+      <div className="p-4 sm:p-10">
+        <p className="text-red-600 font-medium">Failed to load data</p>
+        <p className="text-sm text-muted-foreground mt-1">
+          {(error as any)?.message || (usersError as any)?.message}
+        </p>
+      </div>
+    );
 
   const allWorklogs = data ?? [];
   const allUsersRaw = usersData ?? [];
@@ -817,18 +983,21 @@ const InstructorDashboard = () => {
   // Build per-student status for selected week
   const studentStatuses: StudentEntry[] = allStudents.map((email: string) => {
     const logs = weekLogs
-      .filter((l: any) => l.authorName === email && !l.isDraft)
-      .sort((a: any, b: any) =>
-        new Date(b.dateSubmitted).getTime() - new Date(a.dateSubmitted).getTime(),
+      .filter((l: any) => l.authorEmail === email && !l.isDraft)
+      .sort(
+        (a: any, b: any) =>
+          new Date(b.dateSubmitted).getTime() -
+          new Date(a.dateSubmitted).getTime(),
       );
     const latestLog = logs[0] ?? null;
-    const semStart = new Date("2026-01-26T00:00:00");
-    const dueDate = new Date(semStart);
+    const dueDate = new Date(classStartDate);
     dueDate.setDate(dueDate.getDate() + selectedWeek * 7);
     dueDate.setHours(23, 59, 0, 0);
 
     const isPastDue = new Date() > dueDate;
-    let status: "submitted" | "late" | "missing" | "pending" = isPastDue ? "missing" : "pending";
+    let status: "submitted" | "late" | "missing" | "pending" = isPastDue
+      ? "missing"
+      : "pending";
     let lateDays = 0;
 
     if (latestLog) {
@@ -842,26 +1011,70 @@ const InstructorDashboard = () => {
     const team = userTeamMap.get(email) ?? [];
     // "Reviewed" reflects the latest submission only — instructor reviews the current version.
     const hasReviewed = latestLog?.reviewed === true;
-    return { email, name, team, log: latestLog, logs, status, lateDays, hasReviewed };
+    return {
+      email,
+      name,
+      team,
+      log: latestLog,
+      logs,
+      status,
+      lateDays,
+      hasReviewed,
+    };
   });
 
   // Stats for selected week
   const totalStudents = allStudents.length;
-  const submitted = studentStatuses.filter((s: any) => s.status === "submitted").length;
+  const submitted = studentStatuses.filter(
+    (s: any) => s.status === "submitted",
+  ).length;
   const late = studentStatuses.filter((s: any) => s.status === "late").length;
-  const missing = studentStatuses.filter((s: any) => s.status === "missing").length;
-  const pending = studentStatuses.filter((s: any) => s.status === "pending").length;
-  const reviewed = studentStatuses.filter(
-    (s: any) => s.logs.some((l: any) => l.reviewed === true),
+  const missing = studentStatuses.filter(
+    (s: any) => s.status === "missing",
+  ).length;
+  const pending = studentStatuses.filter(
+    (s: any) => s.status === "pending",
+  ).length;
+  const reviewed = studentStatuses.filter((s: any) =>
+    s.logs.some((l: any) => l.reviewed === true),
   ).length;
 
-  // Search filter
-  const filtered = search
-    ? studentStatuses.filter((s: any) =>
-        s.email.toLowerCase().includes(search.toLowerCase()) ||
-        s.name.toLowerCase().includes(search.toLowerCase()),
-      )
-    : studentStatuses;
+  // Team options derived from current students (excluding "Unassigned" sentinel)
+  const teamOptions = Array.from(
+    new Set(
+      studentStatuses.flatMap((s) =>
+        (s.team ?? []).filter((t) => t && t.toLowerCase() !== "unassigned"),
+      ),
+    ),
+  ).sort();
+
+  // Combined filters
+  const filtered = studentStatuses.filter((s) => {
+    if (search) {
+      const q = search.toLowerCase();
+      if (
+        !s.email.toLowerCase().includes(q) &&
+        !s.name.toLowerCase().includes(q) &&
+        !s.team.some((t) => t.toLowerCase().includes(q))
+      ) {
+        return false;
+      }
+    }
+    if (teamFilter !== "all") {
+      if (teamFilter === "unassigned") {
+        const realTeams = s.team.filter(
+          (t) => t && t.toLowerCase() !== "unassigned",
+        );
+        if (realTeams.length > 0) return false;
+      } else if (!s.team.includes(teamFilter)) {
+        return false;
+      }
+    }
+    if (statusFilter !== "all" && s.status !== statusFilter) return false;
+    if (reviewFilter === "reviewed" && !s.hasReviewed) return false;
+    if (reviewFilter === "not-reviewed" && s.hasReviewed) return false;
+    return true;
+  });
 
   const visibleRows = showAll ? filtered : filtered.slice(0, ROW_LIMIT);
   const firstName =
@@ -879,15 +1092,25 @@ const InstructorDashboard = () => {
         >
           <span>👋</span> Hello, {firstName}.
         </h1>
-        <div className="flex items-center gap-3 border rounded-lg px-4 py-2 bg-white shrink-0 self-start">
-          <div className="h-9 w-9 rounded bg-amber-100 flex items-center justify-center shrink-0">
-            <CalendarDays className="h-5 w-5 text-amber-700" />
-          </div>
-          <div className="whitespace-nowrap">
-            <p className="text-xs text-muted-foreground">Week Status</p>
-            <p className="text-sm font-semibold">
-              Week {Math.max(1, maxWeek - 1)} of 16
-            </p>
+        <div className="flex flex-col items-end gap-3 shrink-0 self-start">
+          {userInfo?.classID && (
+            <div className="text-right">
+              <p className="text-sm text-muted-foreground">Active Class</p>
+              <p className="text-xl sm:text-2xl font-bold text-zinc-900">
+                {userInfo.classID}
+              </p>
+            </div>
+          )}
+          <div className="flex items-center gap-3 border rounded-lg px-4 py-2 bg-white">
+            <div className="h-9 w-9 rounded bg-amber-100 flex items-center justify-center shrink-0">
+              <CalendarDays className="h-5 w-5 text-amber-700" />
+            </div>
+            <div className="whitespace-nowrap">
+              <p className="text-xs text-muted-foreground">Week Status</p>
+              <p className="text-sm font-semibold">
+                Week {Math.max(1, maxWeek - 1)} of {totalWeeks}
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -925,7 +1148,7 @@ const InstructorDashboard = () => {
               Week {selectedWeek}
             </p>
             <p className="text-xs text-muted-foreground">
-              {getWeekRange(selectedWeek)}
+              {getWeekRange(selectedWeek, classStartDate)}
             </p>
           </div>
           <Button
@@ -1011,7 +1234,10 @@ const InstructorDashboard = () => {
               >
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <ClipboardCheck className="h-4 w-4" style={{ color: "#1E4B35" }} />
+                    <ClipboardCheck
+                      className="h-4 w-4"
+                      style={{ color: "#1E4B35" }}
+                    />
                     <p
                       className="text-[11px] uppercase tracking-wider font-semibold"
                       style={{ color: "#1E4B35" }}
@@ -1042,27 +1268,73 @@ const InstructorDashboard = () => {
       <Card className="overflow-hidden">
         <div className="px-4 py-3 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5 text-sm cursor-default"
-            >
-              All Teams <ChevronDown className="h-3.5 w-3.5" />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5 text-sm cursor-default"
-            >
-              Status <ChevronDown className="h-3.5 w-3.5" />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5 text-sm cursor-default"
-            >
-              Review Status <ChevronDown className="h-3.5 w-3.5" />
-            </Button>
+            <Select value={teamFilter} onValueChange={setTeamFilter}>
+              <SelectTrigger
+                size="sm"
+                className="text-sm cursor-pointer"
+                aria-label="Filter by team"
+              >
+                <SelectValue placeholder="All Teams" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Teams</SelectItem>
+                {teamOptions.map((t) => (
+                  <SelectItem key={t} value={t}>
+                    {t}
+                  </SelectItem>
+                ))}
+                <SelectItem value="unassigned">Unassigned</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger
+                size="sm"
+                className="text-sm cursor-pointer"
+                aria-label="Filter by status"
+              >
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="submitted">Submitted</SelectItem>
+                <SelectItem value="late">Late</SelectItem>
+                {selectedWeek === maxWeek ? (
+                  <SelectItem value="pending">Pending</SelectItem>
+                ) : (
+                  <SelectItem value="missing">Missing</SelectItem>
+                )}
+              </SelectContent>
+            </Select>
+            <Select value={reviewFilter} onValueChange={setReviewFilter}>
+              <SelectTrigger
+                size="sm"
+                className="text-sm cursor-pointer"
+                aria-label="Filter by review status"
+              >
+                <SelectValue placeholder="Review Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Reviews</SelectItem>
+                <SelectItem value="reviewed">Reviewed</SelectItem>
+                <SelectItem value="not-reviewed">Not Reviewed</SelectItem>
+              </SelectContent>
+            </Select>
+            {(teamFilter !== "all" ||
+              statusFilter !== "all" ||
+              reviewFilter !== "all") && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs cursor-pointer text-muted-foreground"
+                onClick={() => {
+                  setTeamFilter("all");
+                  setStatusFilter("all");
+                  setReviewFilter("all");
+                }}
+              >
+                Clear filters
+              </Button>
+            )}
           </div>
           <div className="relative w-full sm:w-72">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -1091,7 +1363,9 @@ const InstructorDashboard = () => {
           {filtered.length === 0 ? (
             <div className="text-center py-10">
               <p className="text-muted-foreground">
-                {search ? "No students match your search." : "No students found."}
+                {search
+                  ? "No students match your search."
+                  : "No students found."}
               </p>
             </div>
           ) : (
@@ -1123,9 +1397,7 @@ const InstructorDashboard = () => {
               style={{ color: "#1E4B35" }}
               onClick={() => setShowAll((v) => !v)}
             >
-              {showAll
-                ? "Show Less"
-                : `View All Students (${filtered.length})`}
+              {showAll ? "Show Less" : `View All Students (${filtered.length})`}
             </Button>
           </div>
         )}
@@ -1134,14 +1406,14 @@ const InstructorDashboard = () => {
       <StudentDetailDialog
         student={
           selectedEmail
-            ? studentStatuses.find((s) => s.email === selectedEmail) ?? null
+            ? (studentStatuses.find((s) => s.email === selectedEmail) ?? null)
             : null
         }
         selectedWeek={selectedWeek}
         allStudentLogs={
           selectedEmail
             ? allWorklogs.filter(
-                (l: any) => l.authorName === selectedEmail && !l.isDraft,
+                (l: any) => l.authorEmail === selectedEmail && !l.isDraft,
               )
             : []
         }
@@ -1150,6 +1422,7 @@ const InstructorDashboard = () => {
         open={!!selectedEmail}
         onClose={() => setSelectedEmail(null)}
         classID={activeClassID}
+        semStart={classStartDate}
       />
     </div>
   );

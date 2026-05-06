@@ -36,3 +36,6 @@ export const tokenAtom = atomWithStorage<string | null>(
   "csc_480_token",
   null,
 );
+
+export const isInstructorRole = (role: string | undefined | null) =>
+  role === "instructor" || role === "co-instructor";

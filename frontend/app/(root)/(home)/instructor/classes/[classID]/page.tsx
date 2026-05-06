@@ -4,7 +4,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
-import { userAtom } from "@/components/custom/utils/context/state";
+import { isInstructorRole, userAtom } from "@/components/custom/utils/context/state";
 import {
   getClass,
   unenrollUser,
@@ -44,19 +44,19 @@ export default function ClassDetailPage() {
   } = useQuery({
     queryKey: ["class", classID],
     queryFn: () => getClass(classID),
-    enabled: !!classID && userInfo?.role === "instructor",
+    enabled: !!classID && isInstructorRole(userInfo?.role),
   });
 
   const { data: roster } = useQuery({
     queryKey: ["roster", classID],
     queryFn: () => getUsersFromClass(classID),
-    enabled: !!classID && userInfo?.role === "instructor",
+    enabled: !!classID && isInstructorRole(userInfo?.role),
   });
 
   const { data: worklogs, isLoading: worklogsLoading } = useQuery({
     queryKey: ["class-worklogs", classID],
     queryFn: () => getWorklogsForClass(classID),
-    enabled: !!classID && userInfo?.role === "instructor",
+    enabled: !!classID && isInstructorRole(userInfo?.role),
   });
 
   const unenrollMutation = useMutation({
@@ -71,7 +71,7 @@ export default function ClassDetailPage() {
   });
 
   if (!mounted || !userInfo) return <p className="p-4 sm:p-10">Loading...</p>;
-  if (userInfo.role !== "instructor") {
+  if (!isInstructorRole(userInfo.role)) {
     return (
       <h1 className="p-4 sm:p-10">
         Sorry you do not have access to this page
@@ -195,7 +195,7 @@ export default function ClassDetailPage() {
       <Card className="mt-6">
         <CardHeader>
           <CardTitle className="text-lg">
-            Worklogs ({sortedWorklogs.length})
+            Work Logs ({sortedWorklogs.length})
           </CardTitle>
         </CardHeader>
         <CardContent>

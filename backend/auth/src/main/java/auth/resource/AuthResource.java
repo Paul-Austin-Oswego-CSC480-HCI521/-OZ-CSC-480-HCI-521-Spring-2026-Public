@@ -354,7 +354,7 @@ public class AuthResource {
     // @RolesAllowed("instructor")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Creates instructor in current class")
+    @Operation(summary = "Creates co instructor in current class")
     public Response createInstructor(User user){
         try {
             Document userDoc = authservice.createInstuctor(user.getEmail(), user.getName());
@@ -373,10 +373,11 @@ public class AuthResource {
     // @RolesAllowed("instructor")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Creates/updates user into instructor")
+    @Operation(summary = "Creates/updates user into co instructor")
     public Response updateInstructor(@PathParam("email") String email){
         try {
-            Document user = authservice.changeUserRole(email, "instructor");
+            // update instructor will always update to co-instructor
+            Document user = authservice.changeUserRole(email, "co-instructor");
             return Response.ok(user).build();
             
         } catch(Exception e){
@@ -421,14 +422,15 @@ public class AuthResource {
     }
             
     @POST
-    @Path("/class/create")
-    // @RolesAllowed("instructor")
+    // instructor creating a class sends an email and sets their class id to this
+    @Path("/class/create/{instructoremail}")
+    @RolesAllowed("instructor")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
      @Operation(summary = "Creates a class")
-    public Response createClass(StudentClass studentClass){
+    public Response createClass(@PathParam("instructoremail")String instructoremail,  StudentClass studentClass){
         try {
-            Document classDoc = authservice.createClass(studentClass);
+            Document classDoc = authservice.createClass(studentClass, instructoremail);
             return Response.ok(classDoc).build();
             
         } catch(Exception e){
@@ -505,6 +507,29 @@ public class AuthResource {
                 .build();
         }
     }
+
+    @PUT
+    @Path("/class/update/{classID}")
+    @RolesAllowed("instructor")
+    @Consumes(MediaType.APPLICATION_JSON)                                                                                                                                
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Updates editable fields (semester dates) on an existing class")                                                                                
+    public Response updateClass(@PathParam("classID") String classID, Document updates) {                                                                                
+        try {                                                                                                                                                            
+            Document classDoc = authservice.updateClass(classID, updates);                                                                                               
+            if (classDoc == null) {                                                                                                                                      
+                return Response.status(Response.Status.NOT_FOUND)
+                    .entity("Class not found").build();                                                                                                                  
+            }
+            return Response.ok(classDoc).build();                                                                                                                        
+        } catch (IllegalArgumentException e) {                
+            return Response.status(Response.Status.BAD_REQUEST)                                                                                                          
+                .entity(e.getMessage()).build();
+        } catch (Exception e) {                                                                                                                                          
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)                                                                                                
+                .entity(e.getMessage()).build();
+        }                                                                                                                                                                
+    }    
 
     @PUT
     @Path("/user/unarchive/{email}")

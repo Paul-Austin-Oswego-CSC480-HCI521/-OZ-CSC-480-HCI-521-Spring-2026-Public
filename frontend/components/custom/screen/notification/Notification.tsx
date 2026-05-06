@@ -1,13 +1,16 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
-import { getWorkLog } from "@/components/custom/utils/api_utils/worklogs/allReq";
+import {
+  getWorkLog,
+  getDrafts,
+} from "@/components/custom/utils/api_utils/worklogs/allReq";
+import { getClass } from "@/components/custom/utils/api_utils/req/class";
 import { useAtomValue, useSetAtom } from "jotai";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { userAtom } from "@/components/custom/utils/context/state";
 import { worklogEditAtom } from "@/components/custom/utils/context/state";
-import getWorklogDate from "../../utils/func/getDate";
-import { fmtDate } from "../../utils/func/formatDate";
+import { fmtDateTime } from "../../utils/func/formatDate";
 import { useRouter } from "next/navigation";
 import {
   CheckCircle2,
@@ -40,12 +43,23 @@ interface WeekEntry {
 }
 
 const accentGreen = "#1E4B35";
-const SEMESTER_START = new Date("2026-01-26T00:00:00");
+const FALLBACK_SEMESTER_START = new Date("2026-01-26T00:00:00");
 
 function calendarDaysBetween(from: Date, to: Date): number {
   const a = new Date(from.getFullYear(), from.getMonth(), from.getDate());
   const b = new Date(to.getFullYear(), to.getMonth(), to.getDate());
   return Math.round((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+function parseClassDate(s: string | undefined | null): Date | null {
+  if (!s) return null;
+  try {
+    const cleaned = s.replace(/\[[^\]]+\]$/, "");
+    const d = new Date(cleaned);
+    return Number.isNaN(d.getTime()) ? null : d;
+  } catch {
+    return null;
+  }
 }
 
 function buildWeekEntries(
@@ -54,10 +68,17 @@ function buildWeekEntries(
     dateSubmitted?: string;
     isDraft?: boolean;
   }[],
+  semesterStart: Date,
+  semesterEnd: Date | null,
 ): WeekEntry[] {
   const now = new Date();
-  const worklogInfo = getWorklogDate(SEMESTER_START);
-  const currentWeek = worklogInfo ? parseInt(worklogInfo.weekNumber) - 1 : 0;
+  const semesterTotalWeeks = semesterEnd
+    ? Math.max(1, Math.ceil(calendarDaysBetween(semesterStart, semesterEnd) / 7))
+    : Infinity;
+
+  const daysSinceStart = calendarDaysBetween(semesterStart, now);
+  const rawCurrentWeek = Math.max(0, Math.floor(daysSinceStart / 7) + 1);
+  const currentWeek = Math.min(rawCurrentWeek, semesterTotalWeeks);
 
   const submittedMap = new Map<number, { dateSubmitted?: string }>();
   const draftWeeks = new Set<number>();
@@ -71,11 +92,12 @@ function buildWeekEntries(
     }
   });
 
-  const totalWeeks = currentWeek + 1;
+  // Show one upcoming week beyond current, but never beyond the semester end.
+  const totalWeeks = Math.min(currentWeek + 1, semesterTotalWeeks);
   const entries: WeekEntry[] = [];
 
   for (let w = totalWeeks; w >= 1; w--) {
-    const dueDate = new Date(SEMESTER_START);
+    const dueDate = new Date(semesterStart);
     dueDate.setDate(dueDate.getDate() + w * 7);
     dueDate.setHours(23, 59, 0, 0);
     const dueDateStr = dueDate.toLocaleDateString("en-US", {
@@ -107,7 +129,7 @@ function buildWeekEntries(
           week: w,
           dueDate,
           dueDateStr,
-          submittedDate: fmtDate(log.dateSubmitted),
+          submittedDate: fmtDateTime(log.dateSubmitted),
           status: diffDays > 0 ? "late" : "submitted",
           lateByDays: diffDays > 0 ? diffDays : undefined,
           hasDraft,
@@ -129,7 +151,7 @@ function buildWeekEntries(
         week: w,
         dueDate,
         dueDateStr,
-        submittedDate: fmtDate(log.dateSubmitted),
+        submittedDate: fmtDateTime(log.dateSubmitted),
         status: diffDays > 0 ? "late" : "submitted",
         lateByDays: diffDays > 0 ? diffDays : undefined,
         hasDraft,
@@ -231,11 +253,26 @@ export const Notification = () => {
     queryFn: () => getWorkLog(userInfo?.email),
   });
 
+  const { data: drafts } = useQuery({
+    queryKey: ["worklog-drafts-mine", userInfo?.email],
+    enabled: !!userInfo?.email,
+    queryFn: async () => {
+      const all = await getDrafts();
+      return (all ?? []).filter((d: any) => d.authorEmail === userInfo?.email);
+    },
+  });
+
+  const { data: classData } = useQuery({
+    queryKey: ["class", userInfo?.classID],
+    enabled: !!userInfo?.classID,
+    queryFn: () => getClass(userInfo!.classID!),
+  });
+
   if (isLoading) return <p className="p-4 sm:p-10">Loading...</p>;
   if (error)
     return (
       <div className="p-4 sm:p-10">
-        <p className="text-red-600 font-medium">Failed to load worklogs</p>
+        <p className="text-red-600 font-medium">Failed to load work logs</p>
         <p className="text-sm text-muted-foreground mt-1">
           {(error as Error)?.message}
         </p>
@@ -243,12 +280,22 @@ export const Notification = () => {
     );
 
   const worklogs = data ?? [];
-  const entries = buildWeekEntries(worklogs);
+  const allLogs = [...worklogs, ...(drafts ?? [])];
+  const classStartDate =
+    parseClassDate(classData?.semesterStartDate) ?? FALLBACK_SEMESTER_START;
+  const classEndDate = parseClassDate(classData?.semsesterEndDate);
+  const entries = buildWeekEntries(allLogs, classStartDate, classEndDate);
 
-  const worklogInfo = getWorklogDate(SEMESTER_START);
-  const currentWeekNum = worklogInfo
-    ? parseInt(worklogInfo.weekNumber) - 1
-    : 0;
+  const today = new Date();
+  const semesterTotalWeeks = classEndDate
+    ? Math.max(
+        1,
+        Math.ceil(calendarDaysBetween(classStartDate, classEndDate) / 7),
+      )
+    : Infinity;
+  const daysSinceStart = calendarDaysBetween(classStartDate, today);
+  const rawCurrentWeek = Math.max(0, Math.floor(daysSinceStart / 7) + 1);
+  const currentWeekNum = Math.min(rawCurrentWeek, semesterTotalWeeks);
   const currentWeekEntry = entries.find((e) => e.week === currentWeekNum);
 
   const pastEntries = entries.filter((e) => e.status !== "upcoming");
@@ -259,15 +306,17 @@ export const Notification = () => {
   const late = pastEntries.filter((e) => e.status === "late").length;
   const missing = pastEntries.filter((e) => e.status === "missing").length;
 
+  const currentWeekHasLocalDraft =
+    worklogEdit?.weekNumber === String(currentWeekNum) &&
+    worklogEdit.mode === "new";
   const currentWeekPrimaryLabel =
     currentWeekNum > 0 && currentWeekEntry
       ? currentWeekEntry.status === "submitted" ||
         currentWeekEntry.status === "late"
         ? "Review Current Week's Work Log"
-        : worklogEdit?.weekNumber === String(currentWeekNum) &&
-            worklogEdit.mode === "new"
+        : currentWeekEntry.hasDraft || currentWeekHasLocalDraft
           ? "Continue Current Week's Work Log"
-          : "Continue Current Week's Work Log"
+          : "Create This Week's Work Log"
       : null;
 
   const handleWeekClick = (entry: WeekEntry) => {
@@ -275,8 +324,11 @@ export const Notification = () => {
       entry.status === "submitted" ||
       entry.status === "late" ||
       entry.submittedDate;
-    if (hasSubmission || entry.hasDraft) {
+    if (hasSubmission) {
       router.push(`/worklogs/review?week=${entry.week}`);
+    } else if (entry.hasDraft) {
+      setWorklogEdit(null);
+      router.push(`/worklogs?week=${entry.week}&mode=new`);
     } else {
       setWorklogEdit({
         mode: "new",
@@ -296,22 +348,12 @@ export const Notification = () => {
       {/* Header */}
       <div className="mb-4 sm:mb-5">
         <h1
-          className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight mb-1 flex items-center gap-2.5"
+          className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight mb-1"
           style={{ color: accentGreen }}
         >
-          <span
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border-2 bg-white shadow-sm"
-            style={{ borderColor: accentGreen }}
-          >
-            <FileText
-              className="h-5 w-5"
-              style={{ color: accentGreen }}
-              aria-hidden
-            />
-          </span>
           Weekly Work Log
         </h1>
-        <p className="text-xs sm:text-sm text-muted-foreground pl-0 sm:pl-[46px]">
+        <p className="text-xs sm:text-sm text-muted-foreground">
           Manage and review your work log progress records.
         </p>
       </div>
@@ -456,9 +498,6 @@ export const Notification = () => {
                     <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 border border-amber-200">
                       Draft saved
                     </span>
-                  )}
-                  {showDraftLabel && !entry.hasDraft && (
-                    <span className="text-sm text-gray-600">Draft</span>
                   )}
                   <ChevronRight className="h-4 w-4" />
                 </div>

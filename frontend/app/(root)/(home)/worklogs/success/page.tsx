@@ -11,16 +11,16 @@ export default function SuccessPage() {
     <div className="p-6 sm:p-10">
       <Breadcrumbs
         items={[
-          { label: "Weekly Logs", href: "/" },
+          { label: "Weekly Logs", href: "/notifications" },
           { label: "Submitted" },
         ]}
       />
       <div className="flex flex-col items-center justify-center">
-        <h1 className="text-3xl font-bold mb-6">Worklog Submitted!</h1>
+        <h1 className="text-3xl font-bold mb-6">Work Log Submitted!</h1>
         <p className="mb-6 text-lg text-gray-700">
-          Your worklog has been successfully submitted.
+          Your work log has been successfully submitted.
         </p>
-        <Button onClick={() => router.push("/worklogs")}>Back to Worklogs</Button>
+        <Button onClick={() => router.push("/worklogs")}>Back to Work Logs</Button>
       </div>
     </div>
   );

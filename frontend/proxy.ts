@@ -18,9 +18,12 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/notification/:path*",
     "/notifications/:path*",
-    "/tasktrackers/:path*",
+    "/tasktracker/:path*",
     "/worklogs/:path*",
+    "/instructor/:path*",
+    "/profile/:path*",
 
     "/signup",
     "/",
