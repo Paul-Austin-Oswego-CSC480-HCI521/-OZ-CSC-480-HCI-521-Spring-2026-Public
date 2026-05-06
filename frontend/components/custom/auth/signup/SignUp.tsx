@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import Script from "next/script";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useMutation } from "@tanstack/react-query";
@@ -18,8 +19,10 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { GraduationCap, ClipboardList, BookOpen, Users } from "lucide-react";
+import { ClipboardList } from "lucide-react";
 import { env } from "next-runtime-env";
+
+const BRAND_GREEN = "#1E4B35";
 
 declare global {
   interface Window {
@@ -65,44 +68,62 @@ export default function SignUp() {
   }, [scriptLoaded, mutate]);
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-green-600 via-green-800 via-60% to-green-600">
+    <div className="min-h-screen bg-white">
       <div className="min-h-screen flex flex-col lg:flex-row items-center justify-center gap-12 lg:gap-24 p-6 sm:p-10">
         {/* Branding */}
         <div className="text-center lg:text-left max-w-md space-y-6">
           <div className="flex items-center gap-3 justify-center lg:justify-start">
-            <div className="h-12 w-12 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center">
-              <GraduationCap className="h-7 w-7 text-white" />
-            </div>
+            <Image
+              src="/lakerlog.svg"
+              alt="LakerLogs logo"
+              width={56}
+              height={56}
+              priority
+              className="shrink-0"
+            />
             <div>
-              <h1 className="text-3xl font-bold text-white">LakerLogs</h1>
-              <p className="text-sm text-white/60">HCI 521 / CSC 480</p>
+              <h1
+                className="text-3xl font-bold"
+                style={{ color: BRAND_GREEN }}
+              >
+                LakerLogs
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                HCI 521 / CSC 480
+              </p>
             </div>
           </div>
 
-          <h2 className="text-3xl lg:text-4xl font-bold text-white leading-tight hidden lg:block">
+          <h2
+            className="text-3xl lg:text-4xl font-bold leading-tight hidden lg:block"
+            style={{ color: BRAND_GREEN }}
+          >
             Track your progress.
             <br />
-            <span className="text-emerald-300">Stay on course.</span>
+            <span className="text-amber-500">Stay on course.</span>
           </h2>
 
           <div className="hidden lg:flex flex-col gap-3">
             <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
-                <ClipboardList className="h-4 w-4 text-emerald-300" />
-              </div>
-              <p className="text-sm text-white/80">
+              <ClipboardList
+                className="h-5 w-5 shrink-0"
+                style={{ color: BRAND_GREEN }}
+              />
+              <p className="text-sm text-zinc-700">
                 Submit and track weekly work logs
               </p>
             </div>
-
           </div>
         </div>
 
         {/* Sign in card */}
-        <Card className="w-full max-w-sm shadow-xl text-3xl">
+        <Card
+          className="w-full max-w-sm shadow-xl border-0 text-white"
+          style={{ backgroundColor: BRAND_GREEN }}
+        >
           <CardHeader className="text-center space-y-2 pb-2">
-            <CardTitle className="text-2xl">Welcome</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-2xl text-white">Welcome</CardTitle>
+            <CardDescription className="text-white/80">
               Sign in with your SUNY Oswego account
             </CardDescription>
           </CardHeader>
@@ -112,19 +133,19 @@ export default function SignUp() {
             </div>
 
             {isError && (
-              <p className="text-sm text-destructive text-center">
+              <p className="text-sm text-red-300 text-center">
                 Sign in failed. Please try again.
               </p>
             )}
 
-            <p className="text-xs text-center text-muted-foreground">
+            <p className="text-xs text-center text-white/70">
               Use your @oswego.edu Google account to continue.
             </p>
           </CardContent>
         </Card>
       </div>
 
-      <p className="absolute bottom-4 left-0 right-0 text-xs text-center text-white/40">
+      <p className="absolute bottom-4 left-0 right-0 text-xs text-center text-muted-foreground">
         SUNY Oswego · Department of Computer Science
       </p>
 
