@@ -1,4 +1,5 @@
 # -OZ-CSC-480-HCI-521-Spring-2026-Public
+
 # Laker Logs
 
 <div align="center">
@@ -12,17 +13,35 @@
 
 ## Table of Contents
 
-- [What is Laker Logs?](#what-is-laker-logs)
-- [Who is it for?](#who-is-it-for)
-- [How to Access?](#how-to-access)
-- [Getting Started](#getting-started)
-- [For Students](#for-students)
-- [For Instructors](#for-instructors)
-- [Notifications & Reminders](#notifications--reminders)
-- [Data & Privacy](#data--privacy)
-- [Supported Browsers](#supported-browsers)
-- [Known Limitations](#known-limitations)
-- [Glossary](#glossary)
+- [-OZ-CSC-480-HCI-521-Spring-2026-Public](#-oz-csc-480-hci-521-spring-2026-public)
+- [Laker Logs](#laker-logs)
+  - [Table of Contents](#table-of-contents)
+  - [What is Laker Logs?](#what-is-laker-logs)
+  - [Who is it for?](#who-is-it-for)
+  - [How to Access?](#how-to-access)
+  - [Getting Started](#getting-started)
+    - [Step 1 — Log In with Your Oswego Email](#step-1--log-in-with-your-oswego-email)
+  - [For Students](#for-students)
+    - [Your Dashboard](#your-dashboard)
+    - [Creating a Weekly Work Log](#creating-a-weekly-work-log)
+    - [Submitting Your Work Log](#submitting-your-work-log)
+    - [Viewing Past Work Logs](#viewing-past-work-logs)
+  - [For Instructors](#for-instructors)
+    - [Your Dashboard](#your-dashboard-1)
+    - [Setting Up a Class](#setting-up-a-class)
+    - [Reviewing Student Work Logs](#reviewing-student-work-logs)
+    - [Managing Student Accounts](#managing-student-accounts)
+    - [Managing/Archiving Class](#managingarchiving-class)
+  - [Notifications \& Reminders](#notifications--reminders)
+  - [Data \& Privacy](#data--privacy)
+  - [Supported Browsers](#supported-browsers)
+  - [Known Limitations](#known-limitations)
+  - [Glossary](#glossary)
+  - [Architecture](#architecture)
+    - [System Overview](#system-overview)
+    - [Tech Stack](#tech-stack)
+    - [Deployment](#deployment)
+  - [Contributing](#contributing)
 
 ---
 
@@ -38,9 +57,9 @@ Before Laker Logs, students in the Software Design course submitted weekly work 
 
 Laker Logs has two types of users:
 
-| User Type | Role |
-|-----------|------|
-| **Student** | Fills out and submits weekly work logs |
+| User Type      | Role                                                      |
+| -------------- | --------------------------------------------------------- |
+| **Student**    | Fills out and submits weekly work logs                    |
 | **Instructor** | Creates classes, manages rosters, and reviews submissions |
 
 > Laker Logs is **only** for students and instructors enrolled in CSC480 / HCI 521 at SUNY Oswego. It is not available for other courses or institutions.
@@ -52,6 +71,7 @@ Laker Logs has two types of users:
 Laker Logs is a **web application** — no installation needed! Simply open it in your web browser on a desktop or laptop computer.
 
 **Supported browsers:**
+
 - Google Chrome
 - Mozilla Firefox
 - Apple Safari
@@ -80,6 +100,7 @@ Laker Logs uses your **SUNY Oswego institutional email** to log you in. No separ
 ### Your Dashboard
 
 Once logged in, your home page shows:
+
 - Your **current weekly work log status** (Start, continue, review work log)
 - Any **upcoming deadlines**
 - Any **recent actions or reminders**
@@ -91,21 +112,22 @@ Once logged in, your home page shows:
 ### Creating a Weekly Work Log
 
 On the weekly work log page, you can track the status of your work logs. Each week's widget includes:
+
 - **Week Number**
 - **Due Date**
 - **Submission Status**
 
 Clicking on the widget will take you to the work log of the corresponding week. Each **Work log** includes:
 
-| Field | What to fill in |
-|------------|-------------|
-| Task Name | What the task is called *(required)*|
-| Main Goal | What you were trying to accomplish *(required)*|
-| Deadline | When the task is due *(required)*|
-| Completion Status | Not Started / In Progress / Complete *(required)* |
-| Reflection | A written reflection on your progress *(required)* |
-| Collaborators | Who did you work with |
-| Work division | How did you work with collaborators |
+| Field             | What to fill in                                    |
+| ----------------- | -------------------------------------------------- |
+| Task Name         | What the task is called _(required)_               |
+| Main Goal         | What you were trying to accomplish _(required)_    |
+| Deadline          | When the task is due _(required)_                  |
+| Completion Status | Not Started / In Progress / Complete _(required)_  |
+| Reflection        | A written reflection on your progress _(required)_ |
+| Collaborators     | Who did you work with                              |
+| Work division     | How did you work with collaborators                |
 
 > At least **one task** is required per work log, and every task must include all the required fields filled before submission.
 
@@ -159,6 +181,7 @@ Instructors can view, filter, and sort all student submissions by:
 - **Review status**
 
 Instructors can also:
+
 - View **all versions** of a student's work log (including resubmissions)
 - Mark a work log as **reviewed**
 
@@ -167,6 +190,7 @@ Instructors can also:
 ### Managing Student Accounts
 
 If a student joins late or leaves the course, instructors can:
+
 - **Add** new student
 - **Archive** a student account
 
@@ -206,11 +230,11 @@ Laker Logs takes your privacy seriously and complies with the following regulati
 
 ## Supported Browsers
 
-| Browser | Supported |
-|---------|-----------|
-| Google Chrome | Yes |
-| Mozilla Firefox | Yes |
-| Apple Safari | Yes |
+| Browser         | Supported |
+| --------------- | --------- |
+| Google Chrome   | Yes       |
+| Mozilla Firefox | Yes       |
+| Apple Safari    | Yes       |
 
 ---
 
@@ -225,24 +249,77 @@ Laker Logs takes your privacy seriously and complies with the following regulati
 
 ## Glossary
 
-| Term | Definition |
-|------|------------|
-| **Work Log** | The weekly report submitted by a student to be reviewed by the instructor |
-| **Task** | An individual item on a work log with fields for goal, deadline, status, and reflection |
-| **Student User** | A user who fills out and submits work logs |
-| **Instructor User** | A user who manages rosters and reviews student work logs |
-| **Version** | A saved copy of a work log each time it is submitted or resubmitted |
-| **Late Submission** | A work log submitted after the deadline — still accepted but flagged as late |
-| **FERPA** | Federal law protecting the privacy of student education records |
-| **WCAG** | Web Content Accessibility Guidelines — standards for making websites accessible to all users |
+| Term                | Definition                                                                                   |
+| ------------------- | -------------------------------------------------------------------------------------------- |
+| **Work Log**        | The weekly report submitted by a student to be reviewed by the instructor                    |
+| **Task**            | An individual item on a work log with fields for goal, deadline, status, and reflection      |
+| **Student User**    | A user who fills out and submits work logs                                                   |
+| **Instructor User** | A user who manages rosters and reviews student work logs                                     |
+| **Version**         | A saved copy of a work log each time it is submitted or resubmitted                          |
+| **Late Submission** | A work log submitted after the deadline — still accepted but flagged as late                 |
+| **FERPA**           | Federal law protecting the privacy of student education records                              |
+| **WCAG**            | Web Content Accessibility Guidelines — standards for making websites accessible to all users |
+
+---
+
+## Architecture
+
+Laker Logs is a containerized full-stack web application built with a microservices backend, a Next.js frontend, and MongoDB as the database.
+
+---
+
+### System Overview
+
+```
+Browser
+  │
+  ▼
+Caddy (Reverse Proxy — port 80/443)
+  ├── /         → Frontend (Next.js — port 3000)
+  ├── /wl/*     → Worklog Service (Open Liberty — port 9081)
+  └── /a/*      → Auth Service (Open Liberty — port 9084)
+                           │
+                           ▼
+                      MongoDB (port 27017)
+```
+
+---
+
+### Tech Stack
+
+| Layer              | Technology                                          |
+| ------------------ | --------------------------------------------------- |
+| **Frontend**       | Next.js 15, React 19, TypeScript, Tailwind CSS 4    |
+| **UI Components**  | shadcn/ui, Radix UI, Lucide React                   |
+| **State & Data**   | Jotai, TanStack React Query 5, React Hook Form, Zod |
+| **Backend**        | Java, Jakarta EE 10, Open Liberty, JAX-RS           |
+| **Database**       | MongoDB 7 (direct driver, no ORM)                   |
+| **Authentication** | Google OAuth 2.0 + JWT (RS256)                      |
+| **Reverse Proxy**  | Caddy 2                                             |
+| **Infrastructure** | Docker, Docker Compose, Terraform, AWS EC2          |
+
+---
+
+### Deployment
+
+**Development** — run `make dev` to spin up MongoDB in Docker and all four backend services via Open Liberty dev mode alongside the Next.js dev server.
+
+**Production (AWS)** — Terraform provisions an EC2 `t3.small` instance; `docker-compose.aws.yml` starts all services with Caddy as the reverse proxy terminating TLS via DuckDNS (`lakerlogs.duckdns.org`).
+
+```
+docker-compose.dev.yml     # MongoDB only (local dev)
+docker-compose.yml         # All services (no proxy)
+docker-compose.aws.yml     # All services + Caddy (production)
+```
 
 ---
 
 ## Contributing
 
-For project setup for local development, please refer to [CONTRIBUTING.md](./CONTRIBUTING.md).
+For running the project for local development, please refer to [CONTRIBUTING.md](./CONTRIBUTING.md).
+
+Feel free to create issue and PR.
 
 ---
 
-*Laker Logs was developed as part of the CSC480 / HCI 521 Software Design course at SUNY Oswego, Spring 2026.*
-
+_Laker Logs was developed as part of the CSC480 / HCI 521 Software Design course at SUNY Oswego, Spring 2026.
