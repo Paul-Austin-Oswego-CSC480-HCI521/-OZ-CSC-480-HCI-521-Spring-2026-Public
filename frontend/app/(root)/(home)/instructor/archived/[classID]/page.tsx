@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
-import { userAtom } from "@/components/custom/utils/context/state";
+import { isInstructorRole, userAtom } from "@/components/custom/utils/context/state";
 import {
   ClassUser,
   getAllUsers,
@@ -11,7 +11,7 @@ import {
   StudentClass,
 } from "@/components/custom/utils/api_utils/req/class";
 import { getWorklogsForClass } from "@/components/custom/utils/api_utils/worklogs/allReq";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Breadcrumbs } from "@/components/custom/ui/Breadcrumbs";
 import {
   Archive,
@@ -20,6 +20,7 @@ import {
   CircleDot,
   LayoutGrid,
   User as UserIcon,
+  ChevronDown,
 } from "lucide-react";
 
 const BRAND_GREEN = "#1E4B35";
@@ -36,11 +37,12 @@ function splitName(full: string | undefined): SplitName {
 
 function teamChipClasses(team: string): string {
   const t = team.toLowerCase();
-  if (t.includes("usab")) return "bg-emerald-100 text-emerald-800";
-  if (t.includes("require")) return "bg-green-100 text-green-800";
-  if (t.includes("qa")) return "bg-amber-100 text-amber-800";
-  if (t.includes("front")) return "bg-orange-100 text-orange-800";
-  if (t.includes("back")) return "bg-blue-100 text-blue-800";
+  if (t.includes("usab")) return "bg-[#B0C6DB] text-zinc-900";
+  if (t.includes("require")) return "bg-[#A1D2B5] text-zinc-900";
+  if (t.includes("qa") || t.includes("qualit") || t.includes("assur"))
+    return "bg-[#FAE18A] text-zinc-900";
+  if (t.includes("front")) return "bg-[#EDB970] text-zinc-900";
+  if (t.includes("back")) return "bg-[#BDCABF] text-zinc-900";
   return "bg-slate-100 text-slate-800";
 }
 
@@ -48,6 +50,7 @@ type Worklog = {
   _id?: { $oid: string } | string;
   worklogName?: string;
   authorName: string;
+  authorEmail?: string;
   dateCreated?: string;
   dateSubmitted?: string;
   collaborators?: string[];
@@ -80,19 +83,19 @@ export default function ArchivedClassDetailPage() {
   const { data: classData } = useQuery({
     queryKey: ["class", classID],
     queryFn: () => getClass(classID),
-    enabled: !!classID && userInfo?.role === "instructor",
+    enabled: !!classID && isInstructorRole(userInfo?.role),
   });
 
   const { data: allUsers } = useQuery({
     queryKey: ["all-users"],
     queryFn: getAllUsers,
-    enabled: !!classID && userInfo?.role === "instructor",
+    enabled: !!classID && isInstructorRole(userInfo?.role),
   });
 
   const { data: worklogs, isLoading: worklogsLoading } = useQuery({
     queryKey: ["worklogs-for-class", classID],
     queryFn: () => getWorklogsForClass(classID),
-    enabled: !!classID && userInfo?.role === "instructor",
+    enabled: !!classID && isInstructorRole(userInfo?.role),
   });
 
   const userByEmail = useMemo(() => {
@@ -108,7 +111,7 @@ export default function ArchivedClassDetailPage() {
     const submitted = list.filter((w) => !w.isDraft);
     const map = new Map<string, Worklog[]>();
     for (const w of submitted) {
-      const key = w.authorName ?? "unknown";
+      const key = w.authorEmail ?? "unknown";
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(w);
     }
@@ -123,7 +126,15 @@ export default function ArchivedClassDetailPage() {
   }, [worklogs]);
 
   if (!mounted || !userInfo) return <p className="p-4 sm:p-10">Loading...</p>;
-  if (userInfo.role !== "instructor") {
+  if (!isInstructorRole(userInfo.role)) {
+    return (
+      <h1 className="p-4 sm:p-10">
+        Sorry you do not have access to this page
+      </h1>
+    );
+  }
+  if (!classData) return <p className="p-4 sm:p-10">Loading...</p>;
+  if (!(classData.instructors ?? []).includes(userInfo.email)) {
     return (
       <h1 className="p-4 sm:p-10">
         Sorry you do not have access to this page
@@ -132,197 +143,243 @@ export default function ArchivedClassDetailPage() {
   }
 
   const cls: StudentClass | undefined = classData;
-  const totalWorklogs = grouped.reduce((acc, g) => acc + g.items.length, 0);
+
+  const instructorRows = (cls?.instructors ?? []).map((email) => {
+    const u = userByEmail.get(email);
+    return { email, name: u?.name ?? email };
+  });
+
+  const studentRows = cls?.inactiveStudents ?? [];
 
   return (
-    <div className="p-3 sm:p-4 md:p-6 w-full">
-      <Breadcrumbs
-        items={[
-          { label: "Archived Classes", href: "/instructor/archived" },
-          { label: classID },
-        ]}
-      />
-      <div className="mb-4 sm:mb-5">
-        <h1
-          className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight mb-1 flex items-center gap-2.5 flex-wrap"
-          style={{ color: BRAND_GREEN }}
-        >
+    <div className="w-full">
+      <div className="bg-gray-100 px-4 sm:px-6 md:px-10 py-6 border-b">
+        <Breadcrumbs
+          items={[
+            { label: "Archived Classes", href: "/instructor/archived" },
+            { label: classID },
+          ]}
+        />
+        <div className="flex items-start gap-3 mt-3">
           <span
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border-2 bg-white shadow-sm"
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border-2 bg-white shadow-sm"
             style={{ borderColor: BRAND_GREEN }}
           >
             <Archive
-              className="h-5 w-5"
+              className="h-6 w-6"
               style={{ color: BRAND_GREEN }}
               aria-hidden
             />
           </span>
-          {classID}
-          <span className="text-[11px] font-bold uppercase tracking-wide bg-amber-300 text-amber-900 px-2 py-0.5 rounded">
-            Archived
-          </span>
-        </h1>
-        <p className="text-xs sm:text-sm text-muted-foreground pl-0 sm:pl-[46px]">
-          Worklog history for an archived class. Former students appear by
-          email.
-        </p>
-      </div>
-
-      <Card className="mb-4">
-        <CardContent className="p-4 sm:p-5 grid sm:grid-cols-3 gap-3 text-sm">
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-            <div>
-              <p className="text-xs text-muted-foreground">Semester</p>
-              <p className="font-medium">
-                {fmtDate(cls?.semesterStartDate)} —{" "}
-                {fmtDate(cls?.semsesterEndDate)}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-            <div>
-              <p className="text-xs text-muted-foreground">Student access ended</p>
-              <p className="font-medium">
-                {fmtDate(cls?.studendAccessEndDate)}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <UserIcon className="h-4 w-4 text-muted-foreground" />
-            <div>
-              <p className="text-xs text-muted-foreground">
-                Authors with worklogs
-              </p>
-              <p className="font-medium">
-                {grouped.length} ({totalWorklogs} submissions)
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="mb-4 overflow-hidden p-0 gap-0">
-        <div
-          className="flex items-center justify-between px-4 py-3"
-          style={{ backgroundColor: BRAND_AMBER_TINT }}
-        >
-          <div
-            className="flex items-center gap-2 font-semibold"
-            style={{ color: BRAND_GREEN }}
-          >
-            <LayoutGrid className="h-4 w-4" />
-            Class Roster
-            <span className="text-xs font-normal text-muted-foreground">
-              ({grouped.length})
-            </span>
+          <div>
+            <h1
+              className="text-2xl sm:text-3xl md:text-4xl font-bold leading-tight"
+              style={{ color: BRAND_GREEN }}
+            >
+              Archived Classes
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              View work logs from previous classes.
+            </p>
           </div>
         </div>
-        <CardContent className="p-0">
-          <table className="w-full text-sm">
-            <thead className="bg-amber-50/60 text-xs uppercase tracking-wide text-muted-foreground">
-              <tr>
-                <th className="px-4 py-2.5 text-left">Last Name</th>
-                <th className="px-4 py-2.5 text-left">First Name</th>
-                <th className="px-4 py-2.5 text-left">Email</th>
-                <th className="px-4 py-2.5 text-left">Class</th>
-                <th className="px-4 py-2.5 text-left">Teams</th>
-                <th className="px-4 py-2.5 text-left">Submissions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {worklogsLoading && (
+      </div>
+
+      <div className="p-4 sm:p-6 md:p-10 space-y-6">
+        <div className="border-2 rounded-lg px-4 py-3 bg-white inline-block">
+          <p
+            className="text-xl sm:text-2xl font-bold"
+            style={{ color: "#111" }}
+          >
+            {classID}
+          </p>
+          <p className="text-sm text-muted-foreground flex items-center gap-1.5 mt-1">
+            <Calendar className="h-4 w-4" />
+            {fmtDate(cls?.semesterStartDate)} — {fmtDate(cls?.semsesterEndDate)}
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <h2 className="text-xl font-bold">
+            Instructors ({instructorRows.length})
+          </h2>
+          <Card className="overflow-hidden p-0 gap-0">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
                 <tr>
-                  <td colSpan={6} className="px-4 py-6 text-center text-muted-foreground">
-                    Loading students...
-                  </td>
+                  <th className="px-4 py-2.5 text-left">
+                    <span className="inline-flex items-center gap-1">
+                      Last Name <ChevronDown className="h-3 w-3" />
+                    </span>
+                  </th>
+                  <th className="px-4 py-2.5 text-left">
+                    <span className="inline-flex items-center gap-1">
+                      First Name <ChevronDown className="h-3 w-3" />
+                    </span>
+                  </th>
+                  <th className="px-4 py-2.5 text-left">
+                    <span className="inline-flex items-center gap-1">
+                      Email <ChevronDown className="h-3 w-3" />
+                    </span>
+                  </th>
+                  <th className="px-4 py-2.5 text-left">Role</th>
                 </tr>
-              )}
-              {!worklogsLoading && grouped.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="px-4 py-10 text-center">
-                    <Archive className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-                    <p className="text-sm text-muted-foreground">
-                      No students submitted worklogs in this class.
-                    </p>
-                  </td>
-                </tr>
-              )}
-              {!worklogsLoading &&
-                grouped.map((g) => {
-                  const user = userByEmail.get(g.email);
-                  const { first, last } = splitName(user?.name);
-                  const pref =
-                    user?.preferredName?.trim()?.split(/\s+/)[0] ?? "";
-                  const teams = (user?.team ?? []).filter(
-                    (t) => t && t.toLowerCase() !== "unassigned",
-                  );
-                  const ok = teams.length > 0;
-                  return (
-                    <tr
-                      key={g.email}
-                      className="border-t cursor-pointer hover:bg-muted/40"
-                      onClick={() =>
-                        router.push(
-                          `/instructor/students/${encodeURIComponent(g.email)}?classID=${encodeURIComponent(classID)}`,
-                        )
-                      }
+              </thead>
+              <tbody>
+                {instructorRows.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={4}
+                      className="px-4 py-6 text-center text-muted-foreground"
                     >
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          {ok ? (
+                      No instructors.
+                    </td>
+                  </tr>
+                ) : (
+                  instructorRows.map((inst, idx) => {
+                    const { first, last } = splitName(inst.name);
+                    const isYou = inst.email === userInfo.email;
+                    return (
+                      <tr key={inst.email} className="border-t">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
                             <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                          ) : (
-                            <CircleDot className="h-4 w-4 text-amber-500" />
-                          )}
-                          <span className="font-medium">{last || "—"}</span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        {first || "—"}
-                        {pref && pref.toLowerCase() !== first.toLowerCase() && (
-                          <span className="text-muted-foreground">
-                            {" "}
-                            ({pref})
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground">{g.email}</td>
-                      <td className="px-4 py-3">
-                        {user?.classStanding ? (
-                          <span className="text-xs whitespace-pre-line">
-                            {user.classStanding.replace(" ", "\n")}
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex flex-wrap gap-1">
-                          {teams.length === 0 && (
-                            <span className="text-xs text-muted-foreground">—</span>
-                          )}
-                          {teams.map((t) => (
-                            <span
-                              key={t}
-                              className={`text-[11px] font-medium px-2 py-0.5 rounded ${teamChipClasses(t)}`}
-                            >
-                              {t}
+                            <span className="font-medium">
+                              {last || inst.email}
                             </span>
-                          ))}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {g.items.length}
-                      </td>
-                    </tr>
-                  );
-                })}
-            </tbody>
-          </table>
-        </CardContent>
-      </Card>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          {first || "—"}
+                          {isYou && (
+                            <span className="ml-2 text-[10px] font-bold uppercase tracking-wide bg-amber-300 text-amber-900 px-1.5 py-0.5 rounded">
+                              You
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          {inst.email}
+                        </td>
+                        <td className="px-4 py-3">
+                          {idx === 0 ? "Instructor" : "Co-Instructor"}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </Card>
+        </div>
+
+        <div className="space-y-2">
+          <h2 className="text-xl font-bold">
+            Class Roster ({studentRows.length})
+          </h2>
+          <Card className="overflow-hidden p-0 gap-0">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
+                <tr>
+                  <th className="px-4 py-2.5 text-left">
+                    <span className="inline-flex items-center gap-1">
+                      Last Name <ChevronDown className="h-3 w-3" />
+                    </span>
+                  </th>
+                  <th className="px-4 py-2.5 text-left">
+                    <span className="inline-flex items-center gap-1">
+                      First Name <ChevronDown className="h-3 w-3" />
+                    </span>
+                  </th>
+                  <th className="px-4 py-2.5 text-left">
+                    <span className="inline-flex items-center gap-1">
+                      Email <ChevronDown className="h-3 w-3" />
+                    </span>
+                  </th>
+                  <th className="px-4 py-2.5 text-left">
+                    <span className="inline-flex items-center gap-1">
+                      Class <ChevronDown className="h-3 w-3" />
+                    </span>
+                  </th>
+                  <th className="px-4 py-2.5 text-left">
+                    <span className="inline-flex items-center gap-1">
+                      Team <ChevronDown className="h-3 w-3" />
+                    </span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {studentRows.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={5}
+                      className="px-4 py-10 text-center"
+                    >
+                      <Archive className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+                      <p className="text-sm text-muted-foreground">
+                        No students were enrolled in this class.
+                      </p>
+                    </td>
+                  </tr>
+                ) : (
+                  studentRows.map((s) => {
+                    const { first, last } = splitName(s.name);
+                    const teams = (s.team ?? []).filter(
+                      (t) => t && t.toLowerCase() !== "unassigned",
+                    );
+                    return (
+                      <tr
+                        key={s.email}
+                        className="border-t cursor-pointer hover:bg-muted/40"
+                        onClick={() =>
+                          router.push(
+                            `/instructor/students/${encodeURIComponent(s.email)}?classID=${encodeURIComponent(classID)}`,
+                          )
+                        }
+                      >
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                            <span className="font-medium">
+                              {last || s.email}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">{first || "—"}</td>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          {s.email}
+                        </td>
+                        <td className="px-4 py-3">
+                          {s.classStanding || (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex flex-wrap gap-1">
+                            {teams.length === 0 ? (
+                              <span className="text-xs text-muted-foreground">
+                                —
+                              </span>
+                            ) : (
+                              teams.map((t) => (
+                                <span
+                                  key={t}
+                                  className={`text-[11px] font-medium px-2 py-0.5 rounded ${teamChipClasses(t)}`}
+                                >
+                                  {t}
+                                </span>
+                              ))
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }

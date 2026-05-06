@@ -3,7 +3,7 @@ import { NotifCenter } from "@/components/custom/screen/home/NotifCenter";
 import Welcome from "@/components/custom/screen/home/Welcome";
 import { useRouter } from "next/navigation";
 import { useAtomValue } from "jotai";
-import { userAtom } from "@/components/custom/utils/context/state";
+import { isInstructorRole, userAtom } from "@/components/custom/utils/context/state";
 import { refreshToken } from "@/components/custom/utils/api_utils/req/req";
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -23,12 +23,12 @@ const Page = () => {
   }, []);
 
   useEffect(() => {
-    if (mounted && userInfo?.role === "instructor") {
+    if (mounted && isInstructorRole(userInfo?.role)) {
       router.replace("/instructor");
     }
   }, [mounted, userInfo, router]);
 
-  if (!mounted || !userInfo || userInfo.role === "instructor") {
+  if (!mounted || !userInfo || isInstructorRole(userInfo.role)) {
     return <p className="p-4 sm:p-10">Loading...</p>;
   }
 

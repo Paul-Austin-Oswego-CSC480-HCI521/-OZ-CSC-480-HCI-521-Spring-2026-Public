@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useAtomValue } from "jotai";
-import { userAtom } from "@/components/custom/utils/context/state";
+import { isInstructorRole, userAtom } from "@/components/custom/utils/context/state";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -112,12 +112,14 @@ export default function ArchivedClassPage() {
   const { data: classes, isLoading, error } = useQuery({
     queryKey: ["classes"],
     queryFn: getClasses,
-    enabled: userInfo?.role === "instructor",
+    enabled: isInstructorRole(userInfo?.role),
   });
 
   const sorted = useMemo(() => {
     const archived: StudentClass[] = (classes ?? []).filter(
-      (c) => c.isArchived,
+      (c) =>
+        c.isArchived &&
+        (c.instructors ?? []).includes(userInfo?.email ?? ""),
     );
     return archived.sort((a, b) => {
       const ad = parseDate(a.semesterStartDate);
@@ -127,7 +129,7 @@ export default function ArchivedClassPage() {
   }, [classes, sort]);
 
   if (!mounted || !userInfo) return <p className="p-4 sm:p-10">Loading...</p>;
-  if (userInfo.role !== "instructor") {
+  if (!isInstructorRole(userInfo.role)) {
     return (
       <h1 className="p-4 sm:p-10">
         Sorry you do not have access to this page

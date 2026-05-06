@@ -7,6 +7,13 @@ const getAuthClient = () => {
   return createClient(AUTH_URL);
 };
 
+export interface InactiveStudent {
+  email: string;
+  name?: string;
+  classStanding?: string | null;
+  team?: string[];
+}
+
 export interface StudentClass {
   classID: string;
   semesterStartDate: string;
@@ -14,6 +21,8 @@ export interface StudentClass {
   studendAccessEndDate: string;
   isArchived?: boolean;
   students?: unknown[];
+  instructors?: string[];
+  inactiveStudents?: InactiveStudent[];
 }
 
 export interface ClassUser {
@@ -28,8 +37,11 @@ export interface ClassUser {
   isArchived?: boolean;
 }
 
-export async function createClass(data: StudentClass) {
-  const res = await getAuthClient().post("/auth/class/create", data);
+export async function createClass(data: StudentClass, instructorEmail: string) {
+  const res = await getAuthClient().post(
+    `/auth/class/create/${encodeURIComponent(instructorEmail)}`,
+    data,
+  );
   return res.data as StudentClass | null;
 }
 
@@ -41,6 +53,22 @@ export async function getClasses() {
 export async function getClass(classID: string) {
   const res = await getAuthClient().get(
     `/auth/class/${encodeURIComponent(classID)}`,
+  );
+  return res.data as StudentClass;
+}
+
+export async function updateClass(
+  classID: string,
+  updates: Partial<
+    Pick<
+      StudentClass,
+      "semesterStartDate" | "semsesterEndDate" | "studendAccessEndDate"
+    >
+  >,
+) {
+  const res = await getAuthClient().put(
+    `/auth/class/update/${encodeURIComponent(classID)}`,
+    updates,
   );
   return res.data as StudentClass;
 }
@@ -72,6 +100,20 @@ export async function enrollUser(email: string, classID: string) {
 export async function unenrollUser(email: string) {
   const res = await getAuthClient().delete(
     `/auth/users/class/${encodeURIComponent(email)}`,
+  );
+  return res.data;
+}
+
+export async function promoteToCoInstructor(email: string) {
+  const res = await getAuthClient().put(
+    `/auth/instructor/create/${encodeURIComponent(email)}`,
+  );
+  return res.data;
+}
+
+export async function demoteFromInstructor(email: string) {
+  const res = await getAuthClient().put(
+    `/auth/instructor/remove/${encodeURIComponent(email)}`,
   );
   return res.data;
 }

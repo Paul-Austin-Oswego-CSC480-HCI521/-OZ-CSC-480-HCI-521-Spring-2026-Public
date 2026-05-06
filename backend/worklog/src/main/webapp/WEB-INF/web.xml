@@ -15,4 +15,7 @@
     <security-role>
         <role-name>instructor</role-name>
     </security-role>
+    <security-role>
+        <role-name>co-instructor</role-name>
+    </security-role>
 </web-app>

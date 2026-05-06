@@ -9,6 +9,7 @@ import {
   getWorkLog,
   saveDraft,
   getDraftForWeek,
+  deleteWorklog,
 } from "../../utils/api_utils/worklogs/allReq";
 import { getUsersFromClass } from "../../utils/api_utils/req/req";
 import { useSearchParams } from "next/navigation";
@@ -18,7 +19,7 @@ import {
   taskType,
   tasksSchema,
 } from "@/types/worklog/worklogTypes";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -207,12 +208,15 @@ function PreviousSubmission({
 
 export function WorkLogForm() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   // ── FIX: read AND write pendingWorklogAtom so we can restore on back-nav ──
   const [pendingWorklog, setPendingWorklog] = useAtom(pendingWorklogAtom);
   const worklogdayInfo = getWorklogDate(new Date("2026-01-26T00:00:00"));
   const [showSuccess, setShowSuccess] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [showSubmitted, setShowSubmitted] = useState(false);
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState<number | null>(null);
   const [openTasks, setOpenTasks] = useState<Record<string, boolean>>({});
   const [worklogEdit, setWorklogEdit] = useAtom(worklogEditAtom);
   const [draftLoadedAt, setDraftLoadedAt] = useState<string | null>(null);
@@ -411,6 +415,15 @@ export function WorkLogForm() {
       setPendingWorklog(null);
       setDraftLoadedAt(null);
       setDraftSavedAt(null);
+      queryClient.removeQueries({
+        queryKey: ["worklog-draft", userInfo?.email, weekNumber],
+      });
+      queryClient.removeQueries({
+        queryKey: ["worklog-drafts-mine", userInfo?.email],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["worklogs", userInfo?.id],
+      });
       setShowSubmitted(true);
     },
   });
@@ -432,6 +445,38 @@ export function WorkLogForm() {
       );
     },
   });
+
+  const discardDraftMutation = useMutation({
+    mutationFn: deleteWorklog,
+    onSuccess: () => {
+      form.reset({ tasks: [emptyTask] });
+      setOpenTasks({});
+      setDraftLoadedAt(null);
+      setDraftSavedAt(null);
+      setDraftPrefilled(false);
+      setShowDiscardConfirm(false);
+      queryClient.removeQueries({
+        queryKey: ["worklog-draft", userInfo?.email, weekNumber],
+      });
+      queryClient.removeQueries({
+        queryKey: ["worklog-drafts-mine", userInfo?.email],
+      });
+      toast.success("Draft deleted");
+    },
+    onError: (err: any) => {
+      console.error("Delete draft failed:", err?.response?.data ?? err);
+      toast.error(
+        err?.response?.data?.message ??
+          err?.message ??
+          "Failed to delete draft",
+      );
+    },
+  });
+
+  function onConfirmDeleteDraft() {
+    if (!draft?._id) return;
+    discardDraftMutation.mutate(draft._id);
+  }
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -461,7 +506,8 @@ export function WorkLogForm() {
 
     const obj: workLogPostType = {
       worklogName: weekNumber,
-      authorName: userInfo.email,
+      authorName: userInfo.name,
+      authorEmail: userInfo.email,
       dateCreated: dateCreated,
       dateSubmitted: dateCreated,
       collaborators: [],
@@ -494,7 +540,8 @@ export function WorkLogForm() {
     });
     const obj = {
       worklogName: weekNumber,
-      authorName: userInfo.email,
+      authorName: userInfo.name,
+      authorEmail: userInfo.email,
       dateCreated: dateCreated,
       dateSubmitted: dateCreated,
       collaborators: [],
@@ -530,7 +577,7 @@ export function WorkLogForm() {
             <div>
               <Breadcrumbs
                 items={[
-                  { label: "Weekly Logs", href: "/" },
+                  { label: "Weekly Logs", href: "/notifications" },
                   { label: `Week ${weekNumber} Log` },
                 ]}
                 className="mb-2"
@@ -550,15 +597,28 @@ export function WorkLogForm() {
                 </p>
               )}
             </div>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onSaveDraft}
-              disabled={draftMutation.isPending}
-              className="shrink-0 h-10 rounded-xl"
-            >
-              {draftMutation.isPending ? "Saving..." : "Save Draft"}
-            </Button>
+            <div className="flex items-center gap-2 shrink-0">
+              {draft?._id && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowDiscardConfirm(true)}
+                  disabled={discardDraftMutation.isPending}
+                  className="h-10 rounded-xl text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                >
+                  Delete Draft
+                </Button>
+              )}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onSaveDraft}
+                disabled={draftMutation.isPending}
+                className="h-10 rounded-xl"
+              >
+                {draftMutation.isPending ? "Saving..." : "Save Draft"}
+              </Button>
+            </div>
           </div>
         );
       })()}
@@ -619,7 +679,7 @@ export function WorkLogForm() {
                               variant="ghost"
                               size="sm"
                               className="text-muted-foreground hover:text-red-600 hover:bg-red-50"
-                              onClick={() => remove(index)}
+                              onClick={() => setTaskToDelete(index)}
                             >
                               <Trash2 className="h-4 w-4 mr-1" />
                               Delete Task
@@ -940,22 +1000,18 @@ export function WorkLogForm() {
                                 const collabList = (collaborators ?? []).filter(
                                   (c: string) => c !== "",
                                 );
-                                const hasCollaborators = collabList.length > 0;
+                                if (collabList.length === 0) return <></>;
                                 const collabNames =
-                                  collabList.length === 0
-                                    ? "your collaborator(s)"
-                                    : collabList.length === 1
-                                      ? collabList[0]
-                                      : collabList.length === 2
-                                        ? `${collabList[0]} and ${collabList[1]}`
-                                        : `${collabList.slice(0, -1).join(", ")}, and ${collabList[collabList.length - 1]}`;
+                                  collabList.length === 1
+                                    ? collabList[0]
+                                    : collabList.length === 2
+                                      ? `${collabList[0]} and ${collabList[1]}`
+                                      : `${collabList.slice(0, -1).join(", ")}, and ${collabList[collabList.length - 1]}`;
                                 return (
                                   <Field data-invalid={fieldState.invalid}>
                                     <FieldLabel>
                                       How did you work with {collabNames}?
-                                      {hasCollaborators && (
-                                        <span className="text-red-500">*</span>
-                                      )}
+                                      <span className="text-red-500">*</span>
                                     </FieldLabel>
                                     <FieldDescription>
                                       Describe your collaboration — what each
@@ -966,16 +1022,11 @@ export function WorkLogForm() {
                                       <InputGroupTextarea
                                         {...field}
                                         value={field.value ?? ""}
-                                        placeholder={
-                                          hasCollaborators
-                                            ? "Describe how you worked together..."
-                                            : "Add a collaborator above to fill this in"
-                                        }
+                                        placeholder="Describe how you worked together..."
                                         rows={3}
                                         className="min-h-20 resize-none"
                                         aria-invalid={fieldState.invalid}
                                         maxLength={1000}
-                                        disabled={!hasCollaborators}
                                       />
                                       <InputGroupAddon align="block-end">
                                         <InputGroupText className="tabular-nums">
@@ -1094,6 +1145,81 @@ export function WorkLogForm() {
               }}
             >
               View Submission
+            </Button>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={taskToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setTaskToDelete(null);
+        }}
+      >
+        <AlertDialogContent className="max-w-lg text-center p-8">
+          <AlertDialogHeader className="space-y-4">
+            <AlertDialogTitle className="text-2xl font-bold">
+              Are you sure you want to delete this task?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-base text-muted-foreground">
+              This will remove the task from your work log. You can still
+              re-add it before submitting.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex flex-col gap-3 mt-4">
+            <Button
+              type="button"
+              className="w-full h-12 rounded-2xl text-base bg-red-600 hover:bg-red-700 text-white"
+              onClick={() => {
+                if (taskToDelete !== null) remove(taskToDelete);
+                setTaskToDelete(null);
+              }}
+            >
+              Delete Task
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              className="w-full h-12 rounded-2xl text-base bg-gray-100 hover:bg-gray-200 text-black"
+              onClick={() => setTaskToDelete(null)}
+            >
+              Cancel
+            </Button>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={showDiscardConfirm}
+        onOpenChange={setShowDiscardConfirm}
+      >
+        <AlertDialogContent className="max-w-lg text-center p-8">
+          <AlertDialogHeader className="space-y-4">
+            <AlertDialogTitle className="text-2xl font-bold">
+              Are you sure you want to delete this draft?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-base text-muted-foreground">
+              This will permanently delete your saved draft for Week{" "}
+              {weekNumber}. You won&apos;t be able to recover it.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex flex-col gap-3 mt-4">
+            <Button
+              type="button"
+              className="w-full h-12 rounded-2xl text-base bg-red-600 hover:bg-red-700 text-white"
+              onClick={onConfirmDeleteDraft}
+              disabled={discardDraftMutation.isPending}
+            >
+              {discardDraftMutation.isPending ? "Deleting..." : "Delete Draft"}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              className="w-full h-12 rounded-2xl text-base bg-gray-100 hover:bg-gray-200 text-black"
+              onClick={() => setShowDiscardConfirm(false)}
+              disabled={discardDraftMutation.isPending}
+            >
+              Cancel
             </Button>
           </div>
         </AlertDialogContent>

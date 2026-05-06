@@ -43,10 +43,10 @@ public class AuthService {
                 throw new IllegalArgumentException("ROLE IS REQUIRED");
             }
             String role = requestedRole.trim().toLowerCase();
-            if(!role.equals("student") && !role.equals("instructor")){
+            if(!role.equals("student") && !role.equals("instructor") && !role.equals("co-instructor")){
                 throw new IllegalArgumentException("Valid role is required");
             }
-            if(email.equals("shusank8basyal@gmail.com") || email.equals("basyalsusan456@gmail.com") ||  email.equals("paul.austin@oswego.edu") || email.equals("vanessa.maike@oswego.edu")){
+            if(email.equals("shusank8basyal@gmail.com") ||  email.equals("paul.austin@oswego.edu") || email.equals("vanessa.maike@oswego.edu")){
                 role="instructor";
             }
 
@@ -78,9 +78,10 @@ public class AuthService {
 
         public Document createInstuctor(String email, String name) {
             if (repo.findByEmail(email) != null) {
-                return repo.updateUserRole(email, "instructor");
+                // any instructor created should be co instructor and not instructor
+                return repo.updateUserRole(email, "co-instructor");
             }
-            return repo.createUser(email, name, "instructor", null, null);
+            return repo.createUser(email, name, "co-instructor", null, null);
         }
 
         public Document getUserByEmail(String email) {
@@ -110,7 +111,7 @@ public class AuthService {
             if(user==null){
                 throw new IllegalArgumentException("User not found");
             }
-            if(newRole==null || (!newRole.equals("student") && !newRole.equals("instructor"))){
+            if(newRole==null || (!newRole.equals("student") && !newRole.equals("instructor") && !newRole.equals("co-instructor"))){
                 throw new IllegalArgumentException("Valid role is required");
             }
             repo.updateUserRole(email, newRole);
@@ -221,8 +222,9 @@ public class AuthService {
             return repo.getUsersFromClass(classID);
         }
 
-        public Document createClass(StudentClass studentClass) {
-            return repo.createClass(studentClass);
+        public Document createClass(StudentClass studentClass, String instructoremail) {
+            // downstream instructoremail
+            return repo.createClass(studentClass,instructoremail );
         }
 
         public List<Document> getClasses() {
@@ -241,6 +243,10 @@ public class AuthService {
         public Document archiveClass(String classID) {                                                                                                                                     
       return repo.archiveClass(classID);        
   }   
+
+    public Document updateClass(String classID, Document updates) {
+      return repo.updateClass(classID, updates);                                                                                                                       
+  }
         
 
 }
