@@ -9,6 +9,7 @@ import {
   archiveClass,
   createClass,
   demoteFromInstructor,
+  enrollUser,
   getAllUsers,
   getClasses,
   unenrollUser,
@@ -89,11 +90,12 @@ function splitName(full: string | undefined): SplitName {
 
 function teamChipClasses(team: string): string {
   const t = team.toLowerCase();
-  if (t.includes("usab")) return "bg-emerald-100 text-emerald-800";
-  if (t.includes("require")) return "bg-green-100 text-green-800";
-  if (t.includes("qa")) return "bg-amber-100 text-amber-800";
-  if (t.includes("front")) return "bg-orange-100 text-orange-800";
-  if (t.includes("back")) return "bg-blue-100 text-blue-800";
+  if (t.includes("usab")) return "bg-[#B0C6DB] text-zinc-900";
+  if (t.includes("require")) return "bg-[#A1D2B5] text-zinc-900";
+  if (t.includes("qa") || t.includes("qualit") || t.includes("assur"))
+    return "bg-[#FAE18A] text-zinc-900";
+  if (t.includes("front")) return "bg-[#EDB970] text-zinc-900";
+  if (t.includes("back")) return "bg-[#BDCABF] text-zinc-900";
   return "bg-slate-100 text-slate-800";
 }
 
@@ -165,8 +167,15 @@ export default function ClassesPage() {
       return;
     }
     const rect = e.currentTarget.getBoundingClientRect();
+    // Two menu items @ ~40px each, plus padding.
+    const estimatedHeight = 96;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const top =
+      spaceBelow < estimatedHeight + 8
+        ? Math.max(8, rect.top - estimatedHeight - 4)
+        : rect.bottom + 4;
     setInactiveMenuAnchor({
-      top: rect.bottom + 4,
+      top,
       right: window.innerWidth - rect.right,
     });
     setOpenInactiveMenu(email);
@@ -196,6 +205,63 @@ export default function ClassesPage() {
   const [semesterStartDate, setSemesterStartDate] = useState("");
   const [semsesterEndDate, setSemsesterEndDate] = useState("");
   const [studendAccessEndDate, setStudendAccessEndDate] = useState("");
+
+  // Bulk selection + Actions dropdown state
+  const [selectedStudentEmails, setSelectedStudentEmails] = useState<
+    Set<string>
+  >(new Set());
+  const [selectedCoInstructorEmails, setSelectedCoInstructorEmails] = useState<
+    Set<string>
+  >(new Set());
+  const [studentActionsAnchor, setStudentActionsAnchor] = useState<{
+    top: number;
+    right: number;
+  } | null>(null);
+  const [instructorActionsAnchor, setInstructorActionsAnchor] = useState<{
+    top: number;
+    right: number;
+  } | null>(null);
+  const [bulkRemoveStudentsConfirm, setBulkRemoveStudentsConfirm] =
+    useState(false);
+  const [bulkRemoveCoInstructorsConfirm, setBulkRemoveCoInstructorsConfirm] =
+    useState(false);
+
+  const toggleStudentSelected = (email: string) =>
+    setSelectedStudentEmails((prev) => {
+      const next = new Set(prev);
+      if (next.has(email)) next.delete(email);
+      else next.add(email);
+      return next;
+    });
+  const toggleCoInstructorSelected = (email: string) =>
+    setSelectedCoInstructorEmails((prev) => {
+      const next = new Set(prev);
+      if (next.has(email)) next.delete(email);
+      else next.add(email);
+      return next;
+    });
+  const openStudentActions = (e: React.MouseEvent<HTMLElement>) => {
+    if (studentActionsAnchor) {
+      setStudentActionsAnchor(null);
+      return;
+    }
+    const rect = e.currentTarget.getBoundingClientRect();
+    setStudentActionsAnchor({
+      top: rect.bottom + 4,
+      right: window.innerWidth - rect.right,
+    });
+  };
+  const openInstructorActions = (e: React.MouseEvent<HTMLElement>) => {
+    if (instructorActionsAnchor) {
+      setInstructorActionsAnchor(null);
+      return;
+    }
+    const rect = e.currentTarget.getBoundingClientRect();
+    setInstructorActionsAnchor({
+      top: rect.bottom + 4,
+      right: window.innerWidth - rect.right,
+    });
+  };
 
   useEffect(() => setMounted(true), []);
 
@@ -386,13 +452,18 @@ export default function ClassesPage() {
       const teamsToRemove = vars.originalTeams.filter(
         (t) => !vars.newTeams.includes(t),
       );
-      await Promise.all([
-        ...teamsToRemove.map((t) => removeUserTeam(vars.email, t)),
-        ...teamsToAdd.map((t) => addUserTeam(vars.email, t)),
-        vars.newStanding !== vars.originalStanding
-          ? updateUserStanding(vars.email, vars.newStanding)
-          : Promise.resolve(),
-      ]);
+      // Run sequentially: each addTeam/removeTeam endpoint reads the user's
+      // current team list, modifies it, and writes it back. Running in
+      // parallel causes a read-modify-write race where most edits are lost.
+      for (const t of teamsToRemove) {
+        await removeUserTeam(vars.email, t);
+      }
+      for (const t of teamsToAdd) {
+        await addUserTeam(vars.email, t);
+      }
+      if (vars.newStanding !== vars.originalStanding) {
+        await updateUserStanding(vars.email, vars.newStanding);
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["users-from-class", activeClass?.classID] });
@@ -459,6 +530,57 @@ export default function ClassesPage() {
       toast.error(e?.message ?? "Failed to remove co-instructor"),
   });
 
+  const bulkRemoveStudentsMutation = useMutation({
+    mutationFn: async (emails: string[]) => {
+      await Promise.all(emails.map((e) => unenrollUser(e)));
+      return emails;
+    },
+    onSuccess: (emails) => {
+      qc.invalidateQueries({ queryKey: ["users-from-class", activeClass?.classID] });
+      qc.invalidateQueries({ queryKey: ["all-users"] });
+      qc.invalidateQueries({ queryKey: ["classes"] });
+      toast.success(
+        `Removed ${emails.length} ${emails.length === 1 ? "student" : "students"}.`,
+      );
+      setSelectedStudentEmails(new Set());
+      setBulkRemoveStudentsConfirm(false);
+    },
+    onError: (e: Error) =>
+      toast.error(e?.message ?? "Failed to remove students"),
+  });
+
+  const reEnrollStudentMutation = useMutation({
+    mutationFn: ({ email, classID }: { email: string; classID: string }) =>
+      enrollUser(email, classID),
+    onSuccess: (_data, { email }) => {
+      qc.invalidateQueries({ queryKey: ["users-from-class", activeClass?.classID] });
+      qc.invalidateQueries({ queryKey: ["all-users"] });
+      qc.invalidateQueries({ queryKey: ["classes"] });
+      toast.success(`Re-enrolled ${email}.`);
+    },
+    onError: (e: Error) =>
+      toast.error(e?.message ?? "Failed to re-enroll student"),
+  });
+
+  const bulkRemoveCoInstructorsMutation = useMutation({
+    mutationFn: async (emails: string[]) => {
+      await Promise.all(emails.map((e) => unenrollUser(e)));
+      return emails;
+    },
+    onSuccess: (emails) => {
+      qc.invalidateQueries({ queryKey: ["users-from-class", activeClass?.classID] });
+      qc.invalidateQueries({ queryKey: ["all-users"] });
+      qc.invalidateQueries({ queryKey: ["classes"] });
+      toast.success(
+        `Removed ${emails.length} ${emails.length === 1 ? "co-instructor" : "co-instructors"}.`,
+      );
+      setSelectedCoInstructorEmails(new Set());
+      setBulkRemoveCoInstructorsConfirm(false);
+    },
+    onError: (e: Error) =>
+      toast.error(e?.message ?? "Failed to remove co-instructors"),
+  });
+
   if (!mounted || !userInfo) return <p className="p-4 sm:p-10">Loading...</p>;
   if (!isInstructorRole(userInfo.role)) {
     return (
@@ -473,7 +595,7 @@ export default function ClassesPage() {
         <Card>
           <CardContent className="text-center py-12">
             <p className="text-muted-foreground mb-4">
-              No active class. Ask the primary instructor to add you as a co-instructor.
+               Ask the primary instructor to add you as a co-instructor.
             </p>
           </CardContent>
         </Card>
@@ -481,8 +603,10 @@ export default function ClassesPage() {
     );
   }
 
+  // MongoDB database names cannot contain these characters or be empty.
+  // See https://www.mongodb.com/docs/manual/reference/limits/#naming-restrictions
   const classIDValid =
-    !!classID.trim() && !/\s/.test(classID);
+    !!classID.trim() && !/[\s/\\."$*<>:|?]/.test(classID);
   const endAfterStart =
     !semesterStartDate ||
     !semsesterEndDate ||
@@ -579,9 +703,13 @@ export default function ClassesPage() {
             <Button
               size="sm"
               variant="outline"
-              className="gap-1.5 cursor-pointer border-2"
+              disabled={
+                userInfo.role !== "instructor" ||
+                selectedCoInstructorEmails.size === 0
+              }
+              className="gap-1.5 cursor-pointer border-2 disabled:cursor-not-allowed"
               style={{ borderColor: BRAND_GREEN, color: BRAND_GREEN }}
-              onClick={() => toast.message("Actions (placeholder)")}
+              onClick={openInstructorActions}
             >
               Actions
               <ChevronDown className="h-3.5 w-3.5" />
@@ -593,7 +721,37 @@ export default function ClassesPage() {
             <thead className="bg-emerald-50/50 text-xs uppercase tracking-wide text-muted-foreground">
               <tr>
                 <th className="px-4 py-2.5 text-left w-10">
-                  <input type="checkbox" disabled className="cursor-not-allowed" />
+                  {(() => {
+                    const selectable = instructors
+                      .filter(
+                        (u) =>
+                          u.role === "co-instructor" && u.email !== userInfo.email,
+                      )
+                      .map((u) => u.email);
+                    const allChecked =
+                      selectable.length > 0 &&
+                      selectable.every((e) =>
+                        selectedCoInstructorEmails.has(e),
+                      );
+                    return (
+                      <input
+                        type="checkbox"
+                        disabled={
+                          userInfo.role !== "instructor" ||
+                          selectable.length === 0
+                        }
+                        checked={allChecked}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedCoInstructorEmails(new Set(selectable));
+                          } else {
+                            setSelectedCoInstructorEmails(new Set());
+                          }
+                        }}
+                        className="cursor-pointer disabled:cursor-not-allowed"
+                      />
+                    );
+                  })()}
                 </th>
                 <th className="px-4 py-2.5 text-left">Last Name</th>
                 <th className="px-4 py-2.5 text-left">First Name</th>
@@ -631,10 +789,25 @@ export default function ClassesPage() {
                 const isPrimary = u.role === "instructor";
                 const canDemote = !isPrimary && !isYou;
                 const menuOpen = openRowMenu === u.email;
+                const canSelect =
+                  userInfo.role === "instructor" && !isPrimary && !isYou;
                 return (
                   <tr key={u.email} className="border-t">
                     <td className="px-4 py-3">
-                      <input type="checkbox" disabled className="cursor-not-allowed" />
+                      <input
+                        type="checkbox"
+                        disabled={!canSelect}
+                        checked={selectedCoInstructorEmails.has(u.email)}
+                        onChange={() => toggleCoInstructorSelected(u.email)}
+                        className="cursor-pointer disabled:cursor-not-allowed"
+                        title={
+                          isPrimary
+                            ? "Primary instructor cannot be removed"
+                            : isYou
+                              ? "You cannot remove yourself"
+                              : undefined
+                        }
+                      />
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
@@ -723,9 +896,10 @@ export default function ClassesPage() {
             <Button
               size="sm"
               variant="outline"
-              className="gap-1.5 cursor-pointer border-2"
+              disabled={selectedStudentEmails.size === 0}
+              className="gap-1.5 cursor-pointer border-2 disabled:cursor-not-allowed"
               style={{ borderColor: BRAND_GREEN, color: BRAND_GREEN }}
-              onClick={() => toast.message("Actions (placeholder)")}
+              onClick={openStudentActions}
             >
               Actions
               <ChevronDown className="h-3.5 w-3.5" />
@@ -737,7 +911,33 @@ export default function ClassesPage() {
             <thead className="bg-amber-50/60 text-xs uppercase tracking-wide text-muted-foreground">
               <tr>
                 <th className="px-4 py-2.5 text-left w-10">
-                  <input type="checkbox" disabled className="cursor-not-allowed" />
+                  {(() => {
+                    const visibleEmails = pagedStudents.map((s) => s.email);
+                    const allChecked =
+                      visibleEmails.length > 0 &&
+                      visibleEmails.every((e) =>
+                        selectedStudentEmails.has(e),
+                      );
+                    return (
+                      <input
+                        type="checkbox"
+                        disabled={visibleEmails.length === 0}
+                        checked={allChecked}
+                        onChange={(e) => {
+                          setSelectedStudentEmails((prev) => {
+                            const next = new Set(prev);
+                            if (e.target.checked) {
+                              visibleEmails.forEach((em) => next.add(em));
+                            } else {
+                              visibleEmails.forEach((em) => next.delete(em));
+                            }
+                            return next;
+                          });
+                        }}
+                        className="cursor-pointer disabled:cursor-not-allowed"
+                      />
+                    );
+                  })()}
                 </th>
                 <th className="px-4 py-2.5 text-left">Last Name</th>
                 <th className="px-4 py-2.5 text-left">First Name</th>
@@ -815,7 +1015,12 @@ export default function ClassesPage() {
                       className="px-4 py-3"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <input type="checkbox" disabled className="cursor-not-allowed" />
+                      <input
+                        type="checkbox"
+                        checked={selectedStudentEmails.has(u.email)}
+                        onChange={() => toggleStudentSelected(u.email)}
+                        className="cursor-pointer"
+                      />
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
@@ -1147,10 +1352,204 @@ export default function ClassesPage() {
               >
                 View all worklogs
               </button>
+              <button
+                type="button"
+                className="w-full text-left px-3 py-2 text-sm hover:bg-emerald-50 cursor-pointer disabled:opacity-50"
+                style={{ color: BRAND_GREEN }}
+                disabled={reEnrollStudentMutation.isPending}
+                onClick={() => {
+                  const email = openInactiveMenu;
+                  const cls = activeClass?.classID;
+                  closeInactiveMenu();
+                  if (email && cls) {
+                    reEnrollStudentMutation.mutate({ email, classID: cls });
+                  }
+                }}
+              >
+                Re-enroll
+              </button>
             </div>
           </>,
           document.body,
         )}
+
+      {studentActionsAnchor &&
+        createPortal(
+          <>
+            <div
+              className="fixed inset-0 z-40"
+              onClick={() => setStudentActionsAnchor(null)}
+            />
+            <div
+              className="fixed z-50 w-48 rounded-md border bg-white shadow-lg py-1"
+              style={{
+                top: studentActionsAnchor.top,
+                right: studentActionsAnchor.right,
+              }}
+            >
+              <button
+                type="button"
+                className="w-full text-left px-3 py-2 text-sm hover:bg-red-50 text-red-700 cursor-pointer"
+                onClick={() => {
+                  setStudentActionsAnchor(null);
+                  setBulkRemoveStudentsConfirm(true);
+                }}
+              >
+                Remove Student
+                {selectedStudentEmails.size > 1 ? "s" : ""} (
+                {selectedStudentEmails.size})
+              </button>
+            </div>
+          </>,
+          document.body,
+        )}
+
+      {instructorActionsAnchor &&
+        createPortal(
+          <>
+            <div
+              className="fixed inset-0 z-40"
+              onClick={() => setInstructorActionsAnchor(null)}
+            />
+            <div
+              className="fixed z-50 w-56 rounded-md border bg-white shadow-lg py-1"
+              style={{
+                top: instructorActionsAnchor.top,
+                right: instructorActionsAnchor.right,
+              }}
+            >
+              <button
+                type="button"
+                className="w-full text-left px-3 py-2 text-sm hover:bg-red-50 text-red-700 cursor-pointer"
+                onClick={() => {
+                  setInstructorActionsAnchor(null);
+                  setBulkRemoveCoInstructorsConfirm(true);
+                }}
+              >
+                Remove Co-Instructor
+                {selectedCoInstructorEmails.size > 1 ? "s" : ""} (
+                {selectedCoInstructorEmails.size})
+              </button>
+            </div>
+          </>,
+          document.body,
+        )}
+
+      <AlertDialog
+        open={bulkRemoveStudentsConfirm}
+        onOpenChange={(open) => !open && setBulkRemoveStudentsConfirm(false)}
+      >
+        <AlertDialogContent className="sm:max-w-lg">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-center text-xl sm:text-2xl font-bold leading-snug">
+              Remove {selectedStudentEmails.size} student
+              {selectedStudentEmails.size === 1 ? "" : "s"} from{" "}
+              {activeClass?.classID}?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="sr-only">
+              Confirm bulk removal of selected students.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div
+            className="flex items-start gap-3 rounded-lg px-4 py-3"
+            style={{ backgroundColor: "#E8F0EC" }}
+          >
+            <Info
+              className="h-5 w-5 shrink-0 mt-0.5"
+              style={{ color: BRAND_GREEN }}
+            />
+            <p className="text-sm">
+              These students will be moved to the inactive students list and
+              can be re-added at any time.
+            </p>
+          </div>
+
+          <AlertDialogFooter className="sm:justify-center sm:gap-3 pt-2">
+            <Button
+              variant="outline"
+              className="cursor-pointer border-2"
+              style={{ borderColor: BRAND_GREEN, color: BRAND_GREEN }}
+              disabled={bulkRemoveStudentsMutation.isPending}
+              onClick={() =>
+                bulkRemoveStudentsMutation.mutate(
+                  Array.from(selectedStudentEmails),
+                )
+              }
+            >
+              {bulkRemoveStudentsMutation.isPending
+                ? "Removing..."
+                : `Yes, Remove Student${selectedStudentEmails.size === 1 ? "" : "s"}`}
+            </Button>
+            <AlertDialogCancel
+              className="cursor-pointer text-white hover:opacity-90 mt-0 border-0"
+              style={{ backgroundColor: BRAND_GREEN }}
+              disabled={bulkRemoveStudentsMutation.isPending}
+            >
+              Cancel
+            </AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={bulkRemoveCoInstructorsConfirm}
+        onOpenChange={(open) =>
+          !open && setBulkRemoveCoInstructorsConfirm(false)
+        }
+      >
+        <AlertDialogContent className="sm:max-w-lg">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-center text-xl sm:text-2xl font-bold leading-snug">
+              Remove {selectedCoInstructorEmails.size} co-instructor
+              {selectedCoInstructorEmails.size === 1 ? "" : "s"} from{" "}
+              {activeClass?.classID}?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="sr-only">
+              Confirm bulk removal of selected co-instructors.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div
+            className="flex items-start gap-3 rounded-lg px-4 py-3"
+            style={{ backgroundColor: "#E8F0EC" }}
+          >
+            <Info
+              className="h-5 w-5 shrink-0 mt-0.5"
+              style={{ color: BRAND_GREEN }}
+            />
+            <p className="text-sm">
+              They will lose access to this class. They can be re-invited at
+              any time.
+            </p>
+          </div>
+
+          <AlertDialogFooter className="sm:justify-center sm:gap-3 pt-2">
+            <Button
+              variant="outline"
+              className="cursor-pointer border-2"
+              style={{ borderColor: BRAND_GREEN, color: BRAND_GREEN }}
+              disabled={bulkRemoveCoInstructorsMutation.isPending}
+              onClick={() =>
+                bulkRemoveCoInstructorsMutation.mutate(
+                  Array.from(selectedCoInstructorEmails),
+                )
+              }
+            >
+              {bulkRemoveCoInstructorsMutation.isPending
+                ? "Removing..."
+                : `Yes, Remove Co-Instructor${selectedCoInstructorEmails.size === 1 ? "" : "s"}`}
+            </Button>
+            <AlertDialogCancel
+              className="cursor-pointer text-white hover:opacity-90 mt-0 border-0"
+              style={{ backgroundColor: BRAND_GREEN }}
+              disabled={bulkRemoveCoInstructorsMutation.isPending}
+            >
+              Cancel
+            </AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={settingsOpen} onOpenChange={setSettingsOpen}>
         <AlertDialogContent className="sm:max-w-2xl">
@@ -1688,17 +2087,21 @@ export default function ClassesPage() {
               <Input
                 placeholder="e.g. CSC480-Sp2026"
                 value={classID}
-                onChange={(e) => setClassID(e.target.value.replace(/\s+/g, ""))}
+                onChange={(e) =>
+                  setClassID(e.target.value.replace(/[\s/\\."$*<>:|?]/g, ""))
+                }
                 onKeyDown={(e) => {
                   if (e.key === " ") e.preventDefault();
                 }}
               />
               <p className="text-xs text-muted-foreground">
-                No spaces allowed. This becomes the database name.
+                No spaces or these characters: . / \ &quot; $ * &lt; &gt; : | ?
+                This becomes the database name.
               </p>
               {classID.length > 0 && !classIDValid && (
                 <p className="text-xs text-red-600">
-                  Class ID cannot contain spaces.
+                  Class ID can&apos;t contain spaces or any of: . / \ &quot; $
+                  * &lt; &gt; : | ?
                 </p>
               )}
             </div>

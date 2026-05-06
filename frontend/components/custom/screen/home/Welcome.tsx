@@ -60,7 +60,10 @@ const Welcome = () => {
 
   const today = new Date();
   const daysSinceStart = calendarDaysBetween(classStartDate, today);
-  const weekNum = Math.max(0, Math.floor(daysSinceStart / 7) + 1);
+  const rawWeekNum = Math.max(0, Math.floor(daysSinceStart / 7) + 1);
+  // Cap the current week at the actual semester length so it doesn't
+  // overshoot once today is past the semester end date.
+  const weekNum = classEndDate ? Math.min(rawWeekNum, totalWeeks) : rawWeekNum;
   const weekNumber = String(weekNum);
 
   const currentDeadline = new Date(classStartDate);

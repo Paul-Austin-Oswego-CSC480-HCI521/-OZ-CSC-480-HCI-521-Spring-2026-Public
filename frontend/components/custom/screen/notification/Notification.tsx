@@ -69,10 +69,16 @@ function buildWeekEntries(
     isDraft?: boolean;
   }[],
   semesterStart: Date,
+  semesterEnd: Date | null,
 ): WeekEntry[] {
   const now = new Date();
+  const semesterTotalWeeks = semesterEnd
+    ? Math.max(1, Math.ceil(calendarDaysBetween(semesterStart, semesterEnd) / 7))
+    : Infinity;
+
   const daysSinceStart = calendarDaysBetween(semesterStart, now);
-  const currentWeek = Math.max(0, Math.floor(daysSinceStart / 7) + 1);
+  const rawCurrentWeek = Math.max(0, Math.floor(daysSinceStart / 7) + 1);
+  const currentWeek = Math.min(rawCurrentWeek, semesterTotalWeeks);
 
   const submittedMap = new Map<number, { dateSubmitted?: string }>();
   const draftWeeks = new Set<number>();
@@ -86,7 +92,8 @@ function buildWeekEntries(
     }
   });
 
-  const totalWeeks = currentWeek + 1;
+  // Show one upcoming week beyond current, but never beyond the semester end.
+  const totalWeeks = Math.min(currentWeek + 1, semesterTotalWeeks);
   const entries: WeekEntry[] = [];
 
   for (let w = totalWeeks; w >= 1; w--) {
@@ -276,11 +283,19 @@ export const Notification = () => {
   const allLogs = [...worklogs, ...(drafts ?? [])];
   const classStartDate =
     parseClassDate(classData?.semesterStartDate) ?? FALLBACK_SEMESTER_START;
-  const entries = buildWeekEntries(allLogs, classStartDate);
+  const classEndDate = parseClassDate(classData?.semsesterEndDate);
+  const entries = buildWeekEntries(allLogs, classStartDate, classEndDate);
 
   const today = new Date();
+  const semesterTotalWeeks = classEndDate
+    ? Math.max(
+        1,
+        Math.ceil(calendarDaysBetween(classStartDate, classEndDate) / 7),
+      )
+    : Infinity;
   const daysSinceStart = calendarDaysBetween(classStartDate, today);
-  const currentWeekNum = Math.max(0, Math.floor(daysSinceStart / 7) + 1);
+  const rawCurrentWeek = Math.max(0, Math.floor(daysSinceStart / 7) + 1);
+  const currentWeekNum = Math.min(rawCurrentWeek, semesterTotalWeeks);
   const currentWeekEntry = entries.find((e) => e.week === currentWeekNum);
 
   const pastEntries = entries.filter((e) => e.status !== "upcoming");

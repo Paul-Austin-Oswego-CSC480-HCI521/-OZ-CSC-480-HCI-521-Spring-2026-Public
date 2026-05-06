@@ -144,23 +144,32 @@ public class AuthRepository{
         }
 
         oldClassData.updateOne(
-            new Document("classID", existingClassID),
-            new Document("$pull", new Document("students", new Document("email", email)))
-        );
+              new Document("classID", existingClassID),
+              new Document("$pull", new Document("students", new Document("email", email)))
+          );
 
-        if ("student".equals(user.getString("role"))) {
-            Document snapshot = new Document()
-                .append("email", email)
-                .append("name", user.getString("name"))
-                .append("classStanding",
-                    rosterEntry != null ? rosterEntry.getString("classStanding") : null)
-                .append("team", user.get("team"));
+          if ("student".equals(user.getString("role"))) {
+              Document snapshot = new Document()
+                  .append("email", email)
+                  .append("name", user.getString("name"))
+                  .append("classStanding",
+                      rosterEntry != null ? rosterEntry.getString("classStanding") : null)
+                  .append("team", user.get("team"));
 
-            oldClassData.updateOne(
-                new Document("classID", existingClassID),
-                new Document("$addToSet", new Document("inactiveStudents", snapshot))
-            );
-        }
+              oldClassData.updateOne(
+                  new Document("classID", existingClassID),
+                  new Document("$addToSet", new Document("inactiveStudents", snapshot))
+              );
+          }
+
+          // If they were a co-instructor, drop them from instructors[] too so
+          // they can no longer see this class (active or archived).
+          if ("co-instructor".equals(user.getString("role"))) {
+              oldClassData.updateOne(
+                  new Document("classID", existingClassID),
+                  new Document("$pull", new Document("instructors", email))
+              );
+          }
     }
 
     

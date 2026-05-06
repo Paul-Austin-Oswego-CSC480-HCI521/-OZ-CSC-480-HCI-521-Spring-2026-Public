@@ -37,11 +37,12 @@ function splitName(full: string | undefined): SplitName {
 
 function teamChipClasses(team: string): string {
   const t = team.toLowerCase();
-  if (t.includes("usab")) return "bg-emerald-100 text-emerald-800";
-  if (t.includes("require")) return "bg-green-100 text-green-800";
-  if (t.includes("qa")) return "bg-amber-100 text-amber-800";
-  if (t.includes("front")) return "bg-orange-100 text-orange-800";
-  if (t.includes("back")) return "bg-blue-100 text-blue-800";
+  if (t.includes("usab")) return "bg-[#B0C6DB] text-zinc-900";
+  if (t.includes("require")) return "bg-[#A1D2B5] text-zinc-900";
+  if (t.includes("qa") || t.includes("qualit") || t.includes("assur"))
+    return "bg-[#FAE18A] text-zinc-900";
+  if (t.includes("front")) return "bg-[#EDB970] text-zinc-900";
+  if (t.includes("back")) return "bg-[#BDCABF] text-zinc-900";
   return "bg-slate-100 text-slate-800";
 }
 

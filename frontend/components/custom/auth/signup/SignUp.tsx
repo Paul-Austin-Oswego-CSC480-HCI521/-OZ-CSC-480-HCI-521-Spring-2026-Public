@@ -5,7 +5,11 @@ import Script from "next/script";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { isInstructorRole, tokenAtom, userAtom } from "@/components/custom/utils/context/state";
+import {
+  isInstructorRole,
+  tokenAtom,
+  userAtom,
+} from "@/components/custom/utils/context/state";
 import { googleSignIn } from "@/components/custom/utils/api_utils/req/req";
 import {
   Card,
@@ -45,7 +49,7 @@ export default function SignUp() {
   }, []);
 
   useEffect(() => {
-    if (!scriptLoaded || !window.google || !buttonRef.current) return; 
+    if (!scriptLoaded || !window.google || !buttonRef.current) return;
     window.google.accounts.id.initialize({
       client_id: env("NEXT_PUBLIC_GOOGLE_CLIENT_ID")!,
       callback: (response: { credential: string }) => {
@@ -90,22 +94,7 @@ export default function SignUp() {
                 Submit and track weekly work logs
               </p>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
-                <BookOpen className="h-4 w-4 text-emerald-300" />
-              </div>
-              <p className="text-sm text-white/80">
-                Manage tasks and deadlines
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
-                <Users className="h-4 w-4 text-emerald-300" />
-              </div>
-              <p className="text-sm text-white/80">
-                Collaborate with your team
-              </p>
-            </div>
+
           </div>
         </div>
 

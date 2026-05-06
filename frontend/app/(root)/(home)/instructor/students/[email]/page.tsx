@@ -39,7 +39,6 @@ import {
   User,
   ClipboardCheck,
 } from "lucide-react";
-import getWorklogDate from "@/components/custom/utils/func/getDate";
 import { fmtDate, fmtDateTime } from "@/components/custom/utils/func/formatDate";
 import { cn } from "@/lib/utils";
 import { Breadcrumbs } from "@/components/custom/ui/Breadcrumbs";
@@ -84,6 +83,7 @@ function buildWeekRows(
   effectiveNow: Date,
   currentWeek: number,
   isArchived: boolean,
+  semesterTotalWeeks: number,
 ): WeekRow[] {
   const logsByWeek = new Map<number, any[]>();
   studentLogs.forEach((log) => {
@@ -101,7 +101,10 @@ function buildWeekRows(
   );
 
   // Archived classes have no "next" upcoming week — every week is in the past.
-  const totalWeeks = isArchived ? currentWeek : currentWeek + 1;
+  // Active classes show one upcoming week, but never past the semester end.
+  const totalWeeks = isArchived
+    ? currentWeek
+    : Math.min(currentWeek + 1, semesterTotalWeeks);
   const rows: WeekRow[] = [];
 
   for (let w = totalWeeks; w >= 1; w--) {
@@ -258,28 +261,33 @@ function ReviewToggle({
 }) {
   const reviewed = log.reviewed === true;
 
+  if (reviewed) {
+    return (
+      <span
+        onClick={(e) => {
+          e.stopPropagation();
+          onOpen();
+        }}
+        className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-md bg-green-100 text-green-800 border border-green-200 cursor-pointer"
+      >
+        <CheckCircle2 className="h-3.5 w-3.5" />
+        Reviewed
+      </span>
+    );
+  }
+
   return (
     <Button
       type="button"
-      variant={reviewed ? "default" : "outline"}
+      variant="outline"
       size="sm"
       onClick={(e) => {
         e.stopPropagation();
         onOpen();
       }}
-      className={cn(
-        "text-xs cursor-pointer",
-        reviewed && "bg-green-600 hover:bg-green-700 text-white",
-      )}
+      className="text-xs cursor-pointer"
     >
-      {reviewed ? (
-        <>
-          <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
-          Reviewed
-        </>
-      ) : (
-        "Review"
-      )}
+      Review
     </Button>
   );
 }
@@ -584,13 +592,8 @@ function WeekReviewDialog({
                 e.stopPropagation();
                 mutation.mutate();
               }}
-              className={cn(
-                "w-full h-12 rounded-xl text-base font-semibold text-white cursor-pointer border-0",
-                isReviewed
-                  ? "bg-green-600 hover:bg-green-700"
-                  : "hover:opacity-90",
-              )}
-              style={isReviewed ? undefined : { backgroundColor: ACCENT_GREEN }}
+              className="w-full h-12 rounded-xl text-base font-semibold text-white cursor-pointer border-0 hover:opacity-90"
+              style={{ backgroundColor: ACCENT_GREEN }}
             >
               {mutation.isPending ? (
                 "Saving..."
@@ -751,8 +754,11 @@ export default function StudentHistoryPage() {
   const isArchived = classDetail?.isArchived === true;
   const parsedStart = parseClassDate(classDetail?.semesterStartDate);
   const parsedEnd = parseClassDate(classDetail?.semsesterEndDate);
-  const semesterStart =
-    isArchived && parsedStart ? parsedStart : SEMESTER_START;
+  // Use the class's actual start date for both active and archived classes.
+  const semesterStart = parsedStart ?? SEMESTER_START;
+  const semesterTotalWeeks = parsedEnd
+    ? Math.max(1, Math.ceil(calendarDaysBetween(semesterStart, parsedEnd) / 7))
+    : Infinity;
   const today = new Date();
   // For archived classes, cap "now" at the semester end so overdue counts
   // don't grow forever. Without a stored archive timestamp, we use
@@ -772,8 +778,9 @@ export default function StudentHistoryPage() {
     }, 0);
     currentWeek = Math.max(weekFromTime, maxStudentWeek);
   } else {
-    const worklogInfo = getWorklogDate(SEMESTER_START);
-    currentWeek = worklogInfo ? parseInt(worklogInfo.weekNumber) - 1 : 0;
+    const daysSinceStart = calendarDaysBetween(semesterStart, today);
+    const rawCurrent = Math.max(1, Math.floor(daysSinceStart / 7) + 1);
+    currentWeek = Math.min(rawCurrent, semesterTotalWeeks);
   }
   const rows = buildWeekRows(
     studentLogs,
@@ -781,6 +788,7 @@ export default function StudentHistoryPage() {
     effectiveNow,
     currentWeek,
     isArchived,
+    semesterTotalWeeks,
   );
 
   // Completion stats: weeks 1..currentWeek count as eligible

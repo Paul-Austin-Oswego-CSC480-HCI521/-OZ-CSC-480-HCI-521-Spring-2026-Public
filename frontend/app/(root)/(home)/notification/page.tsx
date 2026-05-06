@@ -108,7 +108,10 @@ export default function NotificationPage() {
     : FALLBACK_TOTAL_WEEKS;
   const now = new Date();
   const daysSinceStart = calendarDaysBetween(classStartDate, now);
-  const weekNum = Math.max(0, Math.floor(daysSinceStart / 7) + 1);
+  const rawWeekNum = Math.max(0, Math.floor(daysSinceStart / 7) + 1);
+  // Cap by the actual semester length so we don't generate missing rows for
+  // weeks that fall after the class ends.
+  const weekNum = classEndDate ? Math.min(rawWeekNum, totalWeeks) : rawWeekNum;
 
   const upcomingDue = new Date(classStartDate);
   if (weekNum > 0) {

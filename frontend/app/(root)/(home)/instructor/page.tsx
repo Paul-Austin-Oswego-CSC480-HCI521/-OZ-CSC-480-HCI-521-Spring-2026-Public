@@ -10,7 +10,10 @@ import {
 import { getUsersFromClass } from "@/components/custom/utils/api_utils/req/req";
 import { getClasses } from "@/components/custom/utils/api_utils/req/class";
 import { useAtomValue } from "jotai";
-import { isInstructorRole, userAtom } from "@/components/custom/utils/context/state";
+import {
+  isInstructorRole,
+  userAtom,
+} from "@/components/custom/utils/context/state";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,7 +24,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { fmtDate, fmtDateTime } from "@/components/custom/utils/func/formatDate";
+import {
+  fmtDate,
+  fmtDateTime,
+} from "@/components/custom/utils/func/formatDate";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -55,6 +61,17 @@ function calendarDaysBetween(from: Date, to: Date): number {
   const a = new Date(from.getFullYear(), from.getMonth(), from.getDate());
   const b = new Date(to.getFullYear(), to.getMonth(), to.getDate());
   return Math.round((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+function teamChipClasses(team: string): string {
+  const t = team.toLowerCase();
+  if (t.includes("usab")) return "bg-[#B0C6DB] text-zinc-900";
+  if (t.includes("require")) return "bg-[#A1D2B5] text-zinc-900";
+  if (t.includes("qa") || t.includes("qualit") || t.includes("assur"))
+    return "bg-[#FAE18A] text-zinc-900";
+  if (t.includes("front")) return "bg-[#EDB970] text-zinc-900";
+  if (t.includes("back")) return "bg-[#BDCABF] text-zinc-900";
+  return "bg-slate-100 text-slate-800";
 }
 
 function parseClassDate(s: string | undefined | null): Date | null {
@@ -104,7 +121,9 @@ function ReviewButton({
         taskList: (log.taskList ?? []).map((t: any) => ({
           ...t,
           dueDate: t.dueDate ? stripZ(t.dueDate) : t.dueDate,
-          creationDate: t.creationDate ? stripZ(t.creationDate) : t.creationDate,
+          creationDate: t.creationDate
+            ? stripZ(t.creationDate)
+            : t.creationDate,
         })),
         reviewed: !log.reviewed,
       };
@@ -127,13 +146,8 @@ function ReviewButton({
           e.stopPropagation();
           mutation.mutate();
         }}
-        className={cn(
-          "w-full h-12 rounded-xl text-base font-semibold text-white cursor-pointer border-0",
-          isReviewed
-            ? "bg-green-600 hover:bg-green-700"
-            : "hover:opacity-90",
-        )}
-        style={isReviewed ? undefined : { backgroundColor: "#1E4B35" }}
+        className="w-full h-12 rounded-xl text-base font-semibold text-white cursor-pointer border-0 hover:opacity-90"
+        style={{ backgroundColor: "#1E4B35" }}
       >
         {mutation.isPending ? (
           "Saving..."
@@ -287,15 +301,13 @@ function StudentRowFlat({
           .map((t) => (
             <span
               key={t}
-              className="text-xs bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-md px-2 py-0.5"
+              className={`text-xs rounded-md px-2 py-0.5 ${teamChipClasses(t)}`}
             >
               {t}
             </span>
           ))}
-        {student.team.filter((t) => t.toLowerCase() !== "unassigned")
-          .length === 0 && (
-          <span className="text-xs text-muted-foreground">—</span>
-        )}
+        {student.team.filter((t) => t.toLowerCase() !== "unassigned").length ===
+          0 && <span className="text-xs text-muted-foreground">—</span>}
       </div>
 
       {/* Status */}
@@ -647,10 +659,7 @@ function DashboardTaskBlock({ task, taskNum }: { task: any; taskNum: number }) {
       <div className="border rounded-xl bg-white">
         <CollapsibleTrigger asChild>
           <div className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-muted/40 rounded-t-xl">
-            <h3
-              className="text-base font-bold"
-              style={{ color: "#1E4B35" }}
-            >
+            <h3 className="text-base font-bold" style={{ color: "#1E4B35" }}>
               Task {taskNum}: {task.taskName || "Untitled"}
             </h3>
             {open ? (
@@ -729,9 +738,7 @@ function DashboardTaskBlock({ task, taskNum }: { task: any; taskNum: number }) {
                 <p className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase mb-1">
                   Reflection
                 </p>
-                <p className="text-sm whitespace-pre-wrap">
-                  {task.reflection}
-                </p>
+                <p className="text-sm whitespace-pre-wrap">{task.reflection}</p>
               </div>
             )}
           </div>
@@ -884,7 +891,11 @@ const InstructorDashboard = () => {
     enabled: !!activeClassID,
   });
 
-  const { data: usersData, isLoading: usersLoading, error: usersError } = useQuery({
+  const {
+    data: usersData,
+    isLoading: usersLoading,
+    error: usersError,
+  } = useQuery({
     queryKey: ["users-from-class", activeClassID],
     queryFn: () => getUsersFromClass(activeClassID),
     enabled: !!activeClassID,
@@ -895,7 +906,9 @@ const InstructorDashboard = () => {
   }
 
   if (!isInstructorRole(userInfo.role)) {
-    return <h1 className="p-4 sm:p-10">Sorry you do not have access to this page</h1>;
+    return (
+      <h1 className="p-4 sm:p-10">Sorry you do not have access to this page</h1>
+    );
   }
 
   if (classesLoading) return <p className="p-4 sm:p-10">Loading...</p>;
@@ -917,8 +930,8 @@ const InstructorDashboard = () => {
           <CardContent className="text-center py-12">
             <p className="text-muted-foreground mb-4">
               {isCoInstructor
-                ? "No active class. Ask the primary instructor to add you as a co-instructor."
-                : "No active class. Create a new class."}
+                ? " Ask the primary instructor to add you as a co-instructor."
+                : " No active class. Create a new class."}
             </p>
             {!isCoInstructor && (
               <Link href="/instructor/classes">
@@ -935,12 +948,15 @@ const InstructorDashboard = () => {
   }
 
   if (isLoading || usersLoading) return <p className="p-4 sm:p-10">Loading</p>;
-  if (error || usersError) return (
-    <div className="p-4 sm:p-10">
-      <p className="text-red-600 font-medium">Failed to load data</p>
-      <p className="text-sm text-muted-foreground mt-1">{(error as any)?.message || (usersError as any)?.message}</p>
-    </div>
-  );
+  if (error || usersError)
+    return (
+      <div className="p-4 sm:p-10">
+        <p className="text-red-600 font-medium">Failed to load data</p>
+        <p className="text-sm text-muted-foreground mt-1">
+          {(error as any)?.message || (usersError as any)?.message}
+        </p>
+      </div>
+    );
 
   const allWorklogs = data ?? [];
   const allUsersRaw = usersData ?? [];
@@ -968,8 +984,10 @@ const InstructorDashboard = () => {
   const studentStatuses: StudentEntry[] = allStudents.map((email: string) => {
     const logs = weekLogs
       .filter((l: any) => l.authorEmail === email && !l.isDraft)
-      .sort((a: any, b: any) =>
-        new Date(b.dateSubmitted).getTime() - new Date(a.dateSubmitted).getTime(),
+      .sort(
+        (a: any, b: any) =>
+          new Date(b.dateSubmitted).getTime() -
+          new Date(a.dateSubmitted).getTime(),
       );
     const latestLog = logs[0] ?? null;
     const dueDate = new Date(classStartDate);
@@ -977,7 +995,9 @@ const InstructorDashboard = () => {
     dueDate.setHours(23, 59, 0, 0);
 
     const isPastDue = new Date() > dueDate;
-    let status: "submitted" | "late" | "missing" | "pending" = isPastDue ? "missing" : "pending";
+    let status: "submitted" | "late" | "missing" | "pending" = isPastDue
+      ? "missing"
+      : "pending";
     let lateDays = 0;
 
     if (latestLog) {
@@ -991,17 +1011,32 @@ const InstructorDashboard = () => {
     const team = userTeamMap.get(email) ?? [];
     // "Reviewed" reflects the latest submission only — instructor reviews the current version.
     const hasReviewed = latestLog?.reviewed === true;
-    return { email, name, team, log: latestLog, logs, status, lateDays, hasReviewed };
+    return {
+      email,
+      name,
+      team,
+      log: latestLog,
+      logs,
+      status,
+      lateDays,
+      hasReviewed,
+    };
   });
 
   // Stats for selected week
   const totalStudents = allStudents.length;
-  const submitted = studentStatuses.filter((s: any) => s.status === "submitted").length;
+  const submitted = studentStatuses.filter(
+    (s: any) => s.status === "submitted",
+  ).length;
   const late = studentStatuses.filter((s: any) => s.status === "late").length;
-  const missing = studentStatuses.filter((s: any) => s.status === "missing").length;
-  const pending = studentStatuses.filter((s: any) => s.status === "pending").length;
-  const reviewed = studentStatuses.filter(
-    (s: any) => s.logs.some((l: any) => l.reviewed === true),
+  const missing = studentStatuses.filter(
+    (s: any) => s.status === "missing",
+  ).length;
+  const pending = studentStatuses.filter(
+    (s: any) => s.status === "pending",
+  ).length;
+  const reviewed = studentStatuses.filter((s: any) =>
+    s.logs.some((l: any) => l.reviewed === true),
   ).length;
 
   // Team options derived from current students (excluding "Unassigned" sentinel)
@@ -1199,7 +1234,10 @@ const InstructorDashboard = () => {
               >
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <ClipboardCheck className="h-4 w-4" style={{ color: "#1E4B35" }} />
+                    <ClipboardCheck
+                      className="h-4 w-4"
+                      style={{ color: "#1E4B35" }}
+                    />
                     <p
                       className="text-[11px] uppercase tracking-wider font-semibold"
                       style={{ color: "#1E4B35" }}
@@ -1325,7 +1363,9 @@ const InstructorDashboard = () => {
           {filtered.length === 0 ? (
             <div className="text-center py-10">
               <p className="text-muted-foreground">
-                {search ? "No students match your search." : "No students found."}
+                {search
+                  ? "No students match your search."
+                  : "No students found."}
               </p>
             </div>
           ) : (
@@ -1357,9 +1397,7 @@ const InstructorDashboard = () => {
               style={{ color: "#1E4B35" }}
               onClick={() => setShowAll((v) => !v)}
             >
-              {showAll
-                ? "Show Less"
-                : `View All Students (${filtered.length})`}
+              {showAll ? "Show Less" : `View All Students (${filtered.length})`}
             </Button>
           </div>
         )}
@@ -1368,7 +1406,7 @@ const InstructorDashboard = () => {
       <StudentDetailDialog
         student={
           selectedEmail
-            ? studentStatuses.find((s) => s.email === selectedEmail) ?? null
+            ? (studentStatuses.find((s) => s.email === selectedEmail) ?? null)
             : null
         }
         selectedWeek={selectedWeek}
